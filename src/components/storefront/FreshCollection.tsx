@@ -130,11 +130,17 @@ export default function FreshCollection({ products, onSelectProduct }: FreshColl
                     <h3 className="text-xl font-bold tracking-tight text-[#14191F] group-hover:text-[#5C7489] transition-colors">
                       {product.name}
                     </h3>
-                    {product.badge && (
-                      <span className="text-[11px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#EDF3F7] text-[#5C7489] border border-[#D5E1E9]">
-                        {product.badge}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      {product.stock <= 0 ? (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
+                          Sold Out
+                        </span>
+                      ) : product.badge ? (
+                        <span className="text-[11px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#EDF3F7] text-[#5C7489] border border-[#D5E1E9]">
+                          {product.badge}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
 
                   <p className="text-[11px] text-[#7C8B99] font-medium tracking-tight line-clamp-1 mb-2">
@@ -158,16 +164,22 @@ export default function FreshCollection({ products, onSelectProduct }: FreshColl
                       )}
                     </div>
 
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addToCart(product, 1);
-                      }}
-                      className="px-5 py-2 rounded-full bg-[#14191F] text-white text-xs font-semibold hover:bg-[#5C7489] transition-colors shadow-sm active:scale-95 flex items-center gap-1.5"
-                    >
-                      <ShoppingBag className="w-3.5 h-3.5" />
-                      <span>Buy now</span>
-                    </button>
+                    {product.stock <= 0 ? (
+                      <span className="px-4 py-2 rounded-full bg-[#E5DFD4] text-[#8E9FAA] text-xs font-semibold cursor-not-allowed">
+                        Sold Out
+                      </span>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToCart(product, 1);
+                        }}
+                        className="px-5 py-2 rounded-full bg-[#14191F] text-white text-xs font-semibold hover:bg-[#5C7489] transition-colors shadow-sm active:scale-95 flex items-center gap-1.5"
+                      >
+                        <ShoppingBag className="w-3.5 h-3.5" />
+                        <span>Buy now</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 

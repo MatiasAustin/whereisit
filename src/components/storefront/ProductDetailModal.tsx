@@ -95,7 +95,7 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
               {product.name}
             </h2>
 
-            <div className="flex items-baseline gap-3 mb-4">
+            <div className="flex items-baseline gap-3 mb-2">
               <span className="text-2xl font-bold text-[#14191F]">
                 {formatRupiah(product.price)}
               </span>
@@ -105,6 +105,26 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
               {product.compareAtPrice && (
                 <span className="text-sm text-[#8E9FAA] line-through">
                   {formatRupiah(product.compareAtPrice)}
+                </span>
+              )}
+            </div>
+
+            {/* Live Inventory Status Badge */}
+            <div className="mb-4">
+              {product.stock <= 0 ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-red-100 text-red-700 border border-red-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                  <span>Sold Out • Next 3D Print Batch In Preparation</span>
+                </span>
+              ) : product.stock <= 5 ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  <span>Low Batch: Only {product.stock} units remaining in studio!</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <span>In Stock • Ready for Crating & Dispatch ({product.stock} units)</span>
                 </span>
               )}
             </div>
@@ -160,42 +180,53 @@ export default function ProductDetailModal({ product, onClose }: ProductDetailMo
 
           {/* Quantity and Actions */}
           <div className="pt-4 border-t border-[#ECE6DC] flex items-center gap-4">
-            <div className="flex items-center border border-[#D5CEBF] rounded-full bg-white px-3 py-1.5">
+            <div className={`flex items-center border border-[#D5CEBF] rounded-full bg-white px-3 py-1.5 ${product.stock <= 0 ? 'opacity-50 pointer-events-none' : ''}`}>
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                disabled={product.stock <= 0}
                 className="text-lg font-semibold px-2 text-[#7A8B99] hover:text-[#14191F]"
               >
                 -
               </button>
               <span className="text-sm font-bold px-2">{quantity}</span>
               <button
-                onClick={() => setQuantity(quantity + 1)}
-                className="text-lg font-semibold px-2 text-[#7A8B99] hover:text-[#14191F]"
+                onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                disabled={product.stock <= 0 || quantity >= product.stock}
+                className="text-lg font-semibold px-2 text-[#7A8B99] hover:text-[#14191F] disabled:opacity-30"
               >
                 +
               </button>
             </div>
 
-            <button
-              onClick={handleAddToCart}
-              className={`flex-1 py-3.5 px-6 rounded-full font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 shadow-md ${
-                added
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-[#14191F] text-white hover:bg-[#5C7489]'
-              }`}
-            >
-              {added ? (
-                <>
-                  <Check className="w-4 h-4" />
-                  <span>Added to Cart</span>
-                </>
-              ) : (
-                <>
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>Add to Bag • {formatRupiah(product.price * quantity)}</span>
-                </>
-              )}
-            </button>
+            {product.stock <= 0 ? (
+              <button
+                disabled
+                className="flex-1 py-3.5 px-6 rounded-full font-semibold text-sm flex items-center justify-center gap-2 bg-[#E5DFD4] text-[#8E9FAA] cursor-not-allowed"
+              >
+                <span>Currently Sold Out</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleAddToCart}
+                className={`flex-1 py-3.5 px-6 rounded-full font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 shadow-md ${
+                  added
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-[#14191F] text-white hover:bg-[#5C7489]'
+                }`}
+              >
+                {added ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>Added to Cart</span>
+                  </>
+                ) : (
+                  <>
+                    <ShoppingBag className="w-4 h-4" />
+                    <span>Add to Bag • {formatRupiah(product.price * quantity)}</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
         </div>

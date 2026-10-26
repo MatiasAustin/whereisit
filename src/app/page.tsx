@@ -74,7 +74,8 @@ export default function HomePage() {
     }
   };
 
-  const featuredProduct = products.find((p) => p.featured) || products[0];
+  const activeProducts = products.filter((p) => p.status === 'ACTIVE');
+  const featuredProduct = activeProducts.find((p) => p.featured) || activeProducts[0] || products[0];
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F6F1]">
@@ -96,7 +97,7 @@ export default function HomePage() {
 
         {/* Fresh Collection - Dark Contrast Section fed directly from database */}
         <FreshCollection
-          products={products}
+          products={activeProducts}
           onSelectProduct={(p) => setSelectedProduct(p)}
         />
 
