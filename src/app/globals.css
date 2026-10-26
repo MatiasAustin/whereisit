@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-blue: #5C7489;
+  --color-brand-blue-dark: #3E5161;
+  --color-brand-blue-light: #8BA1B4;
+  --color-brand-blue-subtle: #EDF3F7;
+  
+  --color-cream-base: #F8F6F1;
+  --color-cream-warm: #F2EDE4;
+  --color-cream-card: #FFFFFF;
+  --color-cream-stone: #E8E2D7;
+  
+  --color-dark-surface: #11161B;
+  --color-dark-card: #182027;
+  --color-dark-border: #26333E;
+  --color-dark-text-muted: #8E9FAA;
+
+  --color-accent-bronze: #C4A27B;
+  --color-accent-terracotta: #B97A56;
+}
+
+:root {
+  --background: #F8F6F1;
+  --foreground: #14191F;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+  -webkit-font-smoothing: antialiased;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Custom scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Subtle line accents */
+.editorial-grid {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(92, 116, 137, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(92, 116, 137, 0.05) 1px, transparent 1px);
+}

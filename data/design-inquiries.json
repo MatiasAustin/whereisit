@@ -1,0 +1,41 @@
+[
+  {
+    "clientName": "Leonardo",
+    "email": "leo@studio.design",
+    "phone": "",
+    "projectType": "Desk Object",
+    "dimensionConstraints": "",
+    "estimatedBudget": "",
+    "description": "Custom acoustic desk stand",
+    "desiredTimeline": "",
+    "id": "des-1792753306773",
+    "status": "NEW",
+    "createdAt": "2026-10-23T11:01:46.773Z"
+  },
+  {
+    "id": "inq-001",
+    "clientName": "Arya Pratama",
+    "email": "arya.pratama@example.com",
+    "phone": "+62 812-3456-7890",
+    "projectType": "Desk Object",
+    "dimensionConstraints": "Max 30cm x 15cm for compact workstation",
+    "estimatedBudget": "Rp 1.000.000 - Rp 2.500.000",
+    "description": "Need a dual acoustic headphone stand integrated with DAC amp isolation cradle in matte slate blue tone.",
+    "desiredTimeline": "Within 2 weeks",
+    "status": "QUOTED",
+    "createdAt": "2026-10-21T11:01:46.772Z"
+  },
+  {
+    "id": "inq-002",
+    "clientName": "Clarissa Widjaja",
+    "email": "clarissa.w@example.com",
+    "phone": "+62 811-9876-5432",
+    "projectType": "Small Furniture",
+    "dimensionConstraints": "Side table height 52cm, diameter 40cm",
+    "estimatedBudget": "Rp 3.500.000+",
+    "description": "Bespoke parametric ribbed pedestal table for a minimalist reading nook with hidden book alcove.",
+    "desiredTimeline": "Next month",
+    "status": "NEW",
+    "createdAt": "2026-10-23T11:01:46.772Z"
+  }
+]

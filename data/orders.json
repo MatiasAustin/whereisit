@@ -1,0 +1,69 @@
+[
+  {
+    "customer": {
+      "city": "Jakarta Selatan",
+      "fullName": "Aditya Pratama",
+      "phone": "+62 812-9988-7766",
+      "postalCode": "12190",
+      "email": "aditya@example.com",
+      "address": "Jl. Senopati 28"
+    },
+    "items": [
+      {
+        "price": 480000,
+        "productName": "Monolith Architectural Desk Valet",
+        "productId": "prod-004",
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=400&q=80"
+      }
+    ],
+    "subtotal": 480000,
+    "shippingFee": 25000,
+    "total": 505000,
+    "shippingCarrier": "JNE Regular",
+    "paymentMethod": "QRIS Instant",
+    "paymentStatus": "PAID",
+    "orderStatus": "PROCESSING",
+    "id": "ord-1792753322658",
+    "orderNumber": "WI-2610-137",
+    "createdAt": "2026-10-23T11:02:02.658Z"
+  },
+  {
+    "id": "ord-001",
+    "orderNumber": "WI-2610-881",
+    "customer": {
+      "fullName": "Bambang Kusuma",
+      "email": "bambang.k@example.com",
+      "phone": "+62 818-0909-1234",
+      "address": "Jl. Senopati No. 44, Kebayoran Baru",
+      "city": "Jakarta Selatan",
+      "postalCode": "12190"
+    },
+    "items": [
+      {
+        "productId": "prod-004",
+        "productName": "Monolith Architectural Desk Valet",
+        "price": 480000,
+        "quantity": 1,
+        "selectedColor": "Slate Dusty Blue",
+        "image": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=400&q=80"
+      },
+      {
+        "productId": "prod-006",
+        "productName": "Chibi Companion \"Mori Bear\" Figurine",
+        "price": 390000,
+        "quantity": 1,
+        "selectedColor": "Warm Cream White",
+        "image": "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=400&q=80"
+      }
+    ],
+    "subtotal": 870000,
+    "shippingFee": 35000,
+    "total": 905000,
+    "shippingCarrier": "JNE Express (Next Day)",
+    "paymentMethod": "BCA Virtual Account",
+    "paymentStatus": "PAID",
+    "orderStatus": "PROCESSING",
+    "createdAt": "2026-10-23T07:02:02.657Z"
+  }
+]
