@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { StoreSettings } from '@/types';
 import { FileText, Save, Eye, Layers } from 'lucide-react';
+import { useToast } from '@/lib/toastContext';
 
 export default function HomepageEditorPage() {
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     fetch('/api/settings')
@@ -31,10 +33,13 @@ export default function HomepageEditorPage() {
       const data = await res.json();
       if (data.success) {
         setSaved(true);
+        showSuccess('Konten homepage berhasil disimpan!');
         setTimeout(() => setSaved(false), 2500);
+      } else {
+        showError('Gagal menyimpan konten homepage.');
       }
     } catch (e) {
-      alert('Failed to save homepage settings');
+      showError('Terjadi kesalahan jaringan.');
     }
   };
 

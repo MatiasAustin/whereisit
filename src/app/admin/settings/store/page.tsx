@@ -5,10 +5,12 @@ import { StoreSettings } from '@/types';
 import { Settings, Save, Check, Sparkles } from 'lucide-react';
 import ImageUploadWithCompress from '@/components/ui/ImageUploadWithCompress';
 import Logo from '@/components/brand/Logo';
+import { useToast } from '@/lib/toastContext';
 
 export default function StoreSettingsPage() {
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const [saved, setSaved] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     fetch('/api/settings')
@@ -23,15 +25,20 @@ export default function StoreSettingsPage() {
     if (!settings) return;
 
     try {
-      await fetch('/api/settings', {
+      const res = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      if (res.ok) {
+        setSaved(true);
+        showSuccess('Profil studio dan logo berhasil disimpan ke database!');
+        setTimeout(() => setSaved(false), 2500);
+      } else {
+        showError('Gagal menyimpan pengaturan ke database.');
+      }
     } catch (e) {
-      alert('Failed to save settings');
+      showError('Terjadi kesalahan jaringan saat menyimpan.');
     }
   };
 

@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { CustomDesignInquiry } from '@/types';
 import { MessageSquare, Sliders, Layers, Box, CheckCircle2, RefreshCw } from 'lucide-react';
+import { useToast } from '@/lib/toastContext';
 
 export default function CustomDesignAdminPage() {
+  const { showSuccess, showError } = useToast();
   const [inquiries, setInquiries] = useState<CustomDesignInquiry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,9 +36,10 @@ export default function CustomDesignAdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status }),
       });
+      showSuccess(`Status brief konsultasi diubah menjadi ${status}!`);
       fetchInquiries();
     } catch (e) {
-      alert('Failed to update status');
+      showError('Gagal memperbarui status brief.');
     }
   };
 

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Order } from '@/types';
 import { formatRupiah, formatUSD } from '@/lib/utils';
+import { useToast } from '@/lib/toastContext';
 import { 
   ShoppingBag, 
   Search, 
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react';
 
 export default function OrdersPage() {
+  const { showSuccess, showError } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -50,12 +52,13 @@ export default function OrdersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, orderStatus }),
       });
+      showSuccess(`Status pesanan #${id} berhasil diubah menjadi ${orderStatus}!`);
       fetchOrders();
       if (selectedOrder && selectedOrder.id === id) {
         setSelectedOrder((prev) => (prev ? { ...prev, orderStatus } : null));
       }
     } catch (e) {
-      alert('Failed to update order status');
+      showError('Gagal memperbarui status pesanan.');
     }
   };
 

@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { StoreSettings } from '@/types';
 import { CreditCard, Save, CheckCircle2, Shield } from 'lucide-react';
+import { useToast } from '@/lib/toastContext';
 
 export default function PaymentsSettingsPage() {
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const [saved, setSaved] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     fetch('/api/settings')
@@ -28,15 +30,20 @@ export default function PaymentsSettingsPage() {
     if (!settings) return;
 
     try {
-      await fetch('/api/settings', {
+      const res = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      if (res.ok) {
+        setSaved(true);
+        showSuccess('Metode pembayaran berhasil disimpan!');
+        setTimeout(() => setSaved(false), 2500);
+      } else {
+        showError('Gagal menyimpan metode pembayaran.');
+      }
     } catch (e) {
-      alert('Failed to save payment settings');
+      showError('Terjadi kesalahan jaringan.');
     }
   };
 

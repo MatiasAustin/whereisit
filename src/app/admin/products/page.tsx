@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Product, ProductCategory } from '@/types';
 import { formatRupiah, formatUSD } from '@/lib/utils';
 import ProductFormModal from '@/components/admin/ProductFormModal';
+import { useToast } from '@/lib/toastContext';
 import { 
   Package, 
   Plus, 
@@ -28,6 +29,7 @@ const CATEGORIES: ('All' | ProductCategory)[] = [
 ];
 
 export default function AdminProductsPage() {
+  const { showSuccess, showError } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -61,9 +63,12 @@ export default function AdminProductsPage() {
       const data = await res.json();
       if (data.success) {
         setProducts((prev) => prev.filter((p) => p.id !== id));
+        showSuccess(`Produk "${name}" berhasil dihapus dari katalog.`);
+      } else {
+        showError('Gagal menghapus produk.');
       }
     } catch (e) {
-      alert('Failed to delete product');
+      showError('Gagal menghapus produk.');
     }
   };
 
@@ -75,9 +80,10 @@ export default function AdminProductsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: nextStatus }),
       });
+      showSuccess(`Status "${product.name}" diubah menjadi ${nextStatus}!`);
       fetchProducts();
     } catch (e) {
-      alert('Failed to update status');
+      showError('Gagal mengubah status produk.');
     }
   };
 

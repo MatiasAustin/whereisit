@@ -4,10 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { StoreSettings } from '@/types';
 import { Truck, Save, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
+import { useToast } from '@/lib/toastContext';
 
 export default function ShippingSettingsPage() {
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const [saved, setSaved] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     fetch('/api/settings')
@@ -36,15 +38,20 @@ export default function ShippingSettingsPage() {
     if (!settings) return;
 
     try {
-      await fetch('/api/settings', {
+      const res = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      if (res.ok) {
+        setSaved(true);
+        showSuccess('Tarif dan opsi pengiriman berhasil disimpan!');
+        setTimeout(() => setSaved(false), 2500);
+      } else {
+        showError('Gagal menyimpan pengaturan pengiriman.');
+      }
     } catch (e) {
-      alert('Failed to save shipping settings');
+      showError('Terjadi kesalahan jaringan.');
     }
   };
 

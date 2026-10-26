@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Product, ProductCategory, ProductBadge } from '@/types';
 import { X, Check, Upload, Image as ImageIcon } from 'lucide-react';
 import ImageUploadWithCompress from '@/components/ui/ImageUploadWithCompress';
+import { useToast } from '@/lib/toastContext';
 
 interface ProductFormModalProps {
   product: Product | null;
@@ -30,6 +31,7 @@ const BADGES: (ProductBadge | '')[] = [
 ];
 
 export default function ProductFormModal({ product, isOpen, onClose, onSaved }: ProductFormModalProps) {
+  const { showSuccess, showError } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -148,9 +150,11 @@ export default function ProductFormModal({ product, isOpen, onClose, onSaved }: 
         throw new Error(resData.error || 'Failed to save product');
       }
 
+      showSuccess(product ? `Produk "${formData.name}" berhasil diperbarui!` : `Produk "${formData.name}" berhasil ditambahkan ke katalog!`);
       onSaved();
       onClose();
     } catch (err: any) {
+      showError(err.message || 'Gagal menyimpan produk');
       setError(err.message || 'Error saving product');
     } finally {
       setLoading(false);

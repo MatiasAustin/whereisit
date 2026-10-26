@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Discount } from '@/types';
 import { formatRupiah } from '@/lib/utils';
 import { Tag, Plus, Trash2, CheckCircle, Clock, X } from 'lucide-react';
+import { useToast } from '@/lib/toastContext';
 
 export default function DiscountsPage() {
+  const { showSuccess, showError } = useToast();
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,9 +53,12 @@ export default function DiscountsPage() {
         setIsModalOpen(false);
         fetchDiscounts();
         setFormData({ code: '', type: 'PERCENTAGE', value: 10, minPurchase: 500000, usageLimit: 100, status: 'ACTIVE' });
+        showSuccess(`Kupon diskon "${formData.code}" berhasil dibuat!`);
+      } else {
+        showError('Gagal membuat diskon.');
       }
     } catch (e) {
-      alert('Failed to create discount');
+      showError('Gagal membuat kupon diskon.');
     }
   };
 
@@ -61,9 +66,10 @@ export default function DiscountsPage() {
     if (!confirm('Are you sure you want to delete this coupon code?')) return;
     try {
       await fetch(`/api/discounts?id=${id}`, { method: 'DELETE' });
+      showSuccess('Kupon diskon berhasil dihapus.');
       fetchDiscounts();
     } catch (e) {
-      alert('Failed to delete');
+      showError('Gagal menghapus diskon.');
     }
   };
 
@@ -75,9 +81,10 @@ export default function DiscountsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: d.id, status: nextStatus }),
       });
+      showSuccess(`Status kupon "${d.code}" diubah menjadi ${nextStatus}.`);
       fetchDiscounts();
     } catch (e) {
-      alert('Failed to update status');
+      showError('Gagal mengubah status diskon.');
     }
   };
 

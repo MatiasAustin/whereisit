@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { CustomCharacterInquiry } from '@/types';
 import { Sparkles, Heart, Camera, Gift, Award, CheckCircle2, RefreshCw, ExternalLink } from 'lucide-react';
+import { useToast } from '@/lib/toastContext';
 
 export default function CustomCharacterAdminPage() {
+  const { showSuccess, showError } = useToast();
   const [inquiries, setInquiries] = useState<CustomCharacterInquiry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,9 +36,10 @@ export default function CustomCharacterAdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status }),
       });
+      showSuccess(`Status keepsake karakter diubah menjadi ${status}!`);
       fetchInquiries();
     } catch (e) {
-      alert('Failed to update status');
+      showError('Gagal memperbarui status permintaan.');
     }
   };
 

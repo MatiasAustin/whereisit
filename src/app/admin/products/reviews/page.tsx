@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { ProductReview } from '@/types';
 import { Star, CheckCircle, EyeOff, MessageSquare, ShieldCheck } from 'lucide-react';
+import { useToast } from '@/lib/toastContext';
 
 export default function ReviewsPage() {
+  const { showSuccess, showError } = useToast();
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,9 +36,10 @@ export default function ReviewsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status }),
       });
+      showSuccess(`Status ulasan diubah menjadi ${status}.`);
       fetchReviews();
     } catch (e) {
-      alert('Failed to update review status');
+      showError('Gagal memperbarui status ulasan.');
     }
   };
 

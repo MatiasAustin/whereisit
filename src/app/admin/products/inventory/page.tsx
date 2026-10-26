@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Product } from '@/types';
+import { useToast } from '@/lib/toastContext';
 import { 
   Package, 
   Search, 
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react';
 
 export default function InventoryPage() {
+  const { showSuccess, showError } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [stockChanges, setStockChanges] = useState<{ [id: string]: number }>({});
   const [search, setSearch] = useState('');
@@ -74,9 +76,12 @@ export default function InventoryPage() {
           delete next[p.id];
           return next;
         });
+        showSuccess(`Stok "${p.name}" diperbarui menjadi ${newStock} unit.`);
+      } else {
+        showError('Gagal memperbarui stok.');
       }
     } catch (e) {
-      alert('Failed to update stock');
+      showError('Gagal memperbarui stok produk.');
     } finally {
       setSavingId(null);
     }

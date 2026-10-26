@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/authContext';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminHeader } from '@/components/admin/AdminHeader';
+import { ToastProvider } from '@/lib/toastContext';
 import { Lock, KeyRound, ArrowLeft } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -104,14 +105,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // AUTHENTICATED VIEW
   return (
-    <div className="min-h-screen bg-[#F4F5F7] flex text-[#14191F]">
-      <AdminSidebar />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <AdminHeader />
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8">
-          {children}
-        </main>
+    <ToastProvider>
+      <div className="min-h-screen bg-[#F4F5F7] flex text-[#14191F]">
+        <AdminSidebar />
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <AdminHeader />
+          <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ToastProvider>
   );
 }
