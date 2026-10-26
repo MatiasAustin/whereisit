@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Product, ProductCategory, ProductBadge } from '@/types';
 import { X, Check, Upload, Image as ImageIcon } from 'lucide-react';
+import ImageUploadWithCompress from '@/components/ui/ImageUploadWithCompress';
 
 interface ProductFormModalProps {
   product: Product | null;
@@ -348,18 +349,38 @@ export default function ProductFormModal({ product, isOpen, onClose, onSaved }: 
             </div>
           </div>
 
-          {/* Image URLs */}
-          <div>
-            <label className="block text-xs font-bold text-[#44505C] mb-1">
-              Image URLs (1 per line for multi-angle carousel)
-            </label>
-            <textarea
-              rows={3}
-              value={formData.images}
-              onChange={(e) => setFormData({ ...formData, images: e.target.value })}
-              placeholder="https://images.unsplash.com/..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-mono focus:outline-none focus:border-[#5C7489]"
+          {/* Product Image Upload with Auto-Compression */}
+          <div className="space-y-3 p-4 bg-[#FAF8F5] rounded-2xl border border-[#ECE6DC]">
+            <div>
+              <label className="block text-xs font-bold text-[#14191F]">Product Photos</label>
+              <p className="text-[11px] text-[#7A8B99]">Upload photos directly (auto-compressed on select) or paste image URLs below.</p>
+            </div>
+
+            <ImageUploadWithCompress
+              onChange={(compressedDataUrl) => {
+                if (compressedDataUrl) {
+                  const currentImgs = formData.images ? formData.images.split('\n').filter(Boolean) : [];
+                  currentImgs.unshift(compressedDataUrl);
+                  setFormData({ ...formData, images: currentImgs.join('\n') });
+                }
+              }}
+              label="Upload Product Photo (Auto-Compressed)"
+              helperText="Upload JPG/PNG/WebP photo. Canvas automatically compresses high-res files to ~180KB."
+              compressionOptions={{ maxWidth: 1200, maxHeight: 1200, quality: 0.85 }}
             />
+
+            <div>
+              <label className="block text-[11px] font-semibold text-[#556473] mb-1">
+                Active Image URLs / Compressed Data (1 per line for carousel):
+              </label>
+              <textarea
+                rows={3}
+                value={formData.images}
+                onChange={(e) => setFormData({ ...formData, images: e.target.value })}
+                placeholder="https://images.unsplash.com/..."
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#DDD5C7] text-[11px] font-mono focus:outline-none focus:border-[#5C7489]"
+              />
+            </div>
           </div>
 
           {/* Status & Featured */}

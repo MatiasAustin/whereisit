@@ -29,7 +29,7 @@ export default function Navbar({ storeSettings }: NavbarProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         
         {/* Official Brand Logo with 3D Mark */}
-        <Logo variant="full" size="md" showStudioTag />
+        <Logo customLogoUrl={storeSettings?.logoUrl} variant="full" size="md" showStudioTag />
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-[#4A5560]">

@@ -60,6 +60,16 @@ export function AdminSidebar() {
     setOpenSections((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
+  const [logoUrl, setLogoUrl] = React.useState<string | undefined>(undefined);
+  React.useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.data?.logoUrl) setLogoUrl(d.data.logoUrl);
+      })
+      .catch(() => {});
+  }, []);
+
   const navItems: NavItem[] = [
     { name: 'Overview', href: '/admin', icon: LayoutDashboard },
     {
@@ -124,7 +134,7 @@ export function AdminSidebar() {
       {/* Brand Header */}
       <div className="p-6 border-b border-[#232D37] flex items-center justify-between">
         <div>
-          <Logo variant="full" theme="dark" size="sm" href="/admin" />
+          <Logo customLogoUrl={logoUrl} variant="full" theme="dark" size="sm" href="/admin" />
           <div className="flex items-center gap-1.5 mt-1 ml-9">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
             <p className="text-[10px] text-[#6C7E8E] uppercase tracking-widest font-semibold font-mono">Studio Admin</p>

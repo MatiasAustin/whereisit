@@ -8,6 +8,7 @@ interface LogoProps {
   theme?: 'light' | 'dark';
   size?: 'sm' | 'md' | 'lg';
   showStudioTag?: boolean;
+  customLogoUrl?: string;
   href?: string;
   className?: string;
 }
@@ -17,6 +18,7 @@ export default function Logo({
   theme = 'light',
   size = 'md',
   showStudioTag = false,
+  customLogoUrl,
   href = '/',
   className = '',
 }: LogoProps) {
@@ -33,8 +35,43 @@ export default function Logo({
     lg: 'text-3xl sm:text-4xl',
   };
 
+  const customLogoHeights = {
+    sm: 'max-h-8',
+    md: 'max-h-10',
+    lg: 'max-h-14',
+  };
+
   const isDark = theme === 'dark';
 
+  // If a custom PNG/SVG logo was uploaded from the admin dashboard, render it directly!
+  if (customLogoUrl) {
+    const customContent = (
+      <div className={`group inline-flex items-center gap-2.5 select-none focus:outline-none ${className}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={customLogoUrl}
+          alt="WhereIsIt Studio"
+          className={`${customLogoHeights[size]} w-auto object-contain transition-transform duration-300 group-hover:scale-102`}
+        />
+        {showStudioTag && (
+          <span className="text-[9px] uppercase tracking-[0.25em] font-bold text-[#7A8E9E] font-mono">
+            3D Studio
+          </span>
+        )}
+      </div>
+    );
+
+    if (href) {
+      return (
+        <Link href={href} className="inline-flex items-center focus:outline-none">
+          {customContent}
+        </Link>
+      );
+    }
+    return customContent;
+  }
+
+  // Default Editorial Vector Logo
   const markIcon = (
     <div className={`relative ${iconSizes[size]} shrink-0 transition-transform duration-300 group-hover:scale-105`}>
       <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-sm">

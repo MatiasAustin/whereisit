@@ -188,6 +188,7 @@ export interface Collection {
 export interface StoreSettings {
   storeName: string;
   tagline: string;
+  logoUrl?: string;
   contactEmail: string;
   contactPhone: string;
   studioAddress: string;

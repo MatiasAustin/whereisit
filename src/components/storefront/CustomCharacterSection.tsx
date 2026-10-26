@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { Sparkles, Heart, Camera, Gift, Award, CheckCircle2, Send, HelpCircle } from 'lucide-react';
+import ImageUploadWithCompress from '@/components/ui/ImageUploadWithCompress';
 
 const CHARACTER_STYLES = [
   {
@@ -317,14 +318,25 @@ export default function CustomCharacterSection() {
 
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-[#556473] mb-1.5">
-                  Reference Photo URL or Google Drive Link
+                  Reference Portrait / Photo (Auto-Compressed)
                 </label>
+                <ImageUploadWithCompress
+                  value={formData.photoUrl}
+                  onChange={(url) => setFormData({ ...formData, photoUrl: url })}
+                  label="Upload Reference Photo"
+                  helperText="Upload person / pet photo (auto-compressed on device, max 1200px)"
+                  aspectRatio="auto"
+                  compressionOptions={{ maxWidth: 1200, maxHeight: 1200, quality: 0.85 }}
+                />
+                <div className="mt-2 text-xs text-[#8292A1] flex items-center gap-1">
+                  <span>Or enter Google Drive / Image Link:</span>
+                </div>
                 <input
                   type="url"
-                  value={formData.photoUrl}
+                  value={formData.photoUrl && !formData.photoUrl.startsWith('data:') ? formData.photoUrl : ''}
                   onChange={(e) => setFormData({ ...formData, photoUrl: e.target.value })}
-                  placeholder="https://drive.google.com/... or image link (can also be sent via WhatsApp after submission)"
-                  className="w-full px-4 py-3 rounded-2xl bg-[#F4EFEA] border border-[#DDD5C7] text-sm focus:outline-none focus:border-[#5C7489]"
+                  placeholder="https://drive.google.com/... (optional if photo uploaded above)"
+                  className="mt-1 w-full px-4 py-2.5 rounded-xl bg-[#F4EFEA] border border-[#DDD5C7] text-xs focus:outline-none focus:border-[#5C7489]"
                 />
               </div>
 

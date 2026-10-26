@@ -48,7 +48,7 @@ export default function Footer({ storeSettings }: FooterProps) {
         {/* Top Row: Big Brand Statement & Newsletter */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pb-16 border-b border-[#24303C]">
           <div className="lg:col-span-6 space-y-4">
-            <Logo variant="full" theme="dark" size="lg" showStudioTag />
+            <Logo customLogoUrl={storeSettings?.logoUrl} variant="full" theme="dark" size="lg" showStudioTag />
             <p className="text-sm text-[#8E9FAA] max-w-md leading-relaxed">
               A bespoke 3D design studio creating tactile, functional, and sculptural objects. We bridge human intent and algorithmic precision for spaces that value quiet luxury.
             </p>
