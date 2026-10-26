@@ -21,10 +21,21 @@ export default function Hero({
   storeSettings,
   onSelectProduct
 }: HeroProps) {
+  const content = storeSettings?.homepageContent;
   const heroImage = featuredProduct?.images?.[0] || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1200&q=85';
   const heroTitle = featuredProduct?.name || 'Walnut Curve Armchair';
   const heroPrice = featuredProduct?.price ? formatRupiah(featuredProduct.price) : 'Rp 4.950.000';
-  const brandTagline = storeSettings?.tagline || 'Bespoke 3D printed objects made for spaces that value quality, tactile texture, and thoughtful design. From human intention to final micro-layer — every piece is built to last and made to be lived with.';
+  const brandTagline = content?.heroStatement || storeSettings?.tagline || 'Bespoke 3D printed objects made for spaces that value quality, tactile texture, and thoughtful design. From human intention to final micro-layer — every piece is built to last and made to be lived with.';
+  const headlineTag = content?.heroHeadlineTag || '3d design & objects studio';
+  const headlineTitle = content?.heroHeadlineTitle || 'whereisit';
+  const ctaPrimary = content?.heroCtaPrimary || 'Go to catalog';
+  const ctaSecondary = content?.heroCtaSecondary || 'Custom design';
+  const specLayer = featuredProduct?.layerResolution || content?.heroSpecLayer || '0.12mm Ultra-Fine Adaptive Layering';
+  const specMaterial = featuredProduct?.materials?.split(',')[0] || content?.heroSpecMaterial || 'Bio-Composite Materials';
+  const shortcut1Title = content?.heroShortcut1Title || 'Ready to buy catalog';
+  const shortcut1Img = content?.heroShortcut1Image || 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=600&q=80';
+  const shortcut2Title = content?.heroShortcut2Title || 'Custom consultation';
+  const shortcut2Img = content?.heroShortcut2Image || 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=format&fit=crop&w=600&q=80';
 
   return (
     <section className="relative pt-6 pb-20 md:pt-10 md:pb-28 overflow-hidden">
@@ -34,10 +45,16 @@ export default function Hero({
         <div className="relative border-b border-transparent">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between">
             <h1 className="text-[15vw] sm:text-[14vw] md:text-[12.5vw] font-black tracking-[-0.05em] leading-[0.88] text-[#14191F] select-none lowercase">
-              where<span className="text-[#5C7489]">is</span>it
+              {headlineTitle.includes('is') ? (
+                <>
+                  {headlineTitle.split('is')[0]}<span className="text-[#5C7489]">is</span>{headlineTitle.split('is')[1]}
+                </>
+              ) : (
+                headlineTitle
+              )}
             </h1>
             <span className="text-sm sm:text-base md:text-lg font-medium text-[#5C7489] tracking-wider uppercase sm:self-end sm:mb-4 sm:ml-4">
-              3d design & objects studio
+              {headlineTag}
             </span>
           </div>
         </div>
@@ -56,7 +73,7 @@ export default function Hero({
                 onClick={onGoToCatalog}
                 className="inline-flex items-center justify-center px-7 py-3.5 rounded-full bg-[#14191F] text-[#F8F6F1] font-medium text-sm hover:bg-[#5C7489] hover:shadow-lg transition-all duration-200"
               >
-                Go to catalog
+                {ctaPrimary}
               </button>
               
               <button
@@ -64,14 +81,14 @@ export default function Hero({
                 className="inline-flex items-center gap-2 px-5 py-3.5 rounded-full bg-[#ECE6DC] text-[#14191F] font-medium text-sm hover:bg-[#DFD8CC] transition-colors"
               >
                 <Sparkles className="w-4 h-4 text-[#5C7489]" />
-                <span>Custom design</span>
+                <span>{ctaSecondary}</span>
               </button>
             </div>
 
             {/* Subtle Studio Credentials */}
             <div className="pt-4 flex items-center gap-6 text-xs text-[#7B8B9A] uppercase tracking-wider font-medium">
-              <div>• {featuredProduct?.layerResolution || '0.12mm Ultra-Fine Adaptive Layering'}</div>
-              <div>• {featuredProduct?.materials?.split(',')[0] || 'Bio-Composite Materials'}</div>
+              <div>• {specLayer}</div>
+              <div>• {specMaterial}</div>
             </div>
           </div>
 
@@ -116,15 +133,15 @@ export default function Hero({
             >
               <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden mb-3">
                 <Image
-                  src="https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=600&q=80"
-                  alt="Ready to buy objects"
+                  src={shortcut1Img}
+                  alt={shortcut1Title}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
               <div className="flex items-center justify-between px-1.5 pb-1">
                 <span className="text-xs sm:text-sm font-semibold text-white tracking-wide">
-                  Ready to buy catalog
+                  {shortcut1Title}
                 </span>
                 <span className="text-white group-hover:translate-x-1 transition-transform">
                   →
@@ -139,15 +156,15 @@ export default function Hero({
             >
               <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden mb-3">
                 <Image
-                  src="https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=format&fit=crop&w=600&q=80"
-                  alt="Custom order drafting"
+                  src={shortcut2Img}
+                  alt={shortcut2Title}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
               <div className="flex items-center justify-between px-1.5 pb-1">
                 <span className="text-xs sm:text-sm font-semibold text-white tracking-wide">
-                  Custom consultation
+                  {shortcut2Title}
                 </span>
                 <span className="text-white group-hover:translate-x-1 transition-transform">
                   →

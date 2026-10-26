@@ -1,4 +1,4 @@
-import { Customer, Discount, ProductReview, Collection, StoreSettings, JournalArticle } from '@/types';
+import { Customer, Discount, ProductReview, Collection, StoreSettings, JournalArticle, HomepageContent } from '@/types';
 
 export const INITIAL_CUSTOMERS: Customer[] = [
   {
@@ -128,6 +128,51 @@ export const INITIAL_COLLECTIONS: Collection[] = [
   },
 ];
 
+export const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
+  // Hero Section
+  heroHeadlineTag: '3d design & objects studio',
+  heroHeadlineTitle: 'whereisit',
+  heroStatement: 'Bespoke 3D printed objects made for spaces that value quality, tactile texture, and thoughtful design. From human intention to final micro-layer — every piece is built to last and made to be lived with.',
+  heroCtaPrimary: 'Go to catalog',
+  heroCtaSecondary: 'Custom design',
+  heroSpecLayer: '0.12mm Ultra-Fine Adaptive Layering',
+  heroSpecMaterial: 'Bio-Composite Materials',
+  heroShortcut1Title: 'Ready to buy catalog',
+  heroShortcut1Image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=600&q=80',
+  heroShortcut2Title: 'Custom consultation',
+  heroShortcut2Image: 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=format&fit=crop&w=600&q=80',
+
+  // About Section (01/ Philosophy & Context)
+  aboutSectionTag: '01/ Philosophy & Context',
+  aboutTitle: 'Thoughtful objects for intentional living',
+  aboutLocationTag: 'WhereIsIt Studio • Jakarta / Bespoke Lab',
+  aboutStoreImage: '/images/whereisit-store.jpg',
+  aboutStoreCaption: 'WhereIsIt flagship space: dusty slate blue arches, warm lighting, and physical character display alcoves.',
+  aboutDetailImage: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
+  aboutDetailTag: 'layer: 0.12mm · continuous',
+  aboutStoryP1: 'We create objects with thoughtful architecture, clean lines, and relentless attention to detail — for those who choose not just interior objects, but a calm quality of life.',
+  aboutStoryP2: 'WhereIsIt is never a generic print service. We are an industrial design studio that first understands your spatial problem, functional purpose, and tactile context. We shape every contour before a single filament is extruded.',
+  aboutPillar1Title: 'Purpose Driven',
+  aboutPillar1Desc: 'Designed for real ergonomics & daily use',
+  aboutPillar2Title: 'Satin Finish',
+  aboutPillar2Desc: 'Manual 3-stage wet sanding & protective sealing',
+
+  // Custom Design Section
+  customDesignTag: 'Custom Your Design',
+  customDesignTitle: 'From spatial problem to functional art & bespoke objects',
+  customDesignDescription: 'Tell us the dimension constraints, aesthetics, or daily friction you want solved. Our design engineers translate your brief into functional prototypes and finished 3D objects.',
+
+  // Custom Character Section
+  customCharacterTag: 'Personal Keepsakes & Gifts',
+  customCharacterTitle: 'Transform memories into tactile 3D bespoke characters',
+  customCharacterDescription: 'Upload photos of someone special or a pet. Our artists sculpt unique stylized 3D figures with high resemblance, custom poses, and optional brass nameplates.',
+
+  // Studio Standards
+  studioStandardsTag: 'Studio Standards',
+  studioStandardsTitle: 'Engineered with intent. Finished with patience.',
+  studioStandardsSubtitle: '3D printing is our precision tool, but human craftsmanship is our soul. Here is how WhereIsIt ensures every piece feels distinctly premium.',
+};
+
 export const INITIAL_SETTINGS: StoreSettings = {
   storeName: 'WhereIsIt',
   tagline: '3D Printed Premium Stuff & Bespoke Studio',
@@ -148,6 +193,7 @@ export const INITIAL_SETTINGS: StoreSettings = {
     { name: 'QRIS Instant Payment', type: 'QRIS', active: true },
     { name: 'Credit / Debit Card (Visa / Mastercard)', type: 'CARD', active: true },
   ],
+  homepageContent: DEFAULT_HOMEPAGE_CONTENT,
 };
 
 export const INITIAL_JOURNAL: JournalArticle[] = [

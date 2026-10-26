@@ -185,6 +185,51 @@ export interface Collection {
   status: 'ACTIVE' | 'ARCHIVED';
 }
 
+export interface HomepageContent {
+  // Hero Section
+  heroHeadlineTag: string;
+  heroHeadlineTitle: string;
+  heroStatement: string;
+  heroCtaPrimary: string;
+  heroCtaSecondary: string;
+  heroSpecLayer: string;
+  heroSpecMaterial: string;
+  heroShortcut1Title: string;
+  heroShortcut1Image: string;
+  heroShortcut2Title: string;
+  heroShortcut2Image: string;
+
+  // About Section (01/ Philosophy & Context)
+  aboutSectionTag: string;
+  aboutTitle: string;
+  aboutLocationTag: string;
+  aboutStoreImage: string;
+  aboutStoreCaption: string;
+  aboutDetailImage: string;
+  aboutDetailTag: string;
+  aboutStoryP1: string;
+  aboutStoryP2: string;
+  aboutPillar1Title: string;
+  aboutPillar1Desc: string;
+  aboutPillar2Title: string;
+  aboutPillar2Desc: string;
+
+  // Custom Design Section
+  customDesignTag: string;
+  customDesignTitle: string;
+  customDesignDescription: string;
+
+  // Custom Character Section
+  customCharacterTag: string;
+  customCharacterTitle: string;
+  customCharacterDescription: string;
+
+  // Studio Standards (Craft & Infill)
+  studioStandardsTag: string;
+  studioStandardsTitle: string;
+  studioStandardsSubtitle: string;
+}
+
 export interface StoreSettings {
   storeName: string;
   tagline: string;
@@ -199,6 +244,7 @@ export interface StoreSettings {
   announcementActive: boolean;
   shippingCarriers: { name: string; fee: number; active: boolean }[];
   paymentMethods: { name: string; type: string; active: boolean }[];
+  homepageContent?: HomepageContent;
 }
 
 export interface JournalArticle {

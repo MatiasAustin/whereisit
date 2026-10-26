@@ -36,7 +36,17 @@ const CHARACTER_STYLES = [
   },
 ];
 
-export default function CustomCharacterSection() {
+import { HomepageContent } from '@/types';
+
+interface CustomCharacterSectionProps {
+  content?: HomepageContent;
+}
+
+export default function CustomCharacterSection({ content }: CustomCharacterSectionProps) {
+  const tag = content?.customCharacterTag || 'Personalized Figurines & Keepsakes';
+  const title = content?.customCharacterTitle || 'Turn your memories into charming 3D collectible characters';
+  const desc = content?.customCharacterDescription || 'Send us a photo of yourself, a loved one, a couple, or your pet. WhereIsIt translates real human charm into a stylized, tactile 3D figurine — preserving likeness while infusing adorable warmth.';
+
   const [selectedStyle, setSelectedStyle] = useState('Chibi Petite');
   const [formData, setFormData] = useState({
     clientName: '',
@@ -89,14 +99,13 @@ export default function CustomCharacterSection() {
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#EDF3F7] text-[#5C7489] text-xs font-semibold tracking-wider uppercase mb-3 border border-[#D5E1E9]">
               <Sparkles className="w-3.5 h-3.5 text-[#5C7489]" />
-              <span>Personalized Figurines & Keepsakes</span>
+              <span>{tag}</span>
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-[#14191F] tracking-tight leading-tight">
-              Turn your memories into <br />
-              <span className="font-bold">charming 3D collectible characters</span>
+              {title}
             </h2>
             <p className="mt-4 text-base text-[#556473] leading-relaxed">
-              Send us a photo of yourself, a loved one, a couple, or your pet. WhereIsIt translates real human charm into a stylized, tactile 3D figurine — preserving likeness while infusing adorable warmth.
+              {desc}
             </p>
           </div>
 

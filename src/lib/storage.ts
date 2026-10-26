@@ -22,7 +22,8 @@ import {
   INITIAL_REVIEWS, 
   INITIAL_COLLECTIONS, 
   INITIAL_SETTINGS, 
-  INITIAL_JOURNAL 
+  INITIAL_JOURNAL,
+  DEFAULT_HOMEPAGE_CONTENT 
 } from './studioDefaults';
 import { getSupabaseServerClient } from './supabaseServer';
 
@@ -1135,7 +1136,14 @@ export async function getStoreSettings(): Promise<StoreSettings> {
     try {
       const { data, error } = await supabase.from('store_settings').select('*').eq('id', 'default').single();
       if (!error && data && data.data) {
-        return data.data as StoreSettings;
+        const s = data.data as StoreSettings;
+        return {
+          ...s,
+          homepageContent: {
+            ...DEFAULT_HOMEPAGE_CONTENT,
+            ...(s.homepageContent || {})
+          }
+        };
       } else if (!error && !data) {
         await autoSeedSupabase(supabase);
         return INITIAL_SETTINGS;
@@ -1144,7 +1152,14 @@ export async function getStoreSettings(): Promise<StoreSettings> {
       console.warn('Supabase settings fetch failed:', err);
     }
   }
-  return readJsonFile<StoreSettings>(SETTINGS_FILE, INITIAL_SETTINGS);
+  const local = readJsonFile<StoreSettings>(SETTINGS_FILE, INITIAL_SETTINGS);
+  return {
+    ...local,
+    homepageContent: {
+      ...DEFAULT_HOMEPAGE_CONTENT,
+      ...(local.homepageContent || {})
+    }
+  };
 }
 
 export async function updateStoreSettings(updates: Partial<StoreSettings>): Promise<StoreSettings> {
@@ -1217,3 +1232,57 @@ export async function updateJournalArticle(id: string, updates: Partial<JournalA
   }
   return list[idx];
 }
+
+export async function createJournalArticle(articleData: Omit<JournalArticle, 'id' | 'publishedAt'>): Promise<JournalArticle> {
+  const id = `art-${Date.now()}`;
+  const now = new Date().toISOString();
+  const newArticle: JournalArticle = {
+    ...articleData,
+    id,
+    publishedAt: now,
+  };
+
+  const list = readJsonFile<JournalArticle[]>(JOURNAL_FILE, INITIAL_JOURNAL);
+  list.unshift(newArticle);
+  writeJsonFile(JOURNAL_FILE, list);
+
+  const supabase = getSupabaseServerClient();
+  if (supabase) {
+    try {
+      await supabase.from('journal_articles').insert([{
+        id: newArticle.id,
+        slug: newArticle.slug,
+        title: newArticle.title,
+        excerpt: newArticle.excerpt,
+        content: newArticle.content,
+        cover_image: newArticle.coverImage,
+        author: newArticle.author,
+        status: newArticle.status,
+        published_at: newArticle.publishedAt
+      }]);
+    } catch (err) {
+      console.error('Failed to insert journal article into Supabase:', err);
+    }
+  }
+
+  return newArticle;
+}
+
+export async function deleteJournalArticle(id: string): Promise<boolean> {
+  const list = readJsonFile<JournalArticle[]>(JOURNAL_FILE, INITIAL_JOURNAL);
+  const filtered = list.filter((a) => a.id !== id);
+  if (filtered.length === list.length) return false;
+  writeJsonFile(JOURNAL_FILE, filtered);
+
+  const supabase = getSupabaseServerClient();
+  if (supabase) {
+    try {
+      await supabase.from('journal_articles').delete().eq('id', id);
+    } catch (err) {
+      console.error('Failed to delete journal article in Supabase:', err);
+    }
+  }
+
+  return true;
+}
+

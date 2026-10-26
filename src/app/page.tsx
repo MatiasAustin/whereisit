@@ -93,7 +93,7 @@ export default function HomePage() {
         />
 
         {/* 01/ About us & Philosophy based on Image 1 + Image 2 */}
-        <AboutSection />
+        <AboutSection content={settings.homepageContent} />
 
         {/* Fresh Collection - Dark Contrast Section fed directly from database */}
         <FreshCollection
@@ -102,13 +102,13 @@ export default function HomePage() {
         />
 
         {/* Custom Design Consultation Flow (Submits to database) */}
-        <CustomDesignSection />
+        <CustomDesignSection content={settings.homepageContent} />
 
         {/* Custom Character Keepsakes (Submits to database) */}
-        <CustomCharacterSection />
+        <CustomCharacterSection content={settings.homepageContent} />
 
         {/* Studio Craft & Technical Excellence */}
-        <StudioCraft />
+        <StudioCraft content={settings.homepageContent} />
 
         {/* Live Client Reviews & Collector Testimonials from Database */}
         <ReviewsSection reviews={reviews} />

@@ -2,8 +2,17 @@
 
 import React, { useState } from 'react';
 import { Sparkles, MessageSquare, Send, CheckCircle2, Ruler, Sliders, Box, Layers } from 'lucide-react';
+import { HomepageContent } from '@/types';
 
-export default function CustomDesignSection() {
+interface CustomDesignSectionProps {
+  content?: HomepageContent;
+}
+
+export default function CustomDesignSection({ content }: CustomDesignSectionProps) {
+  const tag = content?.customDesignTag || 'Custom Your Design';
+  const title = content?.customDesignTitle || 'From spatial problem to functional art & bespoke objects';
+  const desc = content?.customDesignDescription || 'WhereIsIt starts with your intent. Tell us what problem you want to solve, what space you want to fit, or what form you envision. Our industrial designers consult with you to refine the geometry and structural integrity before manufacturing.';
+
   const [formData, setFormData] = useState({
     clientName: '',
     email: '',
@@ -52,14 +61,13 @@ export default function CustomDesignSection() {
         <div className="max-w-3xl mb-16">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#EDF3F7] text-[#5C7489] text-xs font-semibold tracking-wider uppercase mb-3 border border-[#D5E1E9]">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Custom Your Design</span>
+            <span>{tag}</span>
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-[#14191F] tracking-tight leading-tight">
-            From spatial problem to <br />
-            <span className="font-bold">functional art & bespoke objects</span>
+            {title}
           </h2>
           <p className="mt-4 text-base sm:text-lg text-[#556473] leading-relaxed">
-            WhereIsIt starts with your intent. Tell us what problem you want to solve, what space you want to fit, or what form you envision. Our industrial designers consult with you to refine the geometry and structural integrity before manufacturing.
+            {desc}
           </p>
         </div>
 

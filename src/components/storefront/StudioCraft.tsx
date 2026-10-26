@@ -3,8 +3,17 @@
 import React from 'react';
 import Image from 'next/image';
 import { Layers, ShieldCheck, Cpu, Feather, RefreshCw, CheckCircle } from 'lucide-react';
+import { HomepageContent } from '@/types';
 
-export default function StudioCraft() {
+interface StudioCraftProps {
+  content?: HomepageContent;
+}
+
+export default function StudioCraft({ content }: StudioCraftProps) {
+  const tag = content?.studioStandardsTag || 'Studio Standards';
+  const title = content?.studioStandardsTitle || 'Engineered with intent. Finished with patience.';
+  const subtitle = content?.studioStandardsSubtitle || '3D printing is our precision tool, but human craftsmanship is our soul. Here is how WhereIsIt ensures every piece feels distinctly premium.';
+
   const craftFeatures = [
     {
       icon: <Layers className="w-6 h-6 text-[#5C7489]" />,
@@ -33,13 +42,12 @@ export default function StudioCraft() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-xs uppercase tracking-widest text-[#5C7489] font-bold">Studio Standards</span>
+          <span className="text-xs uppercase tracking-widest text-[#5C7489] font-bold">{tag}</span>
           <h2 className="text-3xl sm:text-4xl font-light text-[#14191F] tracking-tight mt-1">
-            Engineered with intent. <br />
-            <span className="font-bold">Finished with patience.</span>
+            {title}
           </h2>
           <p className="mt-3 text-sm sm:text-base text-[#667584]">
-            3D printing is our precision tool, but human craftsmanship is our soul. Here is how WhereIsIt ensures every piece feels distinctly premium.
+            {subtitle}
           </p>
         </div>
 
