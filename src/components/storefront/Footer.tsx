@@ -1,12 +1,44 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { Sparkles, SlidersHorizontal, ArrowUpRight, Mail, Phone, Globe, LogOut } from 'lucide-react';
+import { SlidersHorizontal, LogOut, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
+import { StoreSettings } from '@/types';
 
-export default function Footer() {
+interface FooterProps {
+  storeSettings?: StoreSettings;
+}
+
+export default function Footer({ storeSettings }: FooterProps) {
   const { isAdmin, logout } = useAuth();
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setStatus('loading');
+    try {
+      const res = await fetch('/api/subscribers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: 'Storefront Footer' }),
+      });
+      if (res.ok) {
+        setStatus('success');
+        setEmail('');
+      } else {
+        setStatus('error');
+      }
+    } catch {
+      setStatus('error');
+    }
+  };
+
+  const contactPhone = storeSettings?.contactPhone || '+62 812-3456-7890';
+  const contactEmail = storeSettings?.contactEmail || 'studio@whereisit.design';
+  const studioAddress = storeSettings?.studioAddress || 'Workshop Studio 04, Jl. Senopati No. 82, Jakarta Selatan, 12190';
 
   return (
     <footer className="bg-[#14191F] text-white pt-20 pb-12 border-t border-[#232D37]">
@@ -24,9 +56,9 @@ export default function Footer() {
             <p className="text-sm text-[#8E9FAA] max-w-md leading-relaxed">
               A bespoke 3D design studio creating tactile, functional, and sculptural objects. We bridge human intent and algorithmic precision for spaces that value quiet luxury.
             </p>
-            <div className="flex items-center gap-4 pt-2 text-xs text-[#8E9FAA]">
-              <span>Jakarta Studio</span>
-              <span>•</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pt-2 text-xs text-[#8E9FAA]">
+              <span>{studioAddress}</span>
+              <span className="hidden sm:inline">•</span>
               <span>Mon - Sat 09:00 - 18:00</span>
             </div>
           </div>
@@ -38,19 +70,29 @@ export default function Footer() {
               <p className="text-xs text-[#8E9FAA] mt-1">No spam. Only curated drops, private studio openings, and material experiments.</p>
             </div>
 
-            <div className="mt-4 flex max-w-md">
+            <form onSubmit={handleSubscribe} className="mt-4 flex max-w-md">
               <input
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email address"
+                required
                 className="flex-1 px-4 py-3 rounded-l-full bg-[#1A222A] border border-[#2B3846] text-xs text-white placeholder-[#6C7E8E] focus:outline-none focus:border-[#8BA1B4]"
               />
               <button
-                type="button"
-                className="px-6 py-3 rounded-r-full bg-[#5C7489] hover:bg-[#6D879E] text-white text-xs font-semibold transition-colors"
+                type="submit"
+                disabled={status === 'loading'}
+                className="px-6 py-3 rounded-r-full bg-[#5C7489] hover:bg-[#6D879E] text-white text-xs font-semibold transition-colors disabled:opacity-50"
               >
-                Join
+                {status === 'loading' ? 'Joining...' : 'Join'}
               </button>
-            </div>
+            </form>
+            {status === 'success' && (
+              <p className="text-xs text-emerald-400 mt-2 flex items-center gap-1.5">
+                <CheckCircle className="w-3.5 h-3.5" />
+                <span>Thank you. You are on the private studio dispatch list.</span>
+              </p>
+            )}
           </div>
         </div>
 
@@ -89,8 +131,8 @@ export default function Footer() {
           <div className="space-y-3">
             <h5 className="font-bold text-white uppercase tracking-wider text-[11px]">Studio Contact</h5>
             <ul className="space-y-2">
-              <li><span className="text-[#8E9FAA]">WhatsApp: +62 812-3456-7890</span></li>
-              <li><span className="text-[#8E9FAA]">Email: studio@whereisit.design</span></li>
+              <li><span className="text-[#8E9FAA]">WhatsApp: {contactPhone}</span></li>
+              <li><span className="text-[#8E9FAA]">Email: {contactEmail}</span></li>
               <li><span className="text-[#8E9FAA]">Instagram: @whereisit.studio</span></li>
               
               {/* ONLY RENDERED IF ADMIN IS LOGGED IN */}

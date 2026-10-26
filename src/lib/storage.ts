@@ -16,6 +16,14 @@ import {
   JournalArticle
 } from '@/types';
 import { INITIAL_PRODUCTS } from './initialData';
+import { 
+  INITIAL_CUSTOMERS, 
+  INITIAL_DISCOUNTS, 
+  INITIAL_REVIEWS, 
+  INITIAL_COLLECTIONS, 
+  INITIAL_SETTINGS, 
+  INITIAL_JOURNAL 
+} from './studioDefaults';
 import { getSupabaseServerClient } from './supabaseServer';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -59,7 +67,7 @@ function writeJsonFile<T>(filePath: string, data: T): void {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
 }
 
-// ---------------- PRODUCTS ---------------- //
+// ---------------- MAPPER FUNCTIONS ---------------- //
 
 function mapProductFromDB(row: any): Product {
   return {
@@ -115,6 +123,104 @@ function mapProductToDB(p: Product) {
   };
 }
 
+// ---------------- AUTOMATIC SUPABASE SEEDER (VERCEL READY) ---------------- //
+
+let hasTriggeredAutoSeed = false;
+
+async function autoSeedSupabase(supabase: any) {
+  if (hasTriggeredAutoSeed) return;
+  hasTriggeredAutoSeed = true;
+
+  try {
+    console.log('⚡ Auto-seeding initial database rows to Supabase...');
+
+    // 1. Products
+    const dbProducts = INITIAL_PRODUCTS.map(mapProductToDB);
+    await supabase.from('products').upsert(dbProducts, { onConflict: 'id' });
+
+    // 2. Settings
+    await supabase.from('store_settings').upsert({
+      id: 'default',
+      data: INITIAL_SETTINGS,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'id' });
+
+    // 3. Collections
+    await supabase.from('collections').upsert(INITIAL_COLLECTIONS.map(c => ({
+      id: c.id,
+      slug: c.slug,
+      name: c.name,
+      description: c.description,
+      image: c.image,
+      product_count: c.productCount,
+      status: c.status
+    })), { onConflict: 'id' });
+
+    // 4. Reviews
+    await supabase.from('product_reviews').upsert(INITIAL_REVIEWS.map(r => ({
+      id: r.id,
+      product_id: r.productId,
+      product_name: r.productName,
+      author: r.author,
+      email: r.email,
+      rating: r.rating,
+      title: r.title,
+      content: r.content,
+      verified_purchase: r.verifiedPurchase,
+      status: r.status,
+      created_at: r.createdAt
+    })), { onConflict: 'id' });
+
+    // 5. Journal
+    await supabase.from('journal_articles').upsert(INITIAL_JOURNAL.map(j => ({
+      id: j.id,
+      slug: j.slug,
+      title: j.title,
+      excerpt: j.excerpt,
+      content: j.content,
+      cover_image: j.coverImage,
+      author: j.author,
+      status: j.status,
+      published_at: j.publishedAt
+    })), { onConflict: 'id' });
+
+    // 6. Discounts
+    await supabase.from('discounts').upsert(INITIAL_DISCOUNTS.map(d => ({
+      id: d.id,
+      code: d.code,
+      type: d.type,
+      value: d.value,
+      min_purchase: d.minPurchase || null,
+      usage_limit: d.usageLimit || null,
+      usage_count: d.usageCount || 0,
+      status: d.status,
+      starts_at: d.startsAt || null,
+      created_at: d.createdAt
+    })), { onConflict: 'id' });
+
+    // 7. Customers
+    await supabase.from('customers').upsert(INITIAL_CUSTOMERS.map(c => ({
+      id: c.id,
+      first_name: c.firstName,
+      last_name: c.lastName,
+      email: c.email,
+      phone: c.phone || null,
+      customer_type: c.customerType,
+      city: c.city || null,
+      orders_count: c.ordersCount,
+      total_spent: c.totalSpent,
+      notes: c.notes || null,
+      created_at: c.createdAt
+    })), { onConflict: 'id' });
+
+    console.log('✅ Supabase database populated successfully!');
+  } catch (err) {
+    console.warn('Auto-seed to Supabase encountered non-fatal notice:', err);
+  }
+}
+
+// ---------------- PRODUCTS ---------------- //
+
 export async function getProducts(): Promise<Product[]> {
   const supabase = getSupabaseServerClient();
   if (supabase) {
@@ -124,8 +230,14 @@ export async function getProducts(): Promise<Product[]> {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        return data.map(mapProductFromDB);
+      if (!error) {
+        if (data && data.length > 0) {
+          return data.map(mapProductFromDB);
+        } else {
+          // Empty table in Supabase -> auto-seed!
+          await autoSeedSupabase(supabase);
+          return INITIAL_PRODUCTS;
+        }
       }
     } catch (err) {
       console.warn('Supabase query failed for products, falling back to local file storage:', err);
@@ -516,35 +628,6 @@ export async function updateOrderStatus(id: string, status: Order['orderStatus']
 
 // ---------------- CUSTOMERS ---------------- //
 
-const INITIAL_CUSTOMERS: Customer[] = [
-  {
-    id: 'cust-1',
-    firstName: 'Arif',
-    lastName: 'Wicaksono',
-    email: 'arif.w@archstudio.id',
-    phone: '0812-9876-5432',
-    customerType: 'INTERIOR_DESIGNER',
-    city: 'Jakarta Selatan',
-    ordersCount: 4,
-    totalSpent: 3850000,
-    notes: 'Architect partner, prefers bone alabaster finishes',
-    createdAt: '2026-08-10T10:00:00Z',
-  },
-  {
-    id: 'cust-2',
-    firstName: 'Devina',
-    lastName: 'Surya',
-    email: 'devina@creativehub.co',
-    phone: '0811-2345-6789',
-    customerType: 'COLLECTOR',
-    city: 'Bandung',
-    ordersCount: 2,
-    totalSpent: 1470000,
-    notes: 'Bought custom keepsake characters',
-    createdAt: '2026-09-02T14:30:00Z',
-  },
-];
-
 export async function getCustomers(): Promise<Customer[]> {
   const supabase = getSupabaseServerClient();
   if (supabase) {
@@ -554,20 +637,25 @@ export async function getCustomers(): Promise<Customer[]> {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        return data.map((c: any) => ({
-          id: c.id,
-          firstName: c.first_name,
-          lastName: c.last_name,
-          email: c.email,
-          phone: c.phone || undefined,
-          customerType: c.customer_type,
-          city: c.city || undefined,
-          ordersCount: Number(c.orders_count || 0),
-          totalSpent: Number(c.total_spent || 0),
-          notes: c.notes || undefined,
-          createdAt: c.created_at,
-        }));
+      if (!error) {
+        if (data && data.length > 0) {
+          return data.map((c: any) => ({
+            id: c.id,
+            firstName: c.first_name,
+            lastName: c.last_name,
+            email: c.email,
+            phone: c.phone || undefined,
+            customerType: c.customer_type,
+            city: c.city || undefined,
+            ordersCount: Number(c.orders_count || 0),
+            totalSpent: Number(c.total_spent || 0),
+            notes: c.notes || undefined,
+            createdAt: c.created_at,
+          }));
+        } else {
+          await autoSeedSupabase(supabase);
+          return INITIAL_CUSTOMERS;
+        }
       }
     } catch (err) {
       console.warn('Supabase customers fetch failed:', err);
@@ -610,34 +698,6 @@ export async function createCustomer(customerData: Omit<Customer, 'id' | 'create
 
 // ---------------- DISCOUNTS ---------------- //
 
-const INITIAL_DISCOUNTS: Discount[] = [
-  {
-    id: 'disc-1',
-    code: 'WHEREISIT10',
-    type: 'PERCENTAGE',
-    value: 10,
-    minPurchase: 500000,
-    usageLimit: 100,
-    usageCount: 24,
-    status: 'ACTIVE',
-    startsAt: '2026-01-01T00:00:00Z',
-    createdAt: '2026-01-01T00:00:00Z',
-  },
-  {
-    id: 'disc-2',
-    code: 'STUDIOLAUNCH',
-    type: 'FIXED',
-    value: 50000,
-    minPurchase: 300000,
-    usageLimit: 50,
-    usageCount: 50,
-    status: 'EXPIRED',
-    startsAt: '2026-01-01T00:00:00Z',
-    endsAt: '2026-03-31T23:59:59Z',
-    createdAt: '2026-01-01T00:00:00Z',
-  },
-];
-
 export async function getDiscounts(): Promise<Discount[]> {
   const supabase = getSupabaseServerClient();
   if (supabase) {
@@ -647,20 +707,25 @@ export async function getDiscounts(): Promise<Discount[]> {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        return data.map((d: any) => ({
-          id: d.id,
-          code: d.code,
-          type: d.type,
-          value: Number(d.value),
-          minPurchase: d.min_purchase ? Number(d.min_purchase) : undefined,
-          usageLimit: d.usage_limit ? Number(d.usage_limit) : undefined,
-          usageCount: Number(d.usage_count || 0),
-          status: d.status,
-          startsAt: d.starts_at || undefined,
-          endsAt: d.ends_at || undefined,
-          createdAt: d.created_at,
-        }));
+      if (!error) {
+        if (data && data.length > 0) {
+          return data.map((d: any) => ({
+            id: d.id,
+            code: d.code,
+            type: d.type,
+            value: Number(d.value),
+            minPurchase: d.min_purchase ? Number(d.min_purchase) : undefined,
+            usageLimit: d.usage_limit ? Number(d.usage_limit) : undefined,
+            usageCount: Number(d.usage_count || 0),
+            status: d.status,
+            startsAt: d.starts_at || undefined,
+            endsAt: d.ends_at || undefined,
+            createdAt: d.created_at,
+          }));
+        } else {
+          await autoSeedSupabase(supabase);
+          return INITIAL_DISCOUNTS;
+        }
       }
     } catch (err) {
       console.warn('Supabase discounts fetch failed:', err);
@@ -882,54 +947,30 @@ export async function updateAbandonedStatus(id: string, status: AbandonedCheckou
 
 // ---------------- REVIEWS ---------------- //
 
-const INITIAL_REVIEWS: ProductReview[] = [
-  {
-    id: 'rev-1',
-    productId: 'prod-arch-organizer',
-    productName: 'Architectural Desk Organiser (No. 01)',
-    author: 'Rama Daniswara',
-    email: 'rama.d@designlab.com',
-    rating: 5,
-    title: 'Solid weight and impeccable finish',
-    content: 'Tidak terasa seperti plastik murahan. Tekstur matte structural bio-polymer nya sangat premium dan presisi untuk meja kerja.',
-    verifiedPurchase: true,
-    status: 'APPROVED',
-    createdAt: '2026-09-15T09:20:00Z',
-  },
-  {
-    id: 'rev-2',
-    productId: 'prod-monolith-lamp',
-    productName: 'Monolith Ambient Table Lamp',
-    author: 'Clara Sasmita',
-    email: 'clara@interiorvibes.id',
-    rating: 5,
-    title: 'Warm ambient glow with sculpted elegance',
-    content: 'Layer resolusi 0.12mm benar-benar halus, efek difusi cahayanya warm dan menenangkan untuk ruang studio.',
-    verifiedPurchase: true,
-    status: 'APPROVED',
-    createdAt: '2026-09-28T16:45:00Z',
-  },
-];
-
 export async function getReviews(): Promise<ProductReview[]> {
   const supabase = getSupabaseServerClient();
   if (supabase) {
     try {
       const { data, error } = await supabase.from('product_reviews').select('*').order('created_at', { ascending: false });
-      if (!error && data && data.length > 0) {
-        return data.map((r: any) => ({
-          id: r.id,
-          productId: r.product_id,
-          productName: r.product_name,
-          author: r.author,
-          email: r.email,
-          rating: Number(r.rating || 5),
-          title: r.title,
-          content: r.content,
-          verifiedPurchase: Boolean(r.verified_purchase),
-          status: r.status,
-          createdAt: r.created_at,
-        }));
+      if (!error) {
+        if (data && data.length > 0) {
+          return data.map((r: any) => ({
+            id: r.id,
+            productId: r.product_id,
+            productName: r.product_name,
+            author: r.author,
+            email: r.email,
+            rating: Number(r.rating || 5),
+            title: r.title,
+            content: r.content,
+            verifiedPurchase: Boolean(r.verified_purchase),
+            status: r.status,
+            createdAt: r.created_at,
+          }));
+        } else {
+          await autoSeedSupabase(supabase);
+          return INITIAL_REVIEWS;
+        }
       }
     } catch (err) {
       console.warn('Supabase reviews fetch failed:', err);
@@ -1040,51 +1081,26 @@ export async function addSubscriber(email: string, source: string = 'footer'): P
 
 // ---------------- COLLECTIONS ---------------- //
 
-const INITIAL_COLLECTIONS: Collection[] = [
-  {
-    id: 'col-arch',
-    slug: 'architectural-series',
-    name: 'Architectural Series',
-    description: 'Bespoke desk and interior objects inspired by brutalist and modern architectural forms.',
-    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1000&q=80',
-    productCount: 4,
-    status: 'ACTIVE',
-  },
-  {
-    id: 'col-desk',
-    slug: 'desktop-essentials',
-    name: 'Desktop Essentials',
-    description: 'Precision engineered organizers, stands, and lighting for thoughtful working environments.',
-    image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1000&q=80',
-    productCount: 3,
-    status: 'ACTIVE',
-  },
-  {
-    id: 'col-keepsake',
-    slug: 'keepsake-collection',
-    name: 'Keepsake Collection',
-    description: 'Personalized portrait characters and collectible figures transformed from customer memories.',
-    image: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=1000&q=80',
-    productCount: 2,
-    status: 'ACTIVE',
-  },
-];
-
 export async function getCollections(): Promise<Collection[]> {
   const supabase = getSupabaseServerClient();
   if (supabase) {
     try {
       const { data, error } = await supabase.from('collections').select('*');
-      if (!error && data && data.length > 0) {
-        return data.map((c: any) => ({
-          id: c.id,
-          slug: c.slug,
-          name: c.name,
-          description: c.description || '',
-          image: c.image || '',
-          productCount: Number(c.product_count || 0),
-          status: c.status || 'ACTIVE',
-        }));
+      if (!error) {
+        if (data && data.length > 0) {
+          return data.map((c: any) => ({
+            id: c.id,
+            slug: c.slug,
+            name: c.name,
+            description: c.description || '',
+            image: c.image || '',
+            productCount: Number(c.product_count || 0),
+            status: c.status || 'ACTIVE',
+          }));
+        } else {
+          await autoSeedSupabase(supabase);
+          return INITIAL_COLLECTIONS;
+        }
       }
     } catch (err) {
       console.warn('Supabase collections fetch failed:', err);
@@ -1113,28 +1129,6 @@ export async function updateCollection(id: string, updates: Partial<Collection>)
 
 // ---------------- STORE SETTINGS ---------------- //
 
-const INITIAL_SETTINGS: StoreSettings = {
-  storeName: 'WhereIsIt',
-  tagline: '3D Printed Premium Stuff & Bespoke Studio',
-  contactEmail: 'studio@whereisit.design',
-  contactPhone: '+62 812-3456-7890',
-  studioAddress: 'Workshop Studio 04, Jl. Senopati No. 82, Jakarta Selatan, 12190',
-  currency: 'IDR (Rp)',
-  taxRate: 0,
-  announcementText: '✨ Complimentary nationwide courier delivery for all studio crafted objects above Rp 750.000',
-  announcementActive: true,
-  shippingCarriers: [
-    { name: 'JNE YES (Next Day Air)', fee: 35000, active: true },
-    { name: 'SiCepat Gokil (Cargo & Heavy Object)', fee: 25000, active: true },
-    { name: 'Studio Dedicated Courier (Jabodetabek)', fee: 50000, active: true },
-  ],
-  paymentMethods: [
-    { name: 'Bank Transfer (BCA / Mandiri Manual Verification)', type: 'BANK_TRANSFER', active: true },
-    { name: 'QRIS Instant Payment', type: 'QRIS', active: true },
-    { name: 'Credit / Debit Card (Visa / Mastercard)', type: 'CARD', active: true },
-  ],
-};
-
 export async function getStoreSettings(): Promise<StoreSettings> {
   const supabase = getSupabaseServerClient();
   if (supabase) {
@@ -1142,6 +1136,9 @@ export async function getStoreSettings(): Promise<StoreSettings> {
       const { data, error } = await supabase.from('store_settings').select('*').eq('id', 'default').single();
       if (!error && data && data.data) {
         return data.data as StoreSettings;
+      } else if (!error && !data) {
+        await autoSeedSupabase(supabase);
+        return INITIAL_SETTINGS;
       }
     } catch (err) {
       console.warn('Supabase settings fetch failed:', err);
@@ -1173,48 +1170,28 @@ export async function updateStoreSettings(updates: Partial<StoreSettings>): Prom
 
 // ---------------- JOURNAL / BLOG ---------------- //
 
-const INITIAL_JOURNAL: JournalArticle[] = [
-  {
-    id: 'art-1',
-    slug: 'the-tactility-of-bio-polymers',
-    title: 'The Tactility of Bio-Polymers in High-End Living Spaces',
-    excerpt: 'Exploring how structural precision and matte layered profiles transform raw bioplastics into archival sculptural objects.',
-    content: 'When we founded WhereIsIt, our goal was never merely to output 3D geometry onto a print bed. It was to explore how additive manufacturing can sit alongside Danish teak, brushed brass, and natural limestone without feeling out of place...',
-    coverImage: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1000&q=80',
-    author: 'Austin Matias, Design Lead',
-    status: 'PUBLISHED',
-    publishedAt: '2026-09-01T10:00:00Z',
-  },
-  {
-    id: 'art-2',
-    slug: 'transforming-portraiture-into-3d-keepsakes',
-    title: 'Crafting Intimacy: Transforming Portraiture into 3D Keepsakes',
-    excerpt: 'Behind the scenes of our custom character workflow, from client photographs to hand-finished resin miniatures.',
-    content: 'A photograph captures a split-second slice of time. A three-dimensional figurine gives that memory volume, weight, and presence in physical space...',
-    coverImage: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=1000&q=80',
-    author: 'Studio Craft Team',
-    status: 'PUBLISHED',
-    publishedAt: '2026-09-18T14:00:00Z',
-  },
-];
-
 export async function getJournalArticles(): Promise<JournalArticle[]> {
   const supabase = getSupabaseServerClient();
   if (supabase) {
     try {
       const { data, error } = await supabase.from('journal_articles').select('*').order('published_at', { ascending: false });
-      if (!error && data && data.length > 0) {
-        return data.map((j: any) => ({
-          id: j.id,
-          slug: j.slug,
-          title: j.title,
-          excerpt: j.excerpt || '',
-          content: j.content || '',
-          coverImage: j.cover_image || '',
-          author: j.author || '',
-          status: j.status || 'PUBLISHED',
-          publishedAt: j.published_at,
-        }));
+      if (!error) {
+        if (data && data.length > 0) {
+          return data.map((j: any) => ({
+            id: j.id,
+            slug: j.slug,
+            title: j.title,
+            excerpt: j.excerpt || '',
+            content: j.content || '',
+            coverImage: j.cover_image || '',
+            author: j.author || '',
+            status: j.status || 'PUBLISHED',
+            publishedAt: j.published_at,
+          }));
+        } else {
+          await autoSeedSupabase(supabase);
+          return INITIAL_JOURNAL;
+        }
       }
     } catch (err) {
       console.warn('Supabase journal fetch failed:', err);

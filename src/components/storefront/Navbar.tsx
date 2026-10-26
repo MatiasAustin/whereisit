@@ -5,14 +5,26 @@ import Link from 'next/link';
 import { ShoppingBag, Menu, X, ArrowUpRight, SlidersHorizontal, Sparkles, LogOut, ShieldCheck } from 'lucide-react';
 import { useCart } from '@/lib/cartContext';
 import { useAuth } from '@/lib/authContext';
+import { StoreSettings } from '@/types';
 
-export default function Navbar() {
+interface NavbarProps {
+  storeSettings?: StoreSettings;
+}
+
+export default function Navbar({ storeSettings }: NavbarProps) {
   const { totalItems, setIsCartOpen } = useCart();
   const { isAdmin, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 bg-[#F8F6F1]/90 backdrop-blur-md border-b border-[#ECE6DC]/80 transition-all duration-300">
+      {/* Top Announcement Bar from Database */}
+      {storeSettings?.announcementActive && storeSettings?.announcementText && (
+        <div className="bg-[#14191F] text-[#D5E1E9] text-[11px] sm:text-xs py-2 px-4 text-center font-medium tracking-wide flex items-center justify-center gap-2 border-b border-[#24303C]">
+          <span>{storeSettings.announcementText}</span>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         
         {/* Brand Logo - clean editorial typography matching reference */}

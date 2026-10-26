@@ -2,15 +2,30 @@
 
 import React from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import { Product, StoreSettings } from '@/types';
+import { formatRupiah } from '@/lib/utils';
 
 interface HeroProps {
   onGoToCatalog: () => void;
   onGoToCustom: () => void;
+  featuredProduct?: Product;
+  storeSettings?: StoreSettings;
+  onSelectProduct?: (product: Product) => void;
 }
 
-export default function Hero({ onGoToCatalog, onGoToCustom }: HeroProps) {
+export default function Hero({ 
+  onGoToCatalog, 
+  onGoToCustom,
+  featuredProduct,
+  storeSettings,
+  onSelectProduct
+}: HeroProps) {
+  const heroImage = featuredProduct?.images?.[0] || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1200&q=85';
+  const heroTitle = featuredProduct?.name || 'Walnut Curve Armchair';
+  const heroPrice = featuredProduct?.price ? formatRupiah(featuredProduct.price) : 'Rp 4.950.000';
+  const brandTagline = storeSettings?.tagline || 'Bespoke 3D printed objects made for spaces that value quality, tactile texture, and thoughtful design. From human intention to final micro-layer — every piece is built to last and made to be lived with.';
+
   return (
     <section className="relative pt-6 pb-20 md:pt-10 md:pb-28 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -33,7 +48,7 @@ export default function Hero({ onGoToCatalog, onGoToCustom }: HeroProps) {
           {/* Left Column: Brand Statement & CTA */}
           <div className="lg:col-span-4 z-10 flex flex-col justify-center space-y-6">
             <p className="text-base sm:text-lg text-[#44505C] leading-relaxed font-normal max-w-sm">
-              Bespoke 3D printed objects made for spaces that value quality, tactile texture, and thoughtful design. From human intention to final micro-layer — every piece is built to last and made to be lived with.
+              {brandTagline}
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -55,8 +70,8 @@ export default function Hero({ onGoToCatalog, onGoToCustom }: HeroProps) {
 
             {/* Subtle Studio Credentials */}
             <div className="pt-4 flex items-center gap-6 text-xs text-[#7B8B9A] uppercase tracking-wider font-medium">
-              <div>• 0.08mm - 0.16mm Precision</div>
-              <div>• Bio-Composite Materials</div>
+              <div>• {featuredProduct?.layerResolution || '0.12mm Ultra-Fine Adaptive Layering'}</div>
+              <div>• {featuredProduct?.materials?.split(',')[0] || 'Bio-Composite Materials'}</div>
             </div>
           </div>
 
@@ -65,21 +80,27 @@ export default function Hero({ onGoToCatalog, onGoToCustom }: HeroProps) {
             {/* Ambient soft glow backdrop */}
             <div className="absolute w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-[#5C7489]/10 blur-3xl -z-10 pointer-events-none"></div>
 
-            <div className="relative w-full max-w-md sm:max-w-lg aspect-square group">
+            <div 
+              onClick={() => featuredProduct && onSelectProduct && onSelectProduct(featuredProduct)}
+              className="relative w-full max-w-md sm:max-w-lg aspect-square group cursor-pointer"
+            >
               {/* Sculptural Product Visual */}
               <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 hover:scale-[1.02]">
                 <Image
-                  src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1200&q=85"
-                  alt="WhereIsIt Signature 3D Sculpted Chair"
+                  src={heroImage}
+                  alt={heroTitle}
                   fill
                   className="object-cover"
                   priority
                 />
                 
-                {/* Floating pill badge */}
-                <div className="absolute bottom-4 left-4 bg-[#14191F]/85 backdrop-blur-md text-white text-xs px-3.5 py-1.5 rounded-full font-medium flex items-center gap-2 border border-white/10">
-                  <span className="w-2 h-2 rounded-full bg-[#5C7489] animate-pulse"></span>
-                  <span>Walnut Curve • Edition 01</span>
+                {/* Floating pill badge connected to database */}
+                <div className="absolute bottom-4 left-4 right-4 bg-[#14191F]/90 backdrop-blur-md text-white text-xs px-4 py-2 rounded-2xl font-medium flex items-center justify-between border border-white/10 shadow-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#5C7489] animate-pulse"></span>
+                    <span className="font-semibold">{heroTitle}</span>
+                  </div>
+                  <span className="text-[#8BA1B4] font-mono">{heroPrice}</span>
                 </div>
               </div>
             </div>
@@ -103,7 +124,7 @@ export default function Hero({ onGoToCatalog, onGoToCustom }: HeroProps) {
               </div>
               <div className="flex items-center justify-between px-1.5 pb-1">
                 <span className="text-xs sm:text-sm font-semibold text-white tracking-wide">
-                  Ready to buy
+                  Ready to buy catalog
                 </span>
                 <span className="text-white group-hover:translate-x-1 transition-transform">
                   →
@@ -126,7 +147,7 @@ export default function Hero({ onGoToCatalog, onGoToCustom }: HeroProps) {
               </div>
               <div className="flex items-center justify-between px-1.5 pb-1">
                 <span className="text-xs sm:text-sm font-semibold text-white tracking-wide">
-                  Custom order
+                  Custom consultation
                 </span>
                 <span className="text-white group-hover:translate-x-1 transition-transform">
                   →
