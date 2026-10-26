@@ -99,3 +99,114 @@ export interface Order {
   orderStatus: 'PENDING' | 'PROCESSING' | 'PRINTING' | 'SHIPPED' | 'DELIVERED';
   createdAt: string;
 }
+
+export interface Customer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  customerType: 'RETAIL' | 'STUDIO_PARTNER' | 'INTERIOR_DESIGNER' | 'COLLECTOR';
+  city?: string;
+  ordersCount: number;
+  totalSpent: number;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface Discount {
+  id: string;
+  code: string;
+  type: 'PERCENTAGE' | 'FIXED';
+  value: number; // percentage (e.g. 15) or amount in IDR (e.g. 50000)
+  minPurchase?: number;
+  usageLimit?: number;
+  usageCount: number;
+  status: 'ACTIVE' | 'EXPIRED' | 'DISABLED';
+  startsAt?: string;
+  endsAt?: string;
+  createdAt: string;
+}
+
+export interface DraftOrder {
+  id: string;
+  draftNumber: string;
+  customerName: string;
+  email: string;
+  phone?: string;
+  items: OrderItem[];
+  subtotal: number;
+  shippingFee: number;
+  total: number;
+  status: 'DRAFT' | 'INVOICED' | 'CONVERTED';
+  notes?: string;
+  createdAt: string;
+}
+
+export interface AbandonedCheckout {
+  id: string;
+  checkoutNumber: string;
+  customerEmail: string;
+  customerPhone?: string;
+  items: OrderItem[];
+  subtotal: number;
+  recoveryStatus: 'NOT_RECOVERED' | 'EMAIL_SENT' | 'RECOVERED';
+  createdAt: string;
+}
+
+export interface ProductReview {
+  id: string;
+  productId: string;
+  productName: string;
+  author: string;
+  email: string;
+  rating: number;
+  title: string;
+  content: string;
+  verifiedPurchase: boolean;
+  status: 'APPROVED' | 'PENDING' | 'HIDDEN';
+  createdAt: string;
+}
+
+export interface Subscriber {
+  id: string;
+  email: string;
+  source: string;
+  createdAt: string;
+}
+
+export interface Collection {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  image: string;
+  productCount: number;
+  status: 'ACTIVE' | 'ARCHIVED';
+}
+
+export interface StoreSettings {
+  storeName: string;
+  tagline: string;
+  contactEmail: string;
+  contactPhone: string;
+  studioAddress: string;
+  currency: string;
+  taxRate: number;
+  announcementText: string;
+  announcementActive: boolean;
+  shippingCarriers: { name: string; fee: number; active: boolean }[];
+  paymentMethods: { name: string; type: string; active: boolean }[];
+}
+
+export interface JournalArticle {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  coverImage: string;
+  author: string;
+  status: 'PUBLISHED' | 'DRAFT';
+  publishedAt: string;
+}
