@@ -57,45 +57,97 @@ export default function StoreSettingsPage() {
           </div>
         )}
 
-        {/* Custom Brand Logo Upload Section */}
-        <div className="p-5 rounded-2xl bg-[#FAF8F5] border border-[#E5DFD4] space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-[#14191F]">Official Brand Logo (PNG / WebP)</h3>
-                <span className="inline-flex items-center gap-1 text-[10px] text-[#5C7489] font-semibold bg-[#EDF3F7] px-2 py-0.5 rounded-full border border-[#D5E1E9]">
-                  <Sparkles className="w-3 h-3" />
-                  <span>Auto-Compress</span>
-                </span>
+        {/* Brand Logos (Header & Footer Separate Sources) */}
+        <div className="space-y-6">
+          {/* 1. Header / Navbar Logo (Light Background) */}
+          <div className="p-5 rounded-2xl bg-[#FAF8F5] border border-[#E5DFD4] space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-[#14191F]">1. Navbar & Header Logo (Light Background)</h3>
+                  <span className="inline-flex items-center gap-1 text-[10px] text-[#5C7489] font-semibold bg-[#EDF3F7] px-2 py-0.5 rounded-full border border-[#D5E1E9]">
+                    <Sparkles className="w-3 h-3" />
+                    <span>Auto-Compress</span>
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#7A8B99] mt-0.5">
+                  Digunakan pada Navbar Storefront & Admin Header (latar terang / putih / krem). Unggah versi teks gelap atau berwarna.
+                </p>
               </div>
-              <p className="text-[11px] text-[#7A8B99] mt-0.5">
-                Upload your custom logo PNG with transparent background. It will be auto-compressed without losing sharpness.
-              </p>
+              {settings.logoUrl && (
+                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                  Active
+                </span>
+              )}
             </div>
-            {settings.logoUrl && (
-              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                Custom Logo Active
-              </span>
-            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+              <ImageUploadWithCompress
+                value={settings.logoUrl || ''}
+                onChange={(url) => setSettings({ ...settings, logoUrl: url })}
+                label="Upload Navbar Logo (PNG/WebP)"
+                helperText="Transparan PNG/WebP (Auto-compressed, max 800px)"
+                compressionOptions={{ maxWidth: 800, maxHeight: 400, quality: 0.9, preserveAlpha: true }}
+              />
+
+              <div className="p-4 rounded-xl border border-[#ECE6DC] bg-white flex flex-col items-center justify-center space-y-3">
+                <span className="text-[10px] uppercase tracking-wider font-bold text-[#8E9FAA]">Live Preview on Navbar (Light)</span>
+                <div className="p-4 bg-[#F8F6F1] rounded-xl border border-[#ECE6DC] w-full flex items-center justify-center min-h-[80px]">
+                  <Logo customLogoUrl={settings.logoUrl} variant="full" size="md" showStudioTag />
+                </div>
+                <p className="text-[11px] text-[#8E9FAA] text-center">
+                  {settings.logoUrl ? 'Custom header logo aktif' : 'Menggunakan 3D isometric monogram bawaan'}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-            <ImageUploadWithCompress
-              value={settings.logoUrl || ''}
-              onChange={(url) => setSettings({ ...settings, logoUrl: url })}
-              label="Upload Custom Logo"
-              helperText="Upload transparent PNG, WebP or SVG (Auto-compressed)"
-              compressionOptions={{ maxWidth: 800, maxHeight: 400, quality: 0.9, preserveAlpha: true }}
-            />
-
-            <div className="p-4 rounded-xl border border-[#ECE6DC] bg-white flex flex-col items-center justify-center space-y-3">
-              <span className="text-[10px] uppercase tracking-wider font-bold text-[#8E9FAA]">Live Preview on Navbar</span>
-              <div className="p-4 bg-[#F8F6F1] rounded-xl border border-[#ECE6DC] w-full flex items-center justify-center min-h-[80px]">
-                <Logo customLogoUrl={settings.logoUrl} variant="full" size="md" showStudioTag />
+          {/* 2. Footer Logo (Dark Background) */}
+          <div className="p-5 rounded-2xl bg-[#14191F] border border-[#232D37] text-white space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-white">2. Footer Logo (Dark Background)</h3>
+                  <span className="inline-flex items-center gap-1 text-[10px] text-[#A6C0D4] font-semibold bg-[#1F2B36] px-2 py-0.5 rounded-full border border-[#2D3F50]">
+                    <Sparkles className="w-3 h-3" />
+                    <span>Auto-Compress</span>
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#8E9FAA] mt-0.5">
+                  Digunakan khusus untuk Footer (latar gelap #14191F). Unggah file PNG transparan versi putih / inverted / monokrom terang.
+                </p>
               </div>
-              <p className="text-[11px] text-[#8E9FAA] text-center">
-                {settings.logoUrl ? 'Custom logo active across Navbar, Footer & Admin' : 'Using default studio 3D isometric vector logo'}
-              </p>
+              {settings.footerLogoUrl ? (
+                <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-2.5 py-0.5 rounded-full">
+                  Footer Logo Active
+                </span>
+              ) : (
+                <span className="text-[10px] font-semibold text-[#8E9FAA] bg-[#1E252D] px-2.5 py-0.5 rounded-full">
+                  Using Default White Monogram
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+              <div className="bg-[#1A222B] p-3 rounded-2xl border border-[#2B3743]">
+                <ImageUploadWithCompress
+                  value={settings.footerLogoUrl || ''}
+                  onChange={(url) => setSettings({ ...settings, footerLogoUrl: url })}
+                  label="Upload Footer Logo (PNG/WebP Putih)"
+                  helperText="Transparan PNG/WebP (Auto-compressed, max 800px)"
+                  compressionOptions={{ maxWidth: 800, maxHeight: 400, quality: 0.9, preserveAlpha: true }}
+                />
+              </div>
+
+              <div className="p-4 rounded-xl border border-[#24303C] bg-[#0E1318] flex flex-col items-center justify-center space-y-3">
+                <span className="text-[10px] uppercase tracking-wider font-bold text-[#6D8090]">Live Preview on Footer (Dark)</span>
+                <div className="p-4 bg-[#14191F] rounded-xl border border-[#24303C] w-full flex items-center justify-center min-h-[80px]">
+                  <Logo customLogoUrl={settings.footerLogoUrl} variant="full" theme="dark" size="lg" showStudioTag />
+                </div>
+                <p className="text-[11px] text-[#6D8090] text-center">
+                  {settings.footerLogoUrl ? 'Custom footer logo (putih/terang) aktif' : 'Menggunakan logo bawaan tema gelap (putih & slate)'}
+                </p>
+              </div>
             </div>
           </div>
         </div>

@@ -189,6 +189,7 @@ export interface StoreSettings {
   storeName: string;
   tagline: string;
   logoUrl?: string;
+  footerLogoUrl?: string;
   contactEmail: string;
   contactPhone: string;
   studioAddress: string;
