@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Logo from '@/components/brand/Logo';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
@@ -123,15 +124,10 @@ export function AdminSidebar() {
       {/* Brand Header */}
       <div className="p-6 border-b border-[#232D37] flex items-center justify-between">
         <div>
-          <Link href="/admin" className="flex items-baseline gap-1">
-            <span className="text-xl font-black tracking-tight text-white lowercase">
-              where<span className="text-[#8BA1B4]">is</span>it
-            </span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#8BA1B4] inline-block mb-1"></span>
-          </Link>
-          <div className="flex items-center gap-1.5 mt-0.5">
+          <Logo variant="full" theme="dark" size="sm" href="/admin" />
+          <div className="flex items-center gap-1.5 mt-1 ml-9">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            <p className="text-[10px] text-[#6C7E8E] uppercase tracking-widest font-semibold">Studio Admin</p>
+            <p className="text-[10px] text-[#6C7E8E] uppercase tracking-widest font-semibold font-mono">Studio Admin</p>
           </div>
         </div>
 

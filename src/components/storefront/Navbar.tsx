@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Logo from '@/components/brand/Logo';
 import { ShoppingBag, Menu, X, ArrowUpRight, SlidersHorizontal, Sparkles, LogOut, ShieldCheck } from 'lucide-react';
 import { useCart } from '@/lib/cartContext';
 import { useAuth } from '@/lib/authContext';
@@ -27,13 +28,8 @@ export default function Navbar({ storeSettings }: NavbarProps) {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         
-        {/* Brand Logo - clean editorial typography matching reference */}
-        <Link href="/" className="group flex items-baseline gap-1.5 focus:outline-none">
-          <span className="text-2xl sm:text-3xl font-black tracking-tighter text-[#14191F] group-hover:text-[#5C7489] transition-colors">
-            where<span className="text-[#5C7489]">is</span>it
-          </span>
-          <span className="w-1.5 h-1.5 rounded-full bg-[#5C7489] inline-block mb-1"></span>
-        </Link>
+        {/* Official Brand Logo with 3D Mark */}
+        <Logo variant="full" size="md" showStudioTag />
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-[#4A5560]">

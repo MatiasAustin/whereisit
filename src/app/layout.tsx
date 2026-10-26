@@ -8,6 +8,10 @@ import CheckoutModal from '@/components/cart/CheckoutModal';
 export const metadata: Metadata = {
   title: 'WhereIsIt — 3D Printed Premium Stuff & Design Studio',
   description: 'Bespoke 3D printed objects, functional furniture, architectural desk objects, and custom character keepsakes born from purpose and meticulous design.',
+  icons: {
+    icon: '/logo.svg',
+    apple: '/logo.svg',
+  },
 };
 
 export default function RootLayout({

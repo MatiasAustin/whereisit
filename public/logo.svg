@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Isometric 3D Studio Cube Geometry -->
+  <path d="M24 4L42 14V34L24 44L6 34V14L24 4Z" fill="#14191F" stroke="#5C7489" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Top Face (Bone Alabaster Tint) -->
+  <path d="M24 4L42 14L24 24L6 14L24 4Z" fill="#5C7489" fill-opacity="0.35"/>
+  <!-- Right Face (Dusty Slate Blue) -->
+  <path d="M24 24L42 14V34L24 44V24Z" fill="#5C7489" fill-opacity="0.75"/>
+  <!-- Left Face (Deep Noir) -->
+  <path d="M24 24L6 14V34L24 44V24Z" fill="#14191F"/>
+  <!-- Center 3D Precision Core Dot -->
+  <circle cx="24" cy="24" r="3.5" fill="#F8F6F1"/>
+  <!-- Subtly Stylized Arc/Path representing question curve and layer extrusion -->
+  <path d="M18 19C18 15.5 21 14 24 14C27 14 30 15.5 30 18C30 20.5 28 22 26 23.5" stroke="#F8F6F1" stroke-width="2" stroke-linecap="round"/>
+</svg>

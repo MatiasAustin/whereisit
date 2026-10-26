@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Logo from '@/components/brand/Logo';
 import { SlidersHorizontal, LogOut, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { StoreSettings } from '@/types';
@@ -47,12 +48,7 @@ export default function Footer({ storeSettings }: FooterProps) {
         {/* Top Row: Big Brand Statement & Newsletter */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pb-16 border-b border-[#24303C]">
           <div className="lg:col-span-6 space-y-4">
-            <Link href="/" className="inline-block">
-              <span className="text-3xl sm:text-4xl font-black tracking-tight text-white lowercase">
-                where<span className="text-[#8BA1B4]">is</span>it
-              </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-[#8BA1B4] inline-block mb-1 ml-1"></span>
-            </Link>
+            <Logo variant="full" theme="dark" size="lg" showStudioTag />
             <p className="text-sm text-[#8E9FAA] max-w-md leading-relaxed">
               A bespoke 3D design studio creating tactile, functional, and sculptural objects. We bridge human intent and algorithmic precision for spaces that value quiet luxury.
             </p>
