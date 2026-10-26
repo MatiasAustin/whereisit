@@ -11,13 +11,13 @@ import {
 
 export async function GET() {
   try {
-    const products = getProducts();
-    const orders = getOrders();
-    const customers = getCustomers();
-    const designInquiries = getDesignInquiries();
-    const characterInquiries = getCharacterInquiries();
-    const reviews = getReviews();
-    const settings = getStoreSettings();
+    const products = await getProducts();
+    const orders = await getOrders();
+    const customers = await getCustomers();
+    const designInquiries = await getDesignInquiries();
+    const characterInquiries = await getCharacterInquiries();
+    const reviews = await getReviews();
+    const settings = await getStoreSettings();
 
     const totalSales = orders.reduce((sum, o) => sum + (o.total || 0), 0);
     const totalOrders = orders.length;

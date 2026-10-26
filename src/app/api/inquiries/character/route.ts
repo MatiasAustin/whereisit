@@ -3,7 +3,7 @@ import { getCharacterInquiries, createCharacterInquiry, updateCharacterInquirySt
 
 export async function GET() {
   try {
-    const inquiries = getCharacterInquiries();
+    const inquiries = await getCharacterInquiries();
     return NextResponse.json({ success: true, data: inquiries });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to fetch character inquiries' }, { status: 500 });
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Name, email, and reference notes are required' }, { status: 400 });
     }
 
-    const newInquiry = createCharacterInquiry({
+    const newInquiry = await createCharacterInquiry({
       clientName: body.clientName,
       email: body.email,
       phone: body.phone || '',
@@ -42,7 +42,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: false, error: 'ID and status are required' }, { status: 400 });
     }
 
-    const success = updateCharacterInquiryStatus(id, status);
+    const success = await updateCharacterInquiryStatus(id, status);
     if (!success) {
       return NextResponse.json({ success: false, error: 'Inquiry not found' }, { status: 404 });
     }

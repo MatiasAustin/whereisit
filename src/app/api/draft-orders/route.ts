@@ -3,7 +3,7 @@ import { getDraftOrders, createDraftOrder } from '@/lib/storage';
 
 export async function GET() {
   try {
-    const drafts = getDraftOrders();
+    const drafts = await getDraftOrders();
     return NextResponse.json({ success: true, data: drafts });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to fetch draft orders' }, { status: 500 });
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     if (!body.customerName || !body.items || !body.items.length) {
       return NextResponse.json({ success: false, error: 'Customer name and items are required' }, { status: 400 });
     }
-    const newDraft = createDraftOrder({
+    const newDraft = await createDraftOrder({
       customerName: body.customerName,
       email: body.email,
       phone: body.phone,

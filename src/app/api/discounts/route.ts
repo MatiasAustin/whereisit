@@ -3,7 +3,7 @@ import { getDiscounts, createDiscount, updateDiscount, deleteDiscount } from '@/
 
 export async function GET() {
   try {
-    const discounts = getDiscounts();
+    const discounts = await getDiscounts();
     return NextResponse.json({ success: true, data: discounts });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to fetch discounts' }, { status: 500 });
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     if (!body.code || !body.value) {
       return NextResponse.json({ success: false, error: 'Code and value are required' }, { status: 400 });
     }
-    const newDiscount = createDiscount({
+    const newDiscount = await createDiscount({
       code: body.code.toUpperCase().trim(),
       type: body.type || 'PERCENTAGE',
       value: Number(body.value),
@@ -39,7 +39,7 @@ export async function PATCH(request: Request) {
     if (!id) {
       return NextResponse.json({ success: false, error: 'ID is required' }, { status: 400 });
     }
-    const updated = updateDiscount(id, updates);
+    const updated = await updateDiscount(id, updates);
     if (!updated) {
       return NextResponse.json({ success: false, error: 'Discount not found' }, { status: 404 });
     }
@@ -56,7 +56,7 @@ export async function DELETE(request: Request) {
     if (!id) {
       return NextResponse.json({ success: false, error: 'ID is required' }, { status: 400 });
     }
-    const deleted = deleteDiscount(id);
+    const deleted = await deleteDiscount(id);
     return NextResponse.json({ success: deleted });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to delete discount' }, { status: 500 });

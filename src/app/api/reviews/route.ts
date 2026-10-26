@@ -3,7 +3,7 @@ import { getReviews, updateReviewStatus } from '@/lib/storage';
 
 export async function GET() {
   try {
-    const reviews = getReviews();
+    const reviews = await getReviews();
     return NextResponse.json({ success: true, data: reviews });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to fetch reviews' }, { status: 500 });
@@ -17,7 +17,7 @@ export async function PATCH(request: Request) {
     if (!id || !status) {
       return NextResponse.json({ success: false, error: 'ID and status are required' }, { status: 400 });
     }
-    const updated = updateReviewStatus(id, status);
+    const updated = await updateReviewStatus(id, status);
     if (!updated) {
       return NextResponse.json({ success: false, error: 'Review not found' }, { status: 404 });
     }

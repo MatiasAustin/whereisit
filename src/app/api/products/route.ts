@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const status = searchParams.get('status');
     const search = searchParams.get('search');
 
-    let products = getProducts();
+    let products = await getProducts();
 
     if (category && category !== 'All') {
       products = products.filter((p) => p.category === category);
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Name and price are required' }, { status: 400 });
     }
 
-    const newProduct = createProduct({
+    const newProduct = await createProduct({
       name: body.name,
       slug: body.slug || body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       category: body.category || 'Desk Objects',

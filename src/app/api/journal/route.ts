@@ -3,7 +3,7 @@ import { getJournalArticles, updateJournalArticle } from '@/lib/storage';
 
 export async function GET() {
   try {
-    const articles = getJournalArticles();
+    const articles = await getJournalArticles();
     return NextResponse.json({ success: true, data: articles });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to fetch journal articles' }, { status: 500 });
@@ -17,7 +17,7 @@ export async function PATCH(request: Request) {
     if (!id) {
       return NextResponse.json({ success: false, error: 'ID is required' }, { status: 400 });
     }
-    const updated = updateJournalArticle(id, updates);
+    const updated = await updateJournalArticle(id, updates);
     if (!updated) {
       return NextResponse.json({ success: false, error: 'Article not found' }, { status: 404 });
     }

@@ -3,7 +3,7 @@ import { getOrders, createOrder, updateOrderStatus } from '@/lib/storage';
 
 export async function GET() {
   try {
-    const orders = getOrders();
+    const orders = await getOrders();
     return NextResponse.json({ success: true, data: orders });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to fetch orders' }, { status: 500 });
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Customer information and items are required' }, { status: 400 });
     }
 
-    const newOrder = createOrder({
+    const newOrder = await createOrder({
       customer: body.customer,
       items: body.items,
       subtotal: body.subtotal,
@@ -43,7 +43,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: false, error: 'Order ID and status are required' }, { status: 400 });
     }
 
-    const success = updateOrderStatus(id, orderStatus, paymentStatus);
+    const success = await updateOrderStatus(id, orderStatus, paymentStatus);
     if (!success) {
       return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
     }

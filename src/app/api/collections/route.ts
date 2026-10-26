@@ -3,7 +3,7 @@ import { getCollections, updateCollection } from '@/lib/storage';
 
 export async function GET() {
   try {
-    const collections = getCollections();
+    const collections = await getCollections();
     return NextResponse.json({ success: true, data: collections });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to fetch collections' }, { status: 500 });
@@ -17,7 +17,7 @@ export async function PATCH(request: Request) {
     if (!id) {
       return NextResponse.json({ success: false, error: 'ID is required' }, { status: 400 });
     }
-    const updated = updateCollection(id, updates);
+    const updated = await updateCollection(id, updates);
     if (!updated) {
       return NextResponse.json({ success: false, error: 'Collection not found' }, { status: 404 });
     }

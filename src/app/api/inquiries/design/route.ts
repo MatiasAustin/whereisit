@@ -3,7 +3,7 @@ import { getDesignInquiries, createDesignInquiry, updateDesignInquiryStatus } fr
 
 export async function GET() {
   try {
-    const inquiries = getDesignInquiries();
+    const inquiries = await getDesignInquiries();
     return NextResponse.json({ success: true, data: inquiries });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to fetch inquiries' }, { status: 500 });
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Name, email, and description are required' }, { status: 400 });
     }
 
-    const newInquiry = createDesignInquiry({
+    const newInquiry = await createDesignInquiry({
       clientName: body.clientName,
       email: body.email,
       phone: body.phone || '',
@@ -43,7 +43,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: false, error: 'ID and status are required' }, { status: 400 });
     }
 
-    const success = updateDesignInquiryStatus(id, status);
+    const success = await updateDesignInquiryStatus(id, status);
     if (!success) {
       return NextResponse.json({ success: false, error: 'Inquiry not found' }, { status: 404 });
     }
