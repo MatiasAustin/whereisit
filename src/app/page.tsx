@@ -13,6 +13,7 @@ import JournalSection from '@/components/storefront/JournalSection';
 import DeliveryPaymentSection from '@/components/storefront/DeliveryPaymentSection';
 import Footer from '@/components/storefront/Footer';
 import ProductDetailModal from '@/components/storefront/ProductDetailModal';
+import StravaFeaturedBanner from '@/components/storefront/StravaFeaturedBanner';
 import { Product, StoreSettings, ProductReview, JournalArticle } from '@/types';
 import { INITIAL_PRODUCTS } from '@/lib/initialData';
 import { INITIAL_SETTINGS, INITIAL_REVIEWS, INITIAL_JOURNAL } from '@/lib/studioDefaults';
@@ -91,6 +92,9 @@ export default function HomePage() {
           storeSettings={settings}
           onSelectProduct={(p) => setSelectedProduct(p)}
         />
+
+        {/* Featured Strava Route Keychain Spotlight Card */}
+        <StravaFeaturedBanner />
 
         {/* 01/ About us & Philosophy based on Image 1 + Image 2 */}
         <AboutSection content={settings.homepageContent} />

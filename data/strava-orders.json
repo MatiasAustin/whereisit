@@ -1,0 +1,97 @@
+[
+  {
+    "id": "WSI-EXAMPLE-001",
+    "orderNumber": "WSI-EXAMPLE-001",
+    "productType": "keychain-strava",
+    "variationId": "var-emoney",
+    "variationName": "3D Route Keychain + Integrated E-Money",
+    "customer": {
+      "fullName": "Budi Santoso",
+      "email": "budi.sample@whereisit.test",
+      "phone": "081234567890",
+      "address": "Jl. Sudirman Kav. 21",
+      "city": "Jakarta Selatan",
+      "postalCode": "12190"
+    },
+    "price": 150000,
+    "subtotal": 150000,
+    "shippingFee": 0,
+    "total": 150000,
+    "status": "Produksi",
+    "paymentMethod": "QRIS Instant (Mayar)",
+    "paymentDetails": {
+      "invoiceId": "INV-EX-001",
+      "paidAt": "2026-11-10T10:00:00.000Z",
+      "channel": "QRIS"
+    },
+    "stravaData": {
+      "stravaUrl": "https://www.strava.com/activities/12345678901",
+      "images": ["/images/strava-keychain/photo-1-showcase.jpg"],
+      "eventName": "BDO ULTRA 2026",
+      "eventDate": "2026-11-09",
+      "distance": "50.2 km",
+      "pace": "06:15 /km",
+      "duration": "05:14:20",
+      "engravedText": "BDO ULTRA - 50K FINISHER",
+      "adminNotes": "Tolong warna garis rute kontras biru slate ya admin.",
+      "submittedAt": "2026-11-10T10:15:00.000Z"
+    },
+    "production": {
+      "queuePosition": 1,
+      "estimatedDays": 5,
+      "estimatedCompletionDate": "2026-11-16",
+      "internalAdminNotes": "Sedang proses 3D printing mikron layer 0.12mm di workshop Karawang.",
+      "confirmedAt": "2026-11-10T14:00:00.000Z"
+    },
+    "isExample": true,
+    "createdAt": "2026-11-10T09:45:00.000Z",
+    "updatedAt": "2026-11-11T08:00:00.000Z"
+  },
+  {
+    "id": "WSI-EXAMPLE-002",
+    "orderNumber": "WSI-EXAMPLE-002",
+    "productType": "keychain-strava",
+    "variationId": "var-standard",
+    "variationName": "Standard 3D Route Keychain",
+    "customer": {
+      "fullName": "Siti Rahmawati",
+      "email": "siti.sample@whereisit.test",
+      "phone": "081987654321",
+      "address": "Jl. Riau No. 15",
+      "city": "Bandung",
+      "postalCode": "40115"
+    },
+    "price": 119000,
+    "subtotal": 119000,
+    "shippingFee": 0,
+    "total": 119000,
+    "status": "Data Diterima — Menunggu Konfirmasi Desain",
+    "paymentMethod": "BCA Virtual Account (Mayar)",
+    "paymentDetails": {
+      "invoiceId": "INV-EX-002",
+      "paidAt": "2026-11-12T14:30:00.000Z",
+      "channel": "VA"
+    },
+    "stravaData": {
+      "stravaUrl": "https://www.strava.com/activities/98765432101",
+      "images": ["/images/strava-keychain/photo-2-macro.jpg"],
+      "eventName": "Jakarta Running Festival 2026",
+      "eventDate": "2026-10-20",
+      "distance": "21.1 km",
+      "pace": "05:42 /km",
+      "duration": "02:00:15",
+      "engravedText": "JRF 2026 - SUB 2 PB",
+      "adminNotes": "Mohon konfirmasi jika ada rute elevasi jembatan.",
+      "submittedAt": "2026-11-12T15:00:00.000Z"
+    },
+    "production": {
+      "queuePosition": 2,
+      "estimatedDays": 7,
+      "estimatedCompletionDate": "2026-11-19",
+      "internalAdminNotes": "Data masuk, menunggu desainer kirim layout 3D via WhatsApp."
+    },
+    "isExample": true,
+    "createdAt": "2026-11-12T14:15:00.000Z",
+    "updatedAt": "2026-11-12T15:00:00.000Z"
+  }
+]

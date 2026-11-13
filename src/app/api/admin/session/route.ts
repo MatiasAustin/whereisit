@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE || 'whereisit2026';
+const ADMIN_PASSCODE = process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSCODE || 'whereisit2026';
 
 export async function GET(request: Request) {
   // Check cookie from header or cookies()

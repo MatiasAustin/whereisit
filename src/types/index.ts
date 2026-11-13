@@ -258,3 +258,104 @@ export interface JournalArticle {
   status: 'PUBLISHED' | 'DRAFT';
   publishedAt: string;
 }
+
+// ---------------- STRAVA PRE-ORDER TYPES ---------------- //
+
+export type StravaOrderStatus =
+  | 'Menunggu Pembayaran'
+  | 'Dibayar — Data Belum Lengkap'
+  | 'Data Diterima — Menunggu Konfirmasi Desain'
+  | 'Desain Dikonfirmasi'
+  | 'Produksi'
+  | 'QC / Finishing'
+  | 'Packing'
+  | 'Dikirim'
+  | 'Selesai';
+
+export interface StravaVariation {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  badge?: string;
+  shortDesc: string;
+  features: string[];
+  includesEmoney: boolean;
+  emoneyNote?: string;
+  isPopular?: boolean;
+  todoNote?: string;
+}
+
+export interface StravaCustomData {
+  stravaUrl: string;
+  images: string[];
+  eventName: string;
+  eventDate: string;
+  distance: string;
+  pace: string;
+  duration: string;
+  engravedText?: string;
+  adminNotes?: string;
+  submittedAt?: string;
+}
+
+export interface StravaPreOrder {
+  id: string; // WSI-YYYYMMDD-XXXX
+  orderNumber: string;
+  productType: 'keychain-strava';
+  variationId: string;
+  variationName: string;
+  customer: {
+    fullName: string;
+    email: string;
+    phone: string;
+    address: string;
+    city: string;
+    postalCode?: string;
+    notes?: string;
+  };
+  price: number;
+  subtotal: number;
+  shippingFee: number;
+  total: number;
+  status: StravaOrderStatus;
+  paymentMethod?: string;
+  paymentDetails?: {
+    invoiceId?: string;
+    paymentUrl?: string;
+    paidAt?: string;
+    mayarTransactionId?: string;
+    channel?: string;
+  };
+  stravaData?: StravaCustomData;
+  production?: {
+    queuePosition?: number;
+    estimatedDays?: number;
+    estimatedCompletionDate?: string;
+    resiNumber?: string;
+    courier?: string;
+    internalAdminNotes?: string;
+    confirmedAt?: string;
+  };
+  isExample?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PublicQueueItem {
+  id: string; // masked, e.g. WSI-20261113-****
+  maskedName: string; // e.g. Budi S.
+  variationName: string;
+  status: StravaOrderStatus;
+  queuePosition?: number;
+  estimatedDate?: string;
+  isExample?: boolean;
+  createdAt: string;
+}
+
+export interface QueueSettings {
+  defaultLeadDays: number;
+  customLeadNote: string;
+  updatedAt: string;
+}
+

@@ -32,37 +32,46 @@ export default function Navbar({ storeSettings }: NavbarProps) {
         <Logo customLogoUrl={storeSettings?.logoUrl} variant="full" size="md" showStudioTag />
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-[#4A5560]">
+        <nav className="hidden md:flex items-center space-x-7 text-sm font-medium text-[#4A5560]">
           <Link 
-            href="#catalog" 
+            href="/preorder/keychain-strava" 
+            className="flex items-center gap-1.5 font-bold text-[#14191F] hover:text-[#5C7489] transition-colors"
+          >
+            <span className="px-1.5 py-0.5 rounded text-[10px] bg-[#5C7489] text-white font-bold uppercase tracking-wider">
+              PO
+            </span>
+            <span>Pre-Order Keychain</span>
+          </Link>
+          <Link 
+            href="/track" 
+            className="hover:text-[#14191F] transition-colors hover:underline underline-offset-8 decoration-[#5C7489]"
+          >
+            Lacak Pesanan
+          </Link>
+          <Link 
+            href="/#catalog" 
             className="hover:text-[#14191F] transition-colors hover:underline underline-offset-8 decoration-[#5C7489]"
           >
             Catalog
           </Link>
           <Link 
-            href="#custom-design" 
+            href="/#custom-design" 
             className="hover:text-[#14191F] transition-colors hover:underline underline-offset-8 decoration-[#5C7489]"
           >
             Custom Design
           </Link>
           <Link 
-            href="#custom-character" 
+            href="/#custom-character" 
             className="flex items-center gap-1.5 hover:text-[#14191F] transition-colors hover:underline underline-offset-8 decoration-[#5C7489]"
           >
             <Sparkles className="w-3.5 h-3.5 text-[#5C7489]" />
             <span>Custom Character</span>
           </Link>
           <Link 
-            href="#about" 
+            href="/#about" 
             className="hover:text-[#14191F] transition-colors hover:underline underline-offset-8 decoration-[#5C7489]"
           >
             Studio & Philosophy
-          </Link>
-          <Link 
-            href="#delivery" 
-            className="hover:text-[#14191F] transition-colors hover:underline underline-offset-8 decoration-[#5C7489]"
-          >
-            Delivery & Payment
           </Link>
         </nav>
 
@@ -120,21 +129,36 @@ export default function Navbar({ storeSettings }: NavbarProps) {
         <div className="md:hidden bg-[#F8F6F1] border-b border-[#ECE6DC] px-6 py-6 space-y-4 animate-in slide-in-from-top-4 duration-200">
           <div className="flex flex-col space-y-3 font-medium text-base text-[#14191F]">
             <Link 
-              href="#catalog" 
+              href="/preorder/keychain-strava" 
+              onClick={() => setMobileMenuOpen(false)}
+              className="py-1 font-bold text-[#5C7489] flex items-center justify-between"
+            >
+              <span>Pre-Order Keychain Strava</span>
+              <span className="px-2 py-0.5 rounded text-[10px] bg-[#5C7489] text-white">New PO</span>
+            </Link>
+            <Link 
+              href="/track" 
+              onClick={() => setMobileMenuOpen(false)}
+              className="py-1 hover:text-[#5C7489]"
+            >
+              Lacak Pesanan (Track PO)
+            </Link>
+            <Link 
+              href="/#catalog" 
               onClick={() => setMobileMenuOpen(false)}
               className="py-1 hover:text-[#5C7489]"
             >
               Catalog
             </Link>
             <Link 
-              href="#custom-design" 
+              href="/#custom-design" 
               onClick={() => setMobileMenuOpen(false)}
               className="py-1 hover:text-[#5C7489]"
             >
               Custom Design Consultation
             </Link>
             <Link 
-              href="#custom-character" 
+              href="/#custom-character" 
               onClick={() => setMobileMenuOpen(false)}
               className="py-1 flex items-center gap-2 hover:text-[#5C7489]"
             >
@@ -142,7 +166,7 @@ export default function Navbar({ storeSettings }: NavbarProps) {
               <span>Custom Character</span>
             </Link>
             <Link 
-              href="#about" 
+              href="/#about" 
               onClick={() => setMobileMenuOpen(false)}
               className="py-1 hover:text-[#5C7489]"
             >

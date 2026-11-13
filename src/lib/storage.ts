@@ -13,7 +13,12 @@ import {
   Subscriber,
   Collection,
   StoreSettings,
-  JournalArticle
+  JournalArticle,
+  StravaPreOrder,
+  StravaOrderStatus,
+  StravaCustomData,
+  PublicQueueItem,
+  QueueSettings
 } from '@/types';
 import { INITIAL_PRODUCTS } from './initialData';
 import { 
@@ -41,6 +46,8 @@ const SUBSCRIBERS_FILE = path.join(DATA_DIR, 'subscribers.json');
 const COLLECTIONS_FILE = path.join(DATA_DIR, 'collections.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const JOURNAL_FILE = path.join(DATA_DIR, 'journal.json');
+const STRAVA_ORDERS_FILE = path.join(DATA_DIR, 'strava-orders.json');
+const QUEUE_SETTINGS_FILE = path.join(DATA_DIR, 'queue-settings.json');
 
 function ensureDirectoryExists() {
   if (!fs.existsSync(DATA_DIR)) {
@@ -1285,4 +1292,316 @@ export async function deleteJournalArticle(id: string): Promise<boolean> {
 
   return true;
 }
+
+// ---------------- STRAVA PRE-ORDERS & PRODUCTION QUEUE ---------------- //
+
+function maskCustomerName(name: string): string {
+  if (!name) return 'Pelari';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) {
+    return parts[0].length > 2 ? `${parts[0].slice(0, 2)}***` : `${parts[0]}*`;
+  }
+  return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`;
+}
+
+function maskOrderId(orderId: string): string {
+  if (!orderId) return 'WSI-****';
+  const parts = orderId.split('-');
+  if (parts.length >= 3) {
+    return `${parts[0]}-${parts[1]}-****`;
+  }
+  return `${orderId.slice(0, Math.min(6, orderId.length))}****`;
+}
+
+export async function getStravaOrders(): Promise<StravaPreOrder[]> {
+  const supabase = getSupabaseServerClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('strava_orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        return data.map((o: any) => ({
+          id: o.id,
+          orderNumber: o.order_number,
+          productType: 'keychain-strava',
+          variationId: o.variation_id,
+          variationName: o.variation_name,
+          customer: o.customer,
+          price: Number(o.price),
+          subtotal: Number(o.subtotal),
+          shippingFee: Number(o.shipping_fee || 0),
+          total: Number(o.total),
+          status: o.status,
+          paymentMethod: o.payment_method,
+          paymentDetails: o.payment_details,
+          stravaData: o.strava_data,
+          production: o.production,
+          isExample: Boolean(o.is_example),
+          createdAt: o.created_at,
+          updatedAt: o.updated_at,
+        }));
+      }
+    } catch (err) {
+      console.warn('Supabase strava_orders fetch failed, using json:', err);
+    }
+  }
+
+  return readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
+}
+
+export async function getStravaOrderById(id: string): Promise<StravaPreOrder | undefined> {
+  const orders = await getStravaOrders();
+  const search = id.trim().toLowerCase();
+  return orders.find(
+    (o) => o.id.toLowerCase() === search || o.orderNumber.toLowerCase() === search
+  );
+}
+
+export async function createStravaOrder(order: StravaPreOrder): Promise<StravaPreOrder> {
+  const now = new Date().toISOString();
+  const newOrder: StravaPreOrder = {
+    ...order,
+    createdAt: order.createdAt || now,
+    updatedAt: now,
+  };
+
+  const supabase = getSupabaseServerClient();
+  if (supabase) {
+    try {
+      await supabase.from('strava_orders').insert([{
+        id: newOrder.id,
+        order_number: newOrder.orderNumber,
+        product_type: newOrder.productType,
+        variation_id: newOrder.variationId,
+        variation_name: newOrder.variationName,
+        customer: newOrder.customer,
+        price: newOrder.price,
+        subtotal: newOrder.subtotal,
+        shipping_fee: newOrder.shippingFee,
+        total: newOrder.total,
+        status: newOrder.status,
+        payment_method: newOrder.paymentMethod,
+        payment_details: newOrder.paymentDetails,
+        strava_data: newOrder.stravaData || null,
+        production: newOrder.production || null,
+        is_example: Boolean(newOrder.isExample),
+        created_at: newOrder.createdAt,
+        updated_at: newOrder.updatedAt,
+      }]);
+    } catch (err) {
+      console.error('Failed to insert strava order into Supabase:', err);
+    }
+  }
+
+  const list = readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
+  const existingIdx = list.findIndex((o) => o.id === newOrder.id);
+  if (existingIdx >= 0) {
+    list[existingIdx] = newOrder;
+  } else {
+    list.unshift(newOrder);
+  }
+  writeJsonFile(STRAVA_ORDERS_FILE, list);
+  return newOrder;
+}
+
+export async function updateStravaOrderStatus(
+  id: string,
+  status: StravaOrderStatus,
+  updates?: Partial<StravaPreOrder>
+): Promise<{ success: boolean; error?: string }> {
+  const list = readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
+  const index = list.findIndex((o) => o.id === id || o.orderNumber === id);
+  if (index === -1) {
+    return { success: false, error: 'Pesanan tidak ditemukan' };
+  }
+
+  const current = list[index];
+
+  // GUARD: Cannot advance to 'Produksi' if data is incomplete!
+  if (
+    status === 'Produksi' &&
+    (!current.stravaData || !current.stravaData.stravaUrl || current.status === 'Dibayar — Data Belum Lengkap')
+  ) {
+    return {
+      success: false,
+      error: 'Tidak dapat memulai produksi: Data Strava belum diisi oleh pembeli atau belum dikonfirmasi desainnya.',
+    };
+  }
+
+  const now = new Date().toISOString();
+  const updated: StravaPreOrder = {
+    ...current,
+    ...updates,
+    status,
+    production: {
+      ...current.production,
+      ...(updates?.production || {}),
+    },
+    updatedAt: now,
+  };
+
+  list[index] = updated;
+  writeJsonFile(STRAVA_ORDERS_FILE, list);
+
+  const supabase = getSupabaseServerClient();
+  if (supabase) {
+    try {
+      await supabase
+        .from('strava_orders')
+        .update({
+          status: updated.status,
+          production: updated.production,
+          updated_at: now,
+        })
+        .eq('id', current.id);
+    } catch (err) {
+      console.error('Failed to update strava order in Supabase:', err);
+    }
+  }
+
+  return { success: true };
+}
+
+export async function saveStravaCustomerData(
+  orderId: string,
+  data: StravaCustomData
+): Promise<{ success: boolean; error?: string }> {
+  const list = readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
+  const index = list.findIndex((o) => o.id === orderId || o.orderNumber === orderId);
+  if (index === -1) {
+    return { success: false, error: 'Order ID tidak ditemukan' };
+  }
+
+  const now = new Date().toISOString();
+  const current = list[index];
+
+  const updated: StravaPreOrder = {
+    ...current,
+    stravaData: {
+      ...data,
+      submittedAt: now,
+    },
+    // Transition status to Data Diterima
+    status: 'Data Diterima — Menunggu Konfirmasi Desain',
+    updatedAt: now,
+  };
+
+  list[index] = updated;
+  writeJsonFile(STRAVA_ORDERS_FILE, list);
+
+  const supabase = getSupabaseServerClient();
+  if (supabase) {
+    try {
+      await supabase
+        .from('strava_orders')
+        .update({
+          strava_data: updated.stravaData,
+          status: updated.status,
+          updated_at: now,
+        })
+        .eq('id', current.id);
+    } catch (err) {
+      console.error('Failed to save strava data to Supabase:', err);
+    }
+  }
+
+  return { success: true };
+}
+
+export async function getQueueSettings(): Promise<QueueSettings> {
+  const fallback: QueueSettings = {
+    defaultLeadDays: 7,
+    customLeadNote: '5–7 hari kerja sejak konfirmasi desain (maks. 10 hari PO Shopee)',
+    updatedAt: new Date().toISOString(),
+  };
+  return readJsonFile<QueueSettings>(QUEUE_SETTINGS_FILE, fallback);
+}
+
+export async function updateQueueSettings(settings: Partial<QueueSettings>): Promise<boolean> {
+  const current = await getQueueSettings();
+  const updated: QueueSettings = {
+    ...current,
+    ...settings,
+    updatedAt: new Date().toISOString(),
+  };
+  writeJsonFile(QUEUE_SETTINGS_FILE, updated);
+  return true;
+}
+
+export async function getPublicProductionQueue(): Promise<{
+  queue: PublicQueueItem[];
+  stats: {
+    inQueue: number;
+    inProduction: number;
+    totalCompleted: number;
+    avgLeadDays: number;
+    defaultEstimatedDate: string;
+    customNote: string;
+  };
+}> {
+  const orders = await getStravaOrders();
+  const settings = await getQueueSettings();
+
+  const activeStatuses: StravaOrderStatus[] = [
+    'Data Diterima — Menunggu Konfirmasi Desain',
+    'Desain Dikonfirmasi',
+    'Produksi',
+    'QC / Finishing',
+    'Packing',
+  ];
+
+  const activeOrders = orders.filter((o) => activeStatuses.includes(o.status));
+  const inProductionCount = orders.filter((o) => o.status === 'Produksi').length;
+  const completedCount = orders.filter((o) => o.status === 'Selesai' || o.status === 'Dikirim').length;
+
+  const estDate = new Date();
+  estDate.setDate(estDate.getDate() + (settings.defaultLeadDays || 7));
+  const estFormatted = estDate.toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  // Anonymized queue list (NEVER expose phone, email, address, stravaUrl, images!)
+  const queue: PublicQueueItem[] = activeOrders.map((o, index) => ({
+    id: maskOrderId(o.id),
+    maskedName: maskCustomerName(o.customer?.fullName),
+    variationName: o.variationName,
+    status: o.status,
+    queuePosition: o.production?.queuePosition || index + 1,
+    estimatedDate: o.production?.estimatedCompletionDate || estFormatted,
+    isExample: Boolean(o.isExample),
+    createdAt: o.createdAt,
+  }));
+
+  const rank: Record<StravaOrderStatus, number> = {
+    'Produksi': 1,
+    'QC / Finishing': 2,
+    'Packing': 3,
+    'Desain Dikonfirmasi': 4,
+    'Data Diterima — Menunggu Konfirmasi Desain': 5,
+    'Dibayar — Data Belum Lengkap': 6,
+    'Menunggu Pembayaran': 7,
+    'Dikirim': 8,
+    'Selesai': 9,
+  };
+
+  queue.sort((a, b) => (rank[a.status] || 99) - (rank[b.status] || 99));
+
+  return {
+    queue,
+    stats: {
+      inQueue: activeOrders.length,
+      inProduction: inProductionCount,
+      totalCompleted: completedCount,
+      avgLeadDays: settings.defaultLeadDays,
+      defaultEstimatedDate: estFormatted,
+      customNote: settings.customLeadNote,
+    },
+  };
+}
+
 

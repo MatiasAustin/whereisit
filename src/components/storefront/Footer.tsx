@@ -97,6 +97,12 @@ export default function Footer({ storeSettings }: FooterProps) {
           <div className="space-y-3">
             <h5 className="font-bold text-white uppercase tracking-wider text-[11px]">Collection</h5>
             <ul className="space-y-2">
+              <li>
+                <Link href="/preorder/keychain-strava" className="text-[#8BA1B4] hover:text-white transition-colors font-bold flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#8BA1B4]"></span>
+                  <span>Pre-Order Keychain Strava</span>
+                </Link>
+              </li>
               <li><Link href="#catalog" className="hover:text-white transition-colors">Small Furniture</Link></li>
               <li><Link href="#catalog" className="hover:text-white transition-colors">Desk Objects</Link></li>
               <li><Link href="#catalog" className="hover:text-white transition-colors">Home & Decor</Link></li>
@@ -117,6 +123,11 @@ export default function Footer({ storeSettings }: FooterProps) {
           <div className="space-y-3">
             <h5 className="font-bold text-white uppercase tracking-wider text-[11px]">Transparency</h5>
             <ul className="space-y-2">
+              <li>
+                <Link href="/track" className="text-[#8BA1B4] hover:text-white transition-colors font-bold">
+                  Lacak Pesanan (Track PO)
+                </Link>
+              </li>
               <li><Link href="#delivery" className="hover:text-white transition-colors">Delivery & Insured Logistics</Link></li>
               <li><Link href="#delivery" className="hover:text-white transition-colors">Payment Methods</Link></li>
               <li><Link href="#about" className="hover:text-white transition-colors">Material Safety & Eco-PLA</Link></li>
