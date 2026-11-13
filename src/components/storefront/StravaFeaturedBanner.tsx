@@ -55,21 +55,36 @@ export default function StravaFeaturedBanner() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row lg:flex-col gap-3 flex-shrink-0">
-              <Link
-                href="/preorder/keychain-strava"
-                className="px-8 py-4 rounded-full bg-[#5C7489] hover:bg-[#6D879E] text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-lg flex items-center justify-center gap-2"
-              >
-                <span>Lihat & Pre-Order Sekarang</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+            {/* Visual Thumbnail & Action CTAs */}
+            <div className="flex flex-col sm:flex-row lg:flex-row items-center gap-5 flex-shrink-0">
+              <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden bg-[#14191F] border border-[#3E5161] shadow-2xl flex-shrink-0 group">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/images/strava-keychain/keychain-01.jpg"
+                  alt="Strava 3D Route Keychain Preview"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                />
+                <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[8px] bg-black/70 font-mono text-[#8BA1B4]">
+                  3D Print
+                </span>
+              </div>
 
-              <Link
-                href="/track"
-                className="px-6 py-3.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/15 transition-colors flex items-center justify-center gap-2"
-              >
-                <span>Lacak Pesanan (Track PO)</span>
-              </Link>
+              <div className="flex flex-col gap-3 w-full sm:w-auto">
+                <Link
+                  href="/preorder/keychain-strava"
+                  className="px-8 py-3.5 rounded-full bg-[#5C7489] hover:bg-[#6D879E] text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-lg flex items-center justify-center gap-2 whitespace-nowrap"
+                >
+                  <span>Lihat & Pre-Order</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+
+                <Link
+                  href="/track"
+                  className="px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/15 transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+                >
+                  <span>Lacak Pesanan (Track PO)</span>
+                </Link>
+              </div>
             </div>
 
           </div>

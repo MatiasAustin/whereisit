@@ -129,9 +129,9 @@ export default function StravaKeychainLandingPage() {
                 </div>
               </div>
 
-              {/* Right Column: Visual Teaser */}
+              {/* Right Column: Real Product Visual Showcase */}
               <div className="lg:col-span-5">
-                <div className="relative p-6 sm:p-8 rounded-3xl bg-[#182027] text-white border border-[#26333E] shadow-xl overflow-hidden space-y-6">
+                <div className="relative p-5 sm:p-7 rounded-3xl bg-[#14191F] text-white border border-[#26333E] shadow-2xl overflow-hidden space-y-4">
                   <div className="absolute inset-0 opacity-10 pointer-events-none editorial-grid"></div>
 
                   <div className="relative z-10 flex items-center justify-between">
@@ -139,27 +139,26 @@ export default function StravaKeychainLandingPage() {
                       Bespoke 3D Artifact
                     </span>
                     <span className="px-2.5 py-0.5 rounded text-[9px] font-bold bg-[#5C7489] text-white">
-                      0.12mm Micro-Layer
+                      0.12mm Topografi Timbul
                     </span>
                   </div>
 
-                  <div className="relative z-10 py-6 text-center space-y-3">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-[#24303C] to-[#3E5161] border border-[#5C7489]/50 mx-auto flex items-center justify-center shadow-inner">
-                      <Sparkles className="w-10 h-10 text-[#8BA1B4]" />
-                    </div>
-                    <div className="space-y-1">
-                      <h3 className="text-lg font-black tracking-tight text-white">
-                        Keychain Custom Data Strava
-                      </h3>
-                      <p className="text-xs text-[#8E9FAA]">
-                        Rute &ldquo;BDO ULTRA&rdquo; • 50.2 KM • Finisher Keepsake
-                      </p>
+                  {/* Real Product Image from Shopee */}
+                  <div className="relative z-10 aspect-square rounded-2xl overflow-hidden bg-[#182027] border border-[#26333E] flex items-center justify-center group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/images/strava-keychain/keychain-01.jpg"
+                      alt="Keychain Custom Data Strava x Where Is It?"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 text-[9px] font-mono text-[#8BA1B4] backdrop-blur-xs">
+                      STRAVA X whereIsIt?
                     </div>
                   </div>
 
                   <div className="relative z-10 p-3 rounded-2xl bg-black/40 border border-white/10 text-xs text-[#8E9FAA] flex items-center justify-between">
-                    <span>E-Money Chip Terintegrasi:</span>
-                    <span className="font-bold text-emerald-400">Aktif & Siap Tap</span>
+                    <span>E-Money Contactless Chip:</span>
+                    <span className="font-bold text-emerald-400">Aktif Tap MRT/KRL</span>
                   </div>
                 </div>
               </div>
@@ -520,12 +519,15 @@ export default function StravaKeychainLandingPage() {
                   <span className="text-xs font-bold text-[#5C7489]">88.2K Views</span>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <h3 className="text-sm font-bold text-[#14191F]">
-                    Postingan Viral @jaynrrrrr
+                    Postingan Threads @jaynrrrrr (9 Nov 2026)
                   </h3>
                   <p className="text-xs text-[#556473] leading-relaxed">
-                    Diposting tanggal 9 Nov 2026. Menampilkan bukti nyata tap di reader fare gate MRT Jakarta, lampu indikator hijau, dan model 3D Blender &ldquo;BDO ULTRA&rdquo;.
+                    Mendapat <strong>1.977 likes</strong>, <strong>108 komentar</strong>, <strong>114 repost</strong>, dan <strong>542 share</strong>. Menampilkan POV tap gantungan kunci di fare gate MRT Jakarta, lampu hijau, dan saldo muncul (contoh Rp48.500).
+                  </p>
+                  <p className="text-[11px] text-[#7A8B99]">
+                    Komentar terbanyak: request race spesifik (Bormar, JRF, FM) dan integrasi chip e-money (Flazz / TapCash).
                   </p>
                 </div>
 
@@ -535,8 +537,8 @@ export default function StravaKeychainLandingPage() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-[#5C7489] hover:underline pt-2"
                 >
-                  <span>Lihat Postingan Asli Threads</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Lihat Postingan Asli Threads @jaynrrrrr</span>
+                  <ExternalLink className="w-3 h-3" />
                 </a>
               </div>
 
@@ -552,12 +554,15 @@ export default function StravaKeychainLandingPage() {
                   </div>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <h3 className="text-sm font-bold text-[#14191F]">
-                    WhereIsIt Studio (Shopee Official)
+                    WhereIsIt? Official Store (Shopee)
                   </h3>
                   <p className="text-xs text-[#556473] leading-relaxed">
-                    Lokasi pengiriman: Workshop Kab. Karawang & Jakarta. Rating sempurna 5.0 bintang dari pembeli dengan status pre-order terpercaya.
+                    Lokasi pengiriman: <strong>Kab. Karawang</strong>. Performa chat: <strong>84% dibalas</strong>. Pre-order dikirim dalam 10 hari dengan estimasi tiba 26–29 Nov 2026.
+                  </p>
+                  <p className="text-[11px] text-[#7A8B99]">
+                    Product ID: 41886615712 • Shop ID: 760174452
                   </p>
                 </div>
 
