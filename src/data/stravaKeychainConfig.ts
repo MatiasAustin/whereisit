@@ -377,7 +377,7 @@ export const ALL_NOTIFY_PRODUCTS = [
 
 // WhatsApp Helper
 export function getWhatsAppAdminLink(orderId?: string, customMessage?: string): string {
-  const rawNumber = process.env.NEXT_PUBLIC_WA_ADMIN_NUMBER || '6287776523066';
+  const rawNumber = process.env.NEXT_PUBLIC_WA_ADMIN_NUMBER || '6285128066354';
   const number = rawNumber.replace(/[^0-9]/g, '');
   if (customMessage) {
     return `https://wa.me/${number}?text=${encodeURIComponent(customMessage)}`;

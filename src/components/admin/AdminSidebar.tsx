@@ -124,6 +124,7 @@ export function AdminSidebar() {
       icon: Settings,
       subItems: [
         { name: 'Store Profile', href: '/admin/settings/store' },
+        { name: 'Supabase Database', href: '/admin/settings/database' },
         { name: 'Shipping & Couriers', href: '/admin/settings/shipping' },
         { name: 'Payments & Settlement', href: '/admin/settings/payments' },
       ],

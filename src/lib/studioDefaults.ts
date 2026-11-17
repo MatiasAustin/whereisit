@@ -72,7 +72,7 @@ export const INITIAL_SETTINGS: StoreSettings = {
   storeName: 'WhereIsIt?',
   tagline: 'Personal data. Physical products. Meaningful experiences.',
   contactEmail: 'whereisit26@gmail.com',
-  contactPhone: '6287776523066',
+  contactPhone: '6285128066354',
   studioAddress: 'Kab. Karawang & Jakarta, Indonesia',
   currency: 'IDR (Rp)',
   taxRate: 0,

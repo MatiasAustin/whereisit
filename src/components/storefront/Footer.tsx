@@ -38,7 +38,7 @@ export default function Footer({ storeSettings }: FooterProps) {
     }
   };
 
-  const waNumber = process.env.NEXT_PUBLIC_WA_ADMIN_NUMBER || '6287776523066';
+  const waNumber = process.env.NEXT_PUBLIC_WA_ADMIN_NUMBER || '6285128066354';
   const contactEmail = 'whereisit26@gmail.com';
   const studioAddress = storeSettings?.studioAddress || 'Kab. Karawang & Jakarta, Indonesia';
 

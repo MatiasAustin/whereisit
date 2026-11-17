@@ -53,31 +53,131 @@ const STRAVA_ORDERS_FILE = path.join(DATA_DIR, 'strava-orders.json');
 const QUEUE_SETTINGS_FILE = path.join(DATA_DIR, 'queue-settings.json');
 const NOTIFY_LIST_FILE = path.join(DATA_DIR, 'notify-list.json');
 const STRAVA_MEDIA_FILE = path.join(DATA_DIR, 'strava-media.json');
+const SUPABASE_CONFIG_FILE = path.join(DATA_DIR, 'supabase-config.json');
 
-function ensureDirectoryExists() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+export interface SupabaseConfigData {
+  url: string;
+  anonKey: string;
+  serviceRoleKey: string;
+  updatedAt?: string;
+}
+
+// Detect Serverless / Read-Only Environment (e.g. Vercel Serverless / AWS Lambda)
+const IS_SERVERLESS = Boolean(
+  process.env.VERCEL ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.cwd().startsWith('/var/task')
+);
+
+const BASE_DATA_DIR = path.join(process.cwd(), 'data');
+const SERVERLESS_TMP_DIR = '/tmp/whereisit-data';
+
+// Warm in-memory cache across requests to guarantee immediate consistency
+const memoryFileCache = new Map<string, any>();
+
+function getStoragePaths(targetFile: string): { baseFile: string; writableFile: string; filename: string } {
+  const filename = path.basename(targetFile);
+  const baseFile = path.join(BASE_DATA_DIR, filename);
+  const writableFile = IS_SERVERLESS ? path.join(SERVERLESS_TMP_DIR, filename) : baseFile;
+  return { baseFile, writableFile, filename };
+}
+
+function ensureDirectoryExists(dirPath: string = BASE_DATA_DIR) {
+  try {
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+  } catch (err: any) {
+    // Silently ignore EROFS on read-only environments
+    if (err?.code !== 'EROFS') {
+      console.warn(`Notice creating directory ${dirPath}:`, err?.message || err);
+    }
   }
 }
 
 function readJsonFile<T>(filePath: string, fallback: T): T {
-  ensureDirectoryExists();
-  if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, JSON.stringify(fallback, null, 2), 'utf-8');
-    return fallback;
+  const { baseFile, writableFile, filename } = getStoragePaths(filePath);
+
+  // 1. In-memory cache hit
+  if (memoryFileCache.has(filename)) {
+    return memoryFileCache.get(filename);
   }
-  try {
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    return JSON.parse(raw);
-  } catch (err) {
-    console.error(`Error reading ${filePath}:`, err);
-    return fallback;
+
+  // 2. In serverless, if /tmp has a previous write for this instance, read from /tmp
+  if (IS_SERVERLESS && fs.existsSync(writableFile)) {
+    try {
+      const raw = fs.readFileSync(writableFile, 'utf-8');
+      const parsed = JSON.parse(raw);
+      memoryFileCache.set(filename, parsed);
+      return parsed;
+    } catch (err) {
+      console.warn(`Notice reading serverless tmp file ${writableFile}:`, err);
+    }
   }
+
+  // 2b. In serverless, also check root /tmp fallback
+  if (IS_SERVERLESS) {
+    try {
+      const rootTmp = path.join('/tmp', filename);
+      if (fs.existsSync(rootTmp)) {
+        const raw = fs.readFileSync(rootTmp, 'utf-8');
+        const parsed = JSON.parse(raw);
+        memoryFileCache.set(filename, parsed);
+        return parsed;
+      }
+    } catch {}
+  }
+
+  // 3. Read from bundled base file in data/
+  if (fs.existsSync(baseFile)) {
+    try {
+      const raw = fs.readFileSync(baseFile, 'utf-8');
+      const parsed = JSON.parse(raw);
+      memoryFileCache.set(filename, parsed);
+      return parsed;
+    } catch (err) {
+      console.error(`Error reading ${baseFile}:`, err);
+    }
+  }
+
+  // 4. Fallback: store in cache and try writing to writableFile (safe against EROFS)
+  memoryFileCache.set(filename, fallback);
+  writeJsonFile(filePath, fallback);
+  return fallback;
 }
 
 function writeJsonFile<T>(filePath: string, data: T): void {
-  ensureDirectoryExists();
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+  const { baseFile, writableFile, filename } = getStoragePaths(filePath);
+
+  // Always keep in-memory cache synchronized immediately
+  memoryFileCache.set(filename, data);
+
+  // Write to writableFile (/tmp on serverless, or data/ locally)
+  try {
+    ensureDirectoryExists(path.dirname(writableFile));
+    fs.writeFileSync(writableFile, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err: any) {
+    if (IS_SERVERLESS) {
+      // If writableFile hit EROFS or permission error, fallback to root /tmp directly
+      try {
+        const rootTmp = path.join('/tmp', filename);
+        fs.writeFileSync(rootTmp, JSON.stringify(data, null, 2), 'utf-8');
+      } catch {
+        // In-memory cache is already updated, safely continue
+      }
+    } else {
+      console.warn(`Notice writing file ${writableFile}:`, err?.message || err);
+    }
+  }
+
+  // If running in serverless and writableFile is /tmp, optionally attempt best-effort write to baseFile
+  if (IS_SERVERLESS && writableFile !== baseFile) {
+    try {
+      fs.writeFileSync(baseFile, JSON.stringify(data, null, 2), 'utf-8');
+    } catch {
+      // EROFS on /var/task is expected and normal in serverless - silently ignore!
+    }
+  }
 }
 
 // ---------------- MAPPER FUNCTIONS ---------------- //
@@ -1858,6 +1958,28 @@ export async function updateStravaMediaConfig(
   }
 
   return updated;
+}
+
+// ---------------- DYNAMIC SUPABASE CONFIGURATION ---------------- //
+
+export function getStoredSupabaseConfig(): SupabaseConfigData {
+  const fallback: SupabaseConfigData = {
+    url: '',
+    anonKey: '',
+    serviceRoleKey: '',
+  };
+  return readJsonFile<SupabaseConfigData>(SUPABASE_CONFIG_FILE, fallback);
+}
+
+export function saveStoredSupabaseConfig(config: Partial<SupabaseConfigData>): boolean {
+  const current = getStoredSupabaseConfig();
+  const updated: SupabaseConfigData = {
+    ...current,
+    ...config,
+    updatedAt: new Date().toISOString(),
+  };
+  writeJsonFile(SUPABASE_CONFIG_FILE, updated);
+  return true;
 }
 
 

@@ -10,7 +10,7 @@ async function runTests() {
   const resHome = await fetch(`${BASE}/`);
   if (!resHome.ok) throw new Error(`Homepage returned ${resHome.status}`);
   const htmlHome = await resHome.text();
-  if (!htmlHome.includes('6287776523066') || !htmlHome.includes('whereisit26@gmail.com') || !htmlHome.includes('@whereisit.ofc')) {
+  if (!htmlHome.includes('6285128066354') || !htmlHome.includes('whereisit26@gmail.com') || !htmlHome.includes('@whereisit.ofc')) {
     throw new Error('Homepage footer/page missing updated official contacts');
   }
   if (htmlHome.includes('812-3456-7890') || htmlHome.includes('studio@whereisit.design') || htmlHome.includes('@whereisit.studio')) {
