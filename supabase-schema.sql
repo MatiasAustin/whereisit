@@ -304,9 +304,10 @@ CREATE POLICY "public_read_reviews" ON public.product_reviews FOR SELECT TO anon
 DROP POLICY IF EXISTS "public_read_journal" ON public.journal_articles;
 CREATE POLICY "public_read_journal" ON public.journal_articles FOR SELECT TO anon, authenticated USING (true);
 
--- 3. Public order tracking read policy
+-- 3. Secure Strava Pre-Orders Privacy
+-- CRITICAL SECURITY: Direct anonymous SELECT on strava_orders is REVOKED to protect customer privacy (phone, address, Strava URLs).
+-- All tracking and public queue queries are routed through server API (/api/strava-orders and /api/strava-orders/queue) with strict privacy masking.
 DROP POLICY IF EXISTS "public_read_strava_orders" ON public.strava_orders;
-CREATE POLICY "public_read_strava_orders" ON public.strava_orders FOR SELECT TO anon, authenticated USING (true);
 
 -- 4. Public buyer submission policies (insert only)
 DROP POLICY IF EXISTS "public_insert_notify_list" ON public.notify_list;
@@ -325,14 +326,17 @@ CREATE POLICY "public_insert_custom_character" ON public.custom_character_inquir
 -- INITIAL SEED DATA (CORE PRODUCTION PRODUCTS & STUDIO DEFAULTS)
 -- ==============================================================================
 
--- 1. Insert Core Keychain Product (Shopee Match)
+-- 1. Clean up old template products and duplicate keys
+DELETE FROM public.products WHERE id = 'keychain-strava' OR id IN ('prod-001', 'prod-002', 'prod-003', 'prod-004', 'prod-005', 'prod-006');
+
+-- Insert Core Keychain Product (3 Real Photos: keychain-04, keychain-05, keychain-06)
 INSERT INTO public.products (
   id, slug, name, category, price, compare_at_price, badge, 
   description, short_description, materials, dimensions, weight, layer_resolution, 
   color_options, images, featured, stock, status, rating, tags
 ) VALUES (
+  'prod-strava-keychain',
   'keychain-strava',
-  'keychain-custom-data-strava-x-where-is-it-3d-print-custom',
   'Keychain Custom Data Strava x Where Is It? 3D print Custom',
   'Studio Custom 3D',
   119000,
@@ -344,8 +348,8 @@ INSERT INTO public.products (
   '10 x 5 x 0.8 cm',
   '45 g',
   '0.12mm ultra-fine layer height',
-  '["Hitam Matte (Classic)", "Putih Tulang (Pure)", "Dual Tone Putih-Hitam", "Terracotta Studio", "Deep Navy"]'::jsonb,
-  '["/images/strava-keychain/keychain-01.jpg", "/images/strava-keychain/keychain-02.jpg", "/images/strava-keychain/keychain-04.jpg", "/images/strava-keychain/keychain-03.jpg"]'::jsonb,
+  '["10x5 cm", "10x5 cm Emoney", "10x5 cm Flazz"]'::jsonb,
+  '["/images/strava-keychain/keychain-04.jpg", "/images/strava-keychain/keychain-05.jpg", "/images/strava-keychain/keychain-06.jpg"]'::jsonb,
   true,
   999,
   'ACTIVE',
@@ -354,6 +358,7 @@ INSERT INTO public.products (
 ) ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
   price = EXCLUDED.price,
+  color_options = EXCLUDED.color_options,
   images = EXCLUDED.images;
 
 -- 2. Insert Default Store Settings
@@ -400,11 +405,16 @@ INSERT INTO public.store_settings (id, data, updated_at) VALUES (
   data = EXCLUDED.data,
   updated_at = NOW();
 
--- 3. Insert Initial Collections
+-- 3. Clean up template collections & insert official collections
+DELETE FROM public.collections WHERE id NOT IN ('col-strava', 'col-coming-soon');
+
 INSERT INTO public.collections (id, slug, name, description, image, product_count, status) VALUES
-  ('col-strava', 'strava-memorabilia', 'Strava Physical Memorabilia', 'Koleksi gantungan kunci dan display 3D custom dari data lari Strava.', '/images/strava-keychain/keychain-01.jpg', 1, 'ACTIVE'),
-  ('col-coming-soon', 'coming-soon-lineup', 'Segera Hadir (Teaser Lineup)', 'Konsep produk studio WhereIsIt generasi mendatang dalam tahap riset & prototipe.', '/images/coming-soon/strava-route-lamp.jpg', 7, 'ACTIVE')
-ON CONFLICT (id) DO NOTHING;
+  ('col-strava', 'strava-series', 'Strava Running Memorabilia', 'Koleksi gantungan kunci dan display 3D custom dari data lari Strava.', '/images/strava-keychain/keychain-04.jpg', 1, 'ACTIVE'),
+  ('col-coming-soon', 'coming-soon-lineup', 'Segera Hadir (Teaser Lineup)', 'Konsep produk studio WhereIsIt generasi mendatang dalam tahap riset & prototipe.', '/images/coming-soon/strava-route-lamp.jpg', 2, 'ACTIVE')
+ON CONFLICT (id) DO UPDATE SET
+  image = EXCLUDED.image,
+  name = EXCLUDED.name,
+  description = EXCLUDED.description;
 
 -- Verification query
 SELECT 'WhereIsIt Supabase Migration Completed Successfully!' AS status;

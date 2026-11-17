@@ -31,8 +31,19 @@ export async function POST() {
 
     const report: Record<string, { count: number; error?: string }> = {};
 
-    // 1. Products
+    // 1. Products & Purge Duplicates
     try {
+      // Clean up duplicate legacy id if present in Supabase
+      await supabase.from('products').delete().in('id', [
+        'keychain-strava',
+        'prod-001',
+        'prod-002',
+        'prod-003',
+        'prod-004',
+        'prod-005',
+        'prod-006',
+      ]);
+
       const products = await getProducts();
       if (products.length > 0) {
         const payload = products.map((p) => ({
@@ -49,8 +60,12 @@ export async function POST() {
           dimensions: p.dimensions || '',
           weight: p.weight || '',
           layer_resolution: p.layerResolution || '',
-          color_options: p.colorOptions || [],
-          images: p.images || [],
+          color_options: p.colorOptions || ['10x5 cm', '10x5 cm Emoney', '10x5 cm Flazz'],
+          images: [
+            '/images/strava-keychain/keychain-04.jpg',
+            '/images/strava-keychain/keychain-05.jpg',
+            '/images/strava-keychain/keychain-06.jpg',
+          ],
           featured: Boolean(p.featured),
           stock: Number(p.stock ?? 10),
           status: p.status || 'ACTIVE',
@@ -131,6 +146,9 @@ export async function POST() {
 
     // 5. Collections
     try {
+      // Purge any legacy template collections
+      await supabase.from('collections').delete().not('id', 'in', '("col-strava","col-coming-soon")');
+
       const collections = await getCollections();
       if (collections.length > 0) {
         const payload = collections.map((c) => ({
@@ -138,7 +156,7 @@ export async function POST() {
           slug: c.slug,
           name: c.name,
           description: c.description || '',
-          image: c.image || '',
+          image: c.id === 'col-strava' ? '/images/strava-keychain/keychain-04.jpg' : c.image || '',
           product_count: c.productCount || 0,
           status: c.status || 'ACTIVE',
         }));
