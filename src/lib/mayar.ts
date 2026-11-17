@@ -14,7 +14,8 @@ export function generateOrderId(): string {
 }
 
 export function getMayarApiBase(): string {
-  return process.env.MAYAR_API_BASE || 'https://api.mayar.id/hl/v2';
+  // Default to Mayar Sandbox V2 first until production key & base are configured
+  return process.env.MAYAR_API_BASE || 'https://api.mayar.io/hl/v2';
 }
 
 export interface MayarInvoiceItem {

@@ -123,10 +123,10 @@ export default function AboutSection({ content }: AboutSectionProps) {
 
               <div className="pt-2">
                 <Link
-                  href="#custom-design"
+                  href="/preorder/keychain-strava"
                   className="inline-flex items-center gap-2 text-sm font-semibold text-[#14191F] hover:text-[#5C7489] transition-colors group"
                 >
-                  <span>More about our design process</span>
+                  <span>Lihat Pre-Order Keychain Strava</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>

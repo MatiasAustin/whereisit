@@ -276,6 +276,7 @@ export interface StravaVariation {
   id: string;
   name: string;
   price: number;
+  image?: string;
   originalPrice?: number;
   badge?: string;
   shortDesc: string;
@@ -284,6 +285,15 @@ export interface StravaVariation {
   emoneyNote?: string;
   isPopular?: boolean;
   todoNote?: string;
+}
+
+export interface NotifyListEntry {
+  id: string;
+  name: string;
+  whatsapp: string;
+  product: string; // e.g. 'Strava Route Lamp' | 'Smart Cube' | 'Activity Ring Lamp' | etc.
+  categoryGroup: string; // e.g. 'Minat Lamp' | 'Minat Cube' | 'Minat Lineup Lainnya'
+  createdAt: string;
 }
 
 export interface StravaCustomData {

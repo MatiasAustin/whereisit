@@ -18,7 +18,8 @@ import {
   StravaOrderStatus,
   StravaCustomData,
   PublicQueueItem,
-  QueueSettings
+  QueueSettings,
+  NotifyListEntry
 } from '@/types';
 import { INITIAL_PRODUCTS } from './initialData';
 import { 
@@ -48,6 +49,7 @@ const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const JOURNAL_FILE = path.join(DATA_DIR, 'journal.json');
 const STRAVA_ORDERS_FILE = path.join(DATA_DIR, 'strava-orders.json');
 const QUEUE_SETTINGS_FILE = path.join(DATA_DIR, 'queue-settings.json');
+const NOTIFY_LIST_FILE = path.join(DATA_DIR, 'notify-list.json');
 
 function ensureDirectoryExists() {
   if (!fs.existsSync(DATA_DIR)) {
@@ -1514,7 +1516,7 @@ export async function saveStravaCustomerData(
 export async function getQueueSettings(): Promise<QueueSettings> {
   const fallback: QueueSettings = {
     defaultLeadDays: 7,
-    customLeadNote: '5–7 hari kerja sejak konfirmasi desain (maks. 10 hari PO Shopee)',
+    customLeadNote: 'Pre-order, dikirim dalam 10 hari (estimasi produksi 5-7 hari kerja sejak konfirmasi desain)',
     updatedAt: new Date().toISOString(),
   };
   return readJsonFile<QueueSettings>(QUEUE_SETTINGS_FILE, fallback);
@@ -1529,6 +1531,29 @@ export async function updateQueueSettings(settings: Partial<QueueSettings>): Pro
   };
   writeJsonFile(QUEUE_SETTINGS_FILE, updated);
   return true;
+}
+
+export function computeEstimatedCompletion(
+  order: StravaPreOrder,
+  settings: QueueSettings,
+  queuePos: number
+): string {
+  if (order.production?.estimatedCompletionDate) {
+    return order.production.estimatedCompletionDate;
+  }
+  const baseDate = order.production?.confirmedAt
+    ? new Date(order.production.confirmedAt)
+    : order.stravaData?.submittedAt
+    ? new Date(order.stravaData.submittedAt)
+    : new Date();
+  const lead = Number(order.production?.estimatedDays || settings.defaultLeadDays || 7);
+  const queueOffset = Math.max(0, queuePos - 1);
+  baseDate.setDate(baseDate.getDate() + lead + queueOffset);
+  return baseDate.toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 export async function getPublicProductionQueue(): Promise<{
@@ -1565,18 +1590,6 @@ export async function getPublicProductionQueue(): Promise<{
     year: 'numeric',
   });
 
-  // Anonymized queue list (NEVER expose phone, email, address, stravaUrl, images!)
-  const queue: PublicQueueItem[] = activeOrders.map((o, index) => ({
-    id: maskOrderId(o.id),
-    maskedName: maskCustomerName(o.customer?.fullName),
-    variationName: o.variationName,
-    status: o.status,
-    queuePosition: o.production?.queuePosition || index + 1,
-    estimatedDate: o.production?.estimatedCompletionDate || estFormatted,
-    isExample: Boolean(o.isExample),
-    createdAt: o.createdAt,
-  }));
-
   const rank: Record<StravaOrderStatus, number> = {
     'Produksi': 1,
     'QC / Finishing': 2,
@@ -1589,7 +1602,24 @@ export async function getPublicProductionQueue(): Promise<{
     'Selesai': 9,
   };
 
-  queue.sort((a, b) => (rank[a.status] || 99) - (rank[b.status] || 99));
+  const sortedActive = [...activeOrders].sort(
+    (a, b) => (rank[a.status] || 99) - (rank[b.status] || 99)
+  );
+
+  // Anonymized queue list (NEVER expose phone, email, address, stravaUrl, images!)
+  const queue: PublicQueueItem[] = sortedActive.map((o, index) => {
+    const pos = o.production?.queuePosition || index + 1;
+    return {
+      id: maskOrderId(o.id),
+      maskedName: maskCustomerName(o.customer?.fullName),
+      variationName: o.variationName,
+      status: o.status,
+      queuePosition: pos,
+      estimatedDate: computeEstimatedCompletion(o, settings, pos),
+      isExample: Boolean(o.isExample),
+      createdAt: o.createdAt,
+    };
+  });
 
   return {
     queue,
@@ -1598,10 +1628,69 @@ export async function getPublicProductionQueue(): Promise<{
       inProduction: inProductionCount,
       totalCompleted: completedCount,
       avgLeadDays: settings.defaultLeadDays,
-      defaultEstimatedDate: estFormatted,
+      defaultEstimatedDate: `${settings.defaultLeadDays} hari kerja (${estFormatted})`,
       customNote: settings.customLeadNote,
     },
   };
 }
+
+// ---------------- COMING SOON NOTIFY LIST ---------------- //
+
+export async function getNotifyList(): Promise<NotifyListEntry[]> {
+  const supabase = getSupabaseServerClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('notify_list')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data) {
+        return data.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          whatsapp: item.whatsapp,
+          product: item.product,
+          categoryGroup: item.category_group,
+          createdAt: item.created_at,
+        }));
+      }
+    } catch {}
+  }
+  return readJsonFile<NotifyListEntry[]>(NOTIFY_LIST_FILE, []);
+}
+
+export async function addNotifyListEntry(
+  entry: Omit<NotifyListEntry, 'id' | 'createdAt'>
+): Promise<NotifyListEntry> {
+  const now = new Date().toISOString();
+  const id = `ntf-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+  const newEntry: NotifyListEntry = {
+    ...entry,
+    id,
+    createdAt: now,
+  };
+
+  const supabase = getSupabaseServerClient();
+  if (supabase) {
+    try {
+      await supabase.from('notify_list').insert([
+        {
+          id: newEntry.id,
+          name: newEntry.name,
+          whatsapp: newEntry.whatsapp,
+          product: newEntry.product,
+          category_group: newEntry.categoryGroup,
+          created_at: newEntry.createdAt,
+        },
+      ]);
+    } catch {}
+  }
+
+  const list = readJsonFile<NotifyListEntry[]>(NOTIFY_LIST_FILE, []);
+  list.unshift(newEntry);
+  writeJsonFile(NOTIFY_LIST_FILE, list);
+  return newEntry;
+}
+
 
 

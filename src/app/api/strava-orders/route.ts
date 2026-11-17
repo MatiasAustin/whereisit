@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getStravaOrders, getStravaOrderById, updateStravaOrderStatus } from '@/lib/storage';
+import {
+  getStravaOrders,
+  getStravaOrderById,
+  updateStravaOrderStatus,
+  getQueueSettings,
+  computeEstimatedCompletion,
+} from '@/lib/storage';
 import { cookies } from 'next/headers';
 import { StravaOrderStatus } from '@/types';
 
@@ -34,12 +40,33 @@ export async function GET(request: Request) {
         }
       }
 
+      // Compute dynamic estimate from admin settings & queue position
+      const queueSettings = await getQueueSettings();
+      const allOrders = await getStravaOrders();
+      const activeOrders = allOrders.filter((o) =>
+        [
+          'Data Diterima — Menunggu Konfirmasi Desain',
+          'Desain Dikonfirmasi',
+          'Produksi',
+          'QC / Finishing',
+          'Packing',
+        ].includes(o.status)
+      );
+      const qIdx = activeOrders.findIndex((o) => o.id === order.id);
+      const computedPos = order.production?.queuePosition || (qIdx >= 0 ? qIdx + 1 : undefined);
+      const computedEst = computeEstimatedCompletion(order, queueSettings, computedPos || 1);
+
       // For public tracking: do not expose private full addresses or full raw emails unless phone matched
       const isVerified = Boolean(phone);
       return NextResponse.json({
         success: true,
         data: {
           ...order,
+          production: {
+            ...order.production,
+            queuePosition: computedPos,
+            estimatedCompletionDate: computedEst,
+          },
           customer: isVerified ? order.customer : {
             fullName: order.customer.fullName,
             city: order.customer.city,
@@ -49,6 +76,7 @@ export async function GET(request: Request) {
             address: order.customer.city,
           },
         },
+        queueSettings,
       });
     }
 

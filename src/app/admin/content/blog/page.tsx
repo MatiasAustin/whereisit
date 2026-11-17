@@ -289,7 +289,7 @@ export default function BlogAdminPage() {
                   required
                   value={formData.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
-                  placeholder="Contoh: The Tactility of Bio-Polymers in High-End Living Spaces"
+                  placeholder="Contoh: Dari Rute Strava ke Objek Fisik 3D Print"
                   className="w-full px-4 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-medium focus:outline-none focus:border-[#5C7489]"
                 />
               </div>

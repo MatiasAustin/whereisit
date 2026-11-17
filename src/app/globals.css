@@ -26,10 +26,24 @@
 }
 
 html {
-  scroll-behavior: smooth;
   overflow-x: hidden;
   max-width: 100vw;
   width: 100%;
+}
+
+/* Antislop R-39 interactive cursor guarantees */
+a[href],
+button:not(:disabled),
+summary,
+select:not(:disabled),
+label[for],
+[role='button'] {
+  cursor: pointer;
+}
+
+button:disabled,
+select:disabled {
+  cursor: not-allowed;
 }
 
 body {

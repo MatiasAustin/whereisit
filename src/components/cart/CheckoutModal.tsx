@@ -8,9 +8,7 @@ import { Order } from '@/types';
 import { X, CheckCircle2, ShieldCheck, Truck, CreditCard, ArrowLeft, QrCode } from 'lucide-react';
 
 const SHIPPING_CARRIERS = [
-  { id: 'jne-reg', name: 'JNE Regular (2-3 Days)', fee: 25000 },
-  { id: 'jne-yes', name: 'JNE YES Express (Next Day)', fee: 40000 },
-  { id: 'sicepat-cargo', name: 'SiCepat Cargo (Secure Crating)', fee: 65000 },
+  { id: 'reg-courier', name: 'Ekspedisi Reguler (Dikirim dari Kab. Karawang)', fee: 0 },
 ];
 
 const PAYMENT_METHODS = [

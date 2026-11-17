@@ -26,6 +26,31 @@ function SuccessPageContent() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [simulating, setSimulating] = useState(false);
+  const [retryingPayment, setRetryingPayment] = useState(false);
+
+  const handleRetrySameOrder = async () => {
+    if (!order) return;
+    setRetryingPayment(true);
+    try {
+      const res = await fetch('/api/checkout/mayar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer: order.customer,
+          variationId: order.variationId,
+          existingOrderId: order.id,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setRetryingPayment(false);
+    }
+  };
 
   const fetchOrderStatus = async () => {
     if (!orderId) {
@@ -187,15 +212,24 @@ function SuccessPageContent() {
                 <span>Cek Ulang Status Pembayaran</span>
               </button>
 
-              {/* If payment link exists, allow retry without duplicate order */}
-              {order?.paymentDetails?.paymentUrl && (
+              {/* If payment link exists or needs refresh, retry with SAME Order ID */}
+              {order?.paymentDetails?.paymentUrl ? (
                 <a
                   href={order.paymentDetails.paymentUrl}
-                  className="w-full sm:w-auto px-6 py-3 rounded-full bg-white border border-[#DDD5C7] text-[#14191F] text-xs font-bold hover:bg-[#FAF8F5] transition-colors flex items-center justify-center gap-1.5"
+                  className="w-full sm:w-auto min-h-[44px] px-6 py-3 rounded-full bg-white border border-[#DDD5C7] text-[#14191F] text-xs font-bold hover:bg-[#FAF8F5] transition-colors flex items-center justify-center gap-1.5"
                 >
                   <span>Buka Ulang Halaman Bayar</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleRetrySameOrder}
+                  disabled={retryingPayment}
+                  className="w-full sm:w-auto min-h-[44px] px-6 py-3 rounded-full bg-white border border-[#DDD5C7] text-[#14191F] text-xs font-bold hover:bg-[#FAF8F5] transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  <span>{retryingPayment ? 'Membuat ulang...' : 'Ulangi Pembayaran (Order ID Sama)'}</span>
+                </button>
               )}
             </div>
 

@@ -23,9 +23,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Alamat pengiriman wajib diisi' }, { status: 400 });
     }
 
-    // Find variation
-    const variation = STRAVA_PRODUCT_CONFIG.variations.find((v) => v.id === variationId) 
-      || STRAVA_PRODUCT_CONFIG.variations[0];
+    // Find variation (match by id, exact Shopee name, or legacy alias)
+    const variation =
+      STRAVA_PRODUCT_CONFIG.variations.find(
+        (v) =>
+          v.id === variationId ||
+          v.name === variationId ||
+          (variationId === 'var-standard' && v.id === 'var-10x5') ||
+          (variationId === 'var-duo-plate' && v.id === 'var-flazz')
+      ) || STRAVA_PRODUCT_CONFIG.variations[0];
 
     // If retrying an existing order, reuse the orderId rather than duplicating
     let orderId = existingOrderId;
@@ -92,7 +98,7 @@ export async function POST(request: Request) {
       mobile: cleanMobile,
       items: [
         {
-          description: `Keychain Custom Data Strava - ${variation.name}`,
+          description: `${STRAVA_PRODUCT_CONFIG.name} - ${variation.name}`,
           quantity: 1,
           rate: variation.price,
         },

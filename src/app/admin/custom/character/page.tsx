@@ -52,7 +52,7 @@ export default function CustomCharacterAdminPage() {
           <span className="text-xs uppercase tracking-widest text-[#5C7489] font-bold">Personal Keepsakes Pipeline</span>
           <h1 className="text-2xl font-black text-[#14191F]">Custom Character Requests</h1>
           <p className="text-xs text-[#6C7E8E] mt-0.5">
-            Photo-to-3D figurine requests, likeness notes, brass plaque inscriptions, and sculpting milestones.
+            Personal keepsake 3D requests, likeness notes, plaque inscriptions, and sculpting milestones.
           </p>
         </div>
 

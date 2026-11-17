@@ -1,61 +1,10 @@
 [
   {
-    "id": "WSI-20261113-MUKM",
-    "orderNumber": "WSI-20261113-MUKM",
-    "productType": "keychain-strava",
-    "variationId": "var-emoney",
-    "variationName": "3D Route Keychain + Integrated E-Money",
-    "customer": {
-      "fullName": "Rian Runner",
-      "email": "rian.runner@example.test",
-      "phone": "081234567899",
-      "address": "Jl. Kemang Raya No. 42",
-      "city": "Jakarta Selatan",
-      "postalCode": "12730",
-      "notes": ""
-    },
-    "price": 150000,
-    "subtotal": 150000,
-    "shippingFee": 0,
-    "total": 150000,
-    "status": "Dikirim",
-    "paymentMethod": "Mayar Gateway (QRIS, VA, E-Wallet, Kartu)",
-    "createdAt": "2026-11-13T12:18:48.145Z",
-    "updatedAt": "2026-11-13T12:18:48.251Z",
-    "paymentDetails": {
-      "invoiceId": "INV-MOCK-WSI-20261113-MUKM",
-      "paymentUrl": "http://localhost:3000/preorder/keychain-strava/sandbox-pay?orderId=WSI-20261113-MUKM",
-      "mayarTransactionId": "TRX-SIM-1794572328171",
-      "paidAt": "2026-11-13T12:18:48.171Z",
-      "channel": "Sandbox Simulation (QRIS/VA)"
-    },
-    "production": {
-      "queuePosition": 3,
-      "estimatedCompletionDate": "2026-11-18",
-      "courier": "JNE Express",
-      "resiNumber": "JNE9988776655"
-    },
-    "stravaData": {
-      "stravaUrl": "https://www.strava.com/activities/1122334455",
-      "images": [
-        "/uploads/strava/sample-route.jpg"
-      ],
-      "eventName": "BDO ULTRA 2026",
-      "eventDate": "2026-11-09",
-      "distance": "50.2 km",
-      "pace": "06:12 /km",
-      "duration": "05:11:45",
-      "engravedText": "BDO ULTRA SUB-5.5",
-      "adminNotes": "Warna garis kontras dusty slate blue ya admin.",
-      "submittedAt": "2026-11-13T12:18:48.200Z"
-    }
-  },
-  {
     "id": "WSI-EXAMPLE-001",
     "orderNumber": "WSI-EXAMPLE-001",
     "productType": "keychain-strava",
     "variationId": "var-emoney",
-    "variationName": "Varian 2: Keychain + E-Money (Aktif Tap)",
+    "variationName": "10x5 cm Emoney",
     "customer": {
       "fullName": "Budi Santoso",
       "email": "budi.sample@whereisit.test",
@@ -78,7 +27,7 @@
     "stravaData": {
       "stravaUrl": "https://www.strava.com/activities/12345678901",
       "images": [
-        "/images/strava-keychain/keychain-01.jpg"
+        "/images/strava-keychain/keychain-05.jpg"
       ],
       "eventName": "BDO ULTRA 2026",
       "eventDate": "2026-11-09",
@@ -92,7 +41,6 @@
     "production": {
       "queuePosition": 1,
       "estimatedDays": 5,
-      "estimatedCompletionDate": "2026-11-16",
       "internalAdminNotes": "Sedang proses 3D printing mikron layer 0.12mm di workshop Karawang.",
       "confirmedAt": "2026-11-10T14:00:00.000Z"
     },
@@ -104,8 +52,8 @@
     "id": "WSI-EXAMPLE-002",
     "orderNumber": "WSI-EXAMPLE-002",
     "productType": "keychain-strava",
-    "variationId": "var-standard",
-    "variationName": "Varian 1: Standar (Tanpa E-Money)",
+    "variationId": "var-10x5",
+    "variationName": "10x5 cm",
     "customer": {
       "fullName": "Siti Rahmawati",
       "email": "siti.sample@whereisit.test",
@@ -128,7 +76,7 @@
     "stravaData": {
       "stravaUrl": "https://www.strava.com/activities/98765432101",
       "images": [
-        "/images/strava-keychain/keychain-02.jpg"
+        "/images/strava-keychain/keychain-04.jpg"
       ],
       "eventName": "Jakarta Running Festival 2026",
       "eventDate": "2026-10-20",
@@ -142,7 +90,6 @@
     "production": {
       "queuePosition": 2,
       "estimatedDays": 7,
-      "estimatedCompletionDate": "2026-11-19",
       "internalAdminNotes": "Data masuk, menunggu desainer kirim layout 3D via WhatsApp."
     },
     "isExample": true,

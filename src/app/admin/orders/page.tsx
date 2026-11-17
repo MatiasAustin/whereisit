@@ -2,21 +2,16 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import { Order, StravaPreOrder, StravaOrderStatus } from '@/types';
+import { Order, StravaPreOrder, StravaOrderStatus, NotifyListEntry } from '@/types';
 import { formatRupiah } from '@/lib/utils';
 import { useToast } from '@/lib/toastContext';
 import { getWhatsAppAdminLink } from '@/data/stravaKeychainConfig';
 import { 
   ShoppingBag, 
   Search, 
-  Download, 
-  Filter, 
-  Eye, 
+  Bell,
   CheckCircle2, 
-  Clock, 
-  Truck, 
   X,
-  CreditCard,
   Layers,
   Sparkles,
   ExternalLink,
@@ -41,8 +36,12 @@ const STRAVA_STATUS_LIST: StravaOrderStatus[] = [
 export default function OrdersPage() {
   const { showSuccess, showError } = useToast();
   
-  // Section Mode: 'STORE' vs 'STRAVA'
-  const [activeSection, setActiveSection] = useState<'STORE' | 'STRAVA'>('STRAVA');
+  // Section Mode: 'STRAVA' | 'NOTIFY' | 'STORE'
+  const [activeSection, setActiveSection] = useState<'STORE' | 'STRAVA' | 'NOTIFY'>('STRAVA');
+
+  // Notify List State
+  const [notifyList, setNotifyList] = useState<NotifyListEntry[]>([]);
+  const [loadingNotify, setLoadingNotify] = useState(true);
 
   // Store Orders State
   const [orders, setOrders] = useState<Order[]>([]);
@@ -116,10 +115,27 @@ export default function OrdersPage() {
     }
   };
 
+  // Fetch notify list
+  const fetchNotifyList = async () => {
+    setLoadingNotify(true);
+    try {
+      const res = await fetch('/api/notify');
+      const data = await res.json();
+      if (data.success) {
+        setNotifyList(data.data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingNotify(false);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
     fetchStravaOrders();
     fetchQueueSettings();
+    fetchNotifyList();
   }, []);
 
   // Update Store Order Status
@@ -306,6 +322,18 @@ export default function OrdersPage() {
           </button>
 
           <button
+            onClick={() => setActiveSection('NOTIFY')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+              activeSection === 'NOTIFY'
+                ? 'bg-[#14191F] text-white shadow-sm'
+                : 'text-[#556473] hover:text-[#14191F]'
+            }`}
+          >
+            <Bell className="w-3.5 h-3.5 text-[#5C7489]" />
+            <span>Notify Coming Soon ({notifyList.length})</span>
+          </button>
+
+          <button
             onClick={() => setActiveSection('STORE')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               activeSection === 'STORE'
@@ -484,7 +512,83 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* ---------------- SECTION 2: STORE ORDERS ---------------- */}
+      {/* ---------------- SECTION 2: COMING SOON NOTIFY LIST ---------------- */}
+      {activeSection === 'NOTIFY' && (
+        <div className="space-y-6">
+          {(['Minat Lamp', 'Minat Cube', 'Minat Lineup Lainnya'] as const).map((group) => {
+            const entries = notifyList.filter((item) => item.categoryGroup === group);
+            return (
+              <div key={group} className="bg-white rounded-3xl border border-[#ECE6DC] shadow-sm overflow-hidden">
+                <div className="p-5 sm:p-6 border-b border-[#ECE6DC] flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#5C7489]">
+                      Notify List Group
+                    </span>
+                    <h2 className="text-lg font-black text-[#14191F]">
+                      {group} ({entries.length})
+                    </h2>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-[#FAF8F5] text-[#556473] font-bold uppercase tracking-wider text-[10px] border-b border-[#ECE6DC]">
+                      <tr>
+                        <th className="px-6 py-3">Tanggal Daftar</th>
+                        <th className="px-6 py-3">Nama</th>
+                        <th className="px-6 py-3">No. WhatsApp</th>
+                        <th className="px-6 py-3">Produk Diminati</th>
+                        <th className="px-6 py-3 text-right">Hubungi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#F0EBE3]">
+                      {loadingNotify ? (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-8 text-center text-[#7A8B99]">
+                            Memuat daftar notify list...
+                          </td>
+                        </tr>
+                      ) : entries.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-8 text-center text-[#7A8B99]">
+                            Belum ada pendaftar di kategori {group}.
+                          </td>
+                        </tr>
+                      ) : (
+                        entries.map((entry) => (
+                          <tr key={entry.id} className="hover:bg-[#FAF8F5]">
+                            <td className="px-6 py-3.5 text-[#7A8B99]">
+                              {new Date(entry.createdAt).toLocaleString('id-ID')}
+                            </td>
+                            <td className="px-6 py-3.5 font-bold text-[#14191F]">{entry.name}</td>
+                            <td className="px-6 py-3.5 font-mono text-[#3E5161]">{entry.whatsapp}</td>
+                            <td className="px-6 py-3.5 font-semibold text-[#14191F]">{entry.product}</td>
+                            <td className="px-6 py-3.5 text-right">
+                              <a
+                                href={`https://wa.me/${entry.whatsapp.replace(/\D/g, '').replace(/^0/, '62')}?text=${encodeURIComponent(
+                                  `Halo ${entry.name}, update dari WhereIsIt mengenai ${entry.product} yang kamu nantikan!`
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FAF8F5] hover:bg-[#EDF3F7] border border-[#DDD5C7] text-[#14191F] font-semibold"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Chat WA</span>
+                              </a>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ---------------- SECTION 3: STORE ORDERS ---------------- */}
       {activeSection === 'STORE' && (
         <div className="bg-white rounded-3xl border border-[#ECE6DC] shadow-sm overflow-hidden">
           <div className="p-4 sm:p-6 border-b border-[#ECE6DC] flex flex-col sm:flex-row items-center justify-between gap-4">

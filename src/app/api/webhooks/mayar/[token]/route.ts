@@ -8,29 +8,29 @@ export async function POST(
 ) {
   try {
     const { token } = await params;
-    const expectedToken = process.env.MAYAR_WEBHOOK_TOKEN;
+    const expectedToken = process.env.MAYAR_WEBHOOK_TOKEN || 'sandbox-webhook-token';
 
-    // 1. Verify Secret Webhook Token
-    if (expectedToken && expectedToken.trim() !== '' && token !== expectedToken.trim()) {
+    // 1. Protect endpoint with secret token
+    if (token !== expectedToken.trim()) {
       console.warn(`[Webhook Mayar] Unauthorized webhook attempt with invalid token: ${token}`);
       return NextResponse.json({ error: 'Unauthorized token' }, { status: 401 });
     }
 
     const payload = await request.json();
-    const event = payload.event || payload.type;
+    const event = payload.event || payload.type || 'payment.received';
     const data = payload.data || payload;
 
-    // Only handle payment received events
-    if (event && !event.includes('payment') && !event.includes('paid') && !event.includes('settlement')) {
-      return NextResponse.json({ received: true, ignored: true, reason: 'Event not payment related' });
+    // Only handle payment.received events
+    if (event !== 'payment.received' && !event.includes('payment') && !event.includes('paid')) {
+      return NextResponse.json({ received: true, ignored: true, reason: 'Event not payment.received' });
     }
 
     const transactionId = data.id || data.transactionId || data.invoiceId;
     const rawOrderId = data.extraData?.orderId || data.metadata?.orderId || data.orderId;
 
     if (!rawOrderId) {
-      console.error('[Webhook Mayar] Missing orderId in extraData:', data);
-      return NextResponse.json({ error: 'Missing orderId in payload' }, { status: 400 });
+      console.error('[Webhook Mayar] Missing extraData.orderId:', data);
+      return NextResponse.json({ error: 'Missing extraData.orderId in payload' }, { status: 400 });
     }
 
     // 2. Fetch order to verify
@@ -40,51 +40,68 @@ export async function POST(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    // 3. IDEMPOTENCY: If order is already paid, do not process again
-    if (order.status !== 'Menunggu Pembayaran') {
+    // 3. IDEMPOTENCY: One transaction processed once
+    if (
+      order.status !== 'Menunggu Pembayaran' ||
+      (transactionId && order.paymentDetails?.mayarTransactionId === transactionId)
+    ) {
       return NextResponse.json({
         success: true,
+        idempotent: true,
         message: 'Order already verified & marked paid',
         orderId: order.id,
         currentStatus: order.status,
       });
     }
 
-    // 4. VERIFY WITH MAYAR HEADLESS API (GET /transactions/{id})
-    // Do NOT trust webhook payload alone if MAYAR_API_KEY is configured
+    // 4. VERIFY TRANSACTION (GET /hl/v2/transactions/{transactionId} when key is configured, or strict payload check in sandbox simulation)
+    let txRecord = data;
     if (process.env.MAYAR_API_KEY && process.env.MAYAR_API_KEY !== 'your_mayar_api_key_here') {
-      if (transactionId) {
-        const verified = await verifyMayarTransaction(transactionId);
-        if (!verified) {
-          console.error(`[Webhook Mayar] Verification failed for transaction ${transactionId}`);
-          return NextResponse.json({ error: 'Transaction verification failed' }, { status: 400 });
-        }
-
-        const isPaid = verified.status === 'paid' || verified.status === 'settlement' || verified.status === 'SUCCESS';
-        const amountMatches = Math.abs(Number(verified.amount) - Number(order.total)) < 100;
-        const orderIdMatches = verified.extraData?.orderId === order.id;
-
-        if (!isPaid || !amountMatches || !orderIdMatches) {
-          console.error('[Webhook Mayar] Verification mismatch:', {
-            isPaid,
-            amountMatches,
-            orderIdMatches,
-            verifiedStatus: verified.status,
-            verifiedAmount: verified.amount,
-            orderTotal: order.total,
-          });
-          return NextResponse.json({ error: 'Transaction verification parameters mismatch' }, { status: 400 });
-        }
+      if (!transactionId) {
+        return NextResponse.json({ error: 'Missing transactionId for Mayar API verification' }, { status: 400 });
       }
+      const verified = await verifyMayarTransaction(transactionId);
+      if (!verified) {
+        console.error(`[Webhook Mayar] GET /hl/v2/transactions/${transactionId} verification failed`);
+        return NextResponse.json({ error: 'Transaction verification failed via Mayar API' }, { status: 400 });
+      }
+      txRecord = verified;
     }
 
-    // 5. Update order to 'Dibayar — Data Belum Lengkap'
+    const txStatus = String(txRecord.status || '').toLowerCase();
+    const isPaid = txStatus === 'paid';
+    const txAmount = Number(txRecord.amount ?? txRecord.total ?? NaN);
+    const amountMatches = !Number.isNaN(txAmount) && Math.abs(txAmount - Number(order.total)) === 0;
+    const txOrderId = txRecord.extraData?.orderId;
+    const orderIdMatches = txOrderId === order.id;
+
+    if (!isPaid || !amountMatches || !orderIdMatches) {
+      console.warn('[Webhook Mayar] Rejected unverified/mismatched payment:', {
+        isPaid,
+        amountMatches,
+        orderIdMatches,
+        txStatus,
+        txAmount,
+        expectedTotal: order.total,
+        txOrderId,
+        expectedOrderId: order.id,
+      });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Payment verification failed: status must be "paid", amount must match, and extraData.orderId must match.',
+        },
+        { status: 400 }
+      );
+    }
+
+    // 5. Verified! Mark order as "Dibayar — Data Belum Lengkap"
     const updateResult = await updateStravaOrderStatus(order.id, 'Dibayar — Data Belum Lengkap', {
       paymentDetails: {
         ...order.paymentDetails,
-        mayarTransactionId: transactionId || order.paymentDetails?.mayarTransactionId,
+        mayarTransactionId: transactionId || `TX-${order.id}`,
         paidAt: new Date().toISOString(),
-        channel: data.paymentMethod || data.channel || 'Mayar',
+        channel: txRecord.paymentMethod || txRecord.channel || 'Mayar',
       },
     });
 
@@ -92,7 +109,6 @@ export async function POST(
       return NextResponse.json({ error: updateResult.error }, { status: 500 });
     }
 
-    console.log(`[Webhook Mayar] Order ${order.id} verified and updated to 'Dibayar — Data Belum Lengkap'`);
     return NextResponse.json({
       success: true,
       orderId: order.id,

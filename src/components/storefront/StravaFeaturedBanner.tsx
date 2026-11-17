@@ -2,93 +2,88 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Sparkles, Flame, Star, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Flame, Star } from 'lucide-react';
+import { STRAVA_PRODUCT_CONFIG } from '@/data/stravaKeychainConfig';
+import { BlurFade, MagneticCta, NumberTicker } from '@/components/motion/MotionPrimitives';
+import { formatRupiah } from '@/lib/utils';
 
 export default function StravaFeaturedBanner() {
   return (
     <section className="py-6 sm:py-8 bg-[#F8F6F1]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative rounded-3xl bg-gradient-to-r from-[#182027] via-[#212B35] to-[#14191F] text-white p-6 sm:p-10 border border-[#26333E] shadow-xl overflow-hidden">
-          
-          {/* Subtle grid pattern */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none editorial-grid"></div>
+        <BlurFade>
+          <div className="relative rounded-3xl bg-[#182027] text-white p-6 sm:p-10 border border-[#26333E] shadow-xl overflow-hidden">
+            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+              <div className="space-y-4 max-w-2xl">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#5C7489] text-white">
+                    {STRAVA_PRODUCT_CONFIG.badge}
+                  </span>
+                  <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-[#26333E] text-[#D5E1E9] border border-[#3E5161] flex items-center gap-1.5">
+                    <Flame className="w-3 h-3 text-[#8BA1B4]" />
+                    <span>
+                      Viral di Threads (<NumberTicker value={88.2} decimals={1} suffix="K" /> Views)
+                    </span>
+                  </span>
+                  <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-[#26333E] text-amber-300 border border-[#3E5161] flex items-center gap-1">
+                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                    <span>Shopee {STRAVA_PRODUCT_CONFIG.sourceOfTruth.shopeeRating}</span>
+                  </span>
+                </div>
 
-          {/* Ambient soft glow */}
-          <div className="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-[#5C7489]/20 blur-3xl pointer-events-none"></div>
+                <div className="space-y-1">
+                  <span className="text-xs uppercase font-mono tracking-widest text-[#8BA1B4]">
+                    {STRAVA_PRODUCT_CONFIG.name}
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
+                    &ldquo;{STRAVA_PRODUCT_CONFIG.hook}&rdquo;
+                  </h2>
+                </div>
 
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-            
-            <div className="space-y-4 max-w-2xl">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#5C7489] text-white">
-                  Pre-Order Release
-                </span>
-                <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-[#26333E] text-[#8BA1B4] border border-[#3E5161] flex items-center gap-1.5">
-                  <Flame className="w-3 h-3 text-[#8BA1B4]" />
-                  <span>Viral di Threads (88.2K Views)</span>
-                </span>
-                <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-[#26333E] text-amber-300 border border-[#3E5161] flex items-center gap-1">
-                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                  <span>Shopee 5.0</span>
-                </span>
+                <p className="text-xs sm:text-sm text-[#D5E1E9] leading-relaxed max-w-xl">
+                  {STRAVA_PRODUCT_CONFIG.descriptionId}
+                </p>
+
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  {STRAVA_PRODUCT_CONFIG.variations.map((v) => (
+                    <span
+                      key={v.id}
+                      className="px-3 py-1.5 rounded-xl bg-black/30 border border-white/10 text-[11px] font-semibold text-[#D5E1E9]"
+                    >
+                      {v.name} ({formatRupiah(v.price)})
+                    </span>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4 text-xs text-[#8E9FAA] pt-1">
+                  <span>{STRAVA_PRODUCT_CONFIG.priceRange}</span>
+                  <span>•</span>
+                  <span>{STRAVA_PRODUCT_CONFIG.shippingPolicyText}</span>
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <span className="text-xs uppercase font-mono tracking-widest text-[#8BA1B4]">
-                  Bespoke 3D Running Memorabilia
-                </span>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
-                  &ldquo;Rute lari kamu, sekarang bisa dipegang.&rdquo;
-                </h2>
-              </div>
-
-              <p className="text-xs sm:text-sm text-[#8E9FAA] leading-relaxed max-w-xl">
-                Keychain 3D custom dari kontur rute Strava kamu sendiri + data jarak, pace, & durasi. Terintegrasi fungsi e-money untuk tap di gerbang MRT & KRL.
-              </p>
-
-              <div className="flex items-center gap-4 text-xs text-[#8E9FAA] pt-1">
-                <span>Mulai Rp 119.000</span>
-                <span>•</span>
-                <span>3 Variasi Resmi</span>
-                <span>•</span>
-                <span>Pre-Order 5–7 Hari Kerja</span>
-              </div>
-            </div>
-
-            {/* Visual Thumbnail & Action CTAs */}
-            <div className="flex flex-col sm:flex-row lg:flex-row items-center gap-5 flex-shrink-0">
-              <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden bg-[#14191F] border border-[#3E5161] shadow-2xl flex-shrink-0 group">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/images/strava-keychain/keychain-01.jpg"
-                  alt="Strava 3D Route Keychain Preview"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                />
-                <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[8px] bg-black/70 font-mono text-[#8BA1B4]">
-                  3D Print
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-3 w-full sm:w-auto">
-                <Link
-                  href="/preorder/keychain-strava"
-                  className="px-8 py-3.5 rounded-full bg-[#5C7489] hover:bg-[#6D879E] text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-lg flex items-center justify-center gap-2 whitespace-nowrap"
-                >
-                  <span>Lihat & Pre-Order</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+              {/* Action CTAs (No duplicate image thumbnails) */}
+              <div className="flex flex-col gap-3 w-full sm:w-auto flex-shrink-0">
+                <MagneticCta>
+                  <Link
+                    href="/preorder/keychain-strava"
+                    className="w-full min-h-[44px] px-8 py-3.5 rounded-full bg-[#5C7489] hover:bg-[#6D879E] text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-lg flex items-center justify-center gap-2 whitespace-nowrap"
+                  >
+                    <span>Pre-Order Sekarang</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </MagneticCta>
 
                 <Link
                   href="/track"
-                  className="px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/15 transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+                  className="min-h-[44px] px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/15 transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
                 >
                   <span>Lacak Pesanan (Track PO)</span>
                 </Link>
               </div>
             </div>
-
           </div>
-        </div>
+        </BlurFade>
       </div>
     </section>
   );

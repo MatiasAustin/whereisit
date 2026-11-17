@@ -157,30 +157,32 @@ function TrackContent() {
       {/* Search Input Box */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#ECE6DC] shadow-sm">
         <form onSubmit={handleTrack} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-          <div className="sm:col-span-6">
-            <label className="block text-xs font-bold text-[#44505C] mb-1 uppercase tracking-wider">
+                  <div className="sm:col-span-6">
+            <label htmlFor="track-order-id" className="block text-xs font-bold text-[#44505C] mb-1 uppercase tracking-wider">
               Order ID *
             </label>
             <input
+              id="track-order-id"
               type="text"
               required
-              placeholder="e.g. WSI-20261113-A8F2"
+              placeholder="e.g. WSI-20261116-A8F2"
               value={orderId}
               onChange={(e) => setOrderId(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-mono focus:outline-none focus:border-[#5C7489]"
+              className="w-full min-h-[44px] px-4 py-3 rounded-2xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-mono focus:outline-none focus:border-[#5C7489]"
             />
           </div>
 
           <div className="sm:col-span-4">
-            <label className="block text-xs font-bold text-[#44505C] mb-1 uppercase tracking-wider">
+            <label htmlFor="track-phone" className="block text-xs font-bold text-[#44505C] mb-1 uppercase tracking-wider">
               No. WhatsApp (Verifikasi)
             </label>
             <input
+              id="track-phone"
               type="tel"
-              placeholder="081234567890"
+              placeholder="08xxxxxxxxxx"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs focus:outline-none focus:border-[#5C7489]"
+              className="w-full min-h-[44px] px-4 py-3 rounded-2xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs focus:outline-none focus:border-[#5C7489]"
             />
           </div>
 
@@ -188,7 +190,7 @@ function TrackContent() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-2xl bg-[#14191F] hover:bg-[#5C7489] text-white text-xs font-bold transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center gap-1.5"
+              className="w-full min-h-[44px] py-3.5 rounded-2xl bg-[#14191F] hover:bg-[#5C7489] text-white text-xs font-bold transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center gap-1.5"
             >
               <Search className="w-4 h-4" />
               <span>{loading ? 'Mencari...' : 'Lacak'}</span>
@@ -210,21 +212,30 @@ function TrackContent() {
           
           {/* WARNING BANNER: INCOMPLETE DATA */}
           {order.status === 'Dibayar — Data Belum Lengkap' && (
-            <div className="p-5 rounded-3xl bg-amber-50 border-2 border-amber-300 text-amber-900 space-y-3 shadow-sm">
+            <div className="p-5 rounded-3xl bg-amber-50 border-2 border-amber-300 text-amber-950 space-y-3 shadow-sm">
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-amber-700 flex-shrink-0" />
+                <AlertCircle className="w-5 h-5 text-amber-700 flex-shrink-0" aria-hidden="true" />
                 <h3 className="text-sm font-bold">Lengkapi Data Strava Kamu Supaya Produksi Bisa Mulai!</h3>
               </div>
-              <p className="text-xs text-amber-900/90 leading-relaxed">
+              <p className="text-xs text-amber-950/90 leading-relaxed">
                 Pembayaran kamu telah kami terima. Namun, tim 3D kami belum dapat memulai proses desain karena kamu belum melampirkan tautan Strava dan screenshot rute.
               </p>
-              <div className="pt-1">
+              <div className="pt-1 flex flex-wrap items-center gap-3">
                 <Link
                   href={`/preorder/keychain-strava/data?orderId=${order.id}`}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-800 hover:bg-amber-900 text-white text-xs font-bold transition-colors shadow-sm"
+                  className="min-h-[44px] inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-800 hover:bg-amber-900 text-white text-xs font-bold transition-colors shadow-sm"
                 >
                   <span>Isi Formulir Data Strava Sekarang</span>
                 </Link>
+                <a
+                  href={getWhatsAppAdminLink(order.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="min-h-[44px] inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white border border-amber-300 text-amber-950 text-xs font-bold"
+                >
+                  <MessageCircle className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+                  <span>Butuh bantuan? Chat admin</span>
+                </a>
               </div>
             </div>
           )}
@@ -283,8 +294,10 @@ function TrackContent() {
                   </span>
                 </div>
                 {order.production?.estimatedCompletionDate && (
-                  <p className="text-[11px] text-[#7A8B99]">
-                    Target Selesai: <strong>{order.production.estimatedCompletionDate}</strong>
+                  <p className="text-[11px] text-[#556473]">
+                    Target Selesai (dari Pengaturan Studio):{' '}
+                    <strong>{order.production.estimatedCompletionDate}</strong>
+                    {order.production.queuePosition ? ` • Antrian #${order.production.queuePosition}` : ''}
                   </p>
                 )}
               </div>
@@ -409,8 +422,8 @@ function TrackContent() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#FAF8F5] hover:bg-[#F2EDE4] text-[#14191F] font-bold border border-[#DDD5C7] transition-colors"
               >
-                <MessageCircle className="w-4 h-4 text-emerald-600" />
-                <span>Chat Admin di WhatsApp</span>
+                <MessageCircle className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+                <span>Butuh bantuan? Chat admin</span>
               </a>
             </div>
           </div>

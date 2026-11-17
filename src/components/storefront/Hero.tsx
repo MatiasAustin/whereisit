@@ -1,56 +1,42 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
-import { ArrowRight, Sparkles } from 'lucide-react';
-import { Product, StoreSettings } from '@/types';
-import { formatRupiah } from '@/lib/utils';
+import Link from 'next/link';
+import { ArrowRight, Search } from 'lucide-react';
+import { StoreSettings } from '@/types';
+import { STRAVA_PRODUCT_CONFIG } from '@/data/stravaKeychainConfig';
+import { BlurText, MagneticCta } from '@/components/motion/MotionPrimitives';
 
 interface HeroProps {
-  onGoToCatalog: () => void;
-  onGoToCustom: () => void;
-  featuredProduct?: Product;
+  onGoToLineup: () => void;
   storeSettings?: StoreSettings;
-  onSelectProduct?: (product: Product) => void;
 }
 
-export default function Hero({ 
-  onGoToCatalog, 
-  onGoToCustom,
-  featuredProduct,
-  storeSettings,
-  onSelectProduct
-}: HeroProps) {
+export default function Hero({ onGoToLineup, storeSettings }: HeroProps) {
   const content = storeSettings?.homepageContent;
-  const heroImage = featuredProduct?.images?.[0] || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1200&q=85';
-  const heroTitle = featuredProduct?.name || 'Walnut Curve Armchair';
-  const heroPrice = featuredProduct?.price ? formatRupiah(featuredProduct.price) : 'Rp 4.950.000';
-  const brandTagline = content?.heroStatement || storeSettings?.tagline || 'Bespoke 3D printed objects made for spaces that value quality, tactile texture, and thoughtful design. From human intention to final micro-layer — every piece is built to last and made to be lived with.';
+  const brandTagline =
+    content?.heroStatement ||
+    'Transforms personal data, achievements, and everyday routines into meaningful physical products. Personal data. Physical products. Meaningful experiences.';
   const headlineTag = content?.heroHeadlineTag || '3d design & objects studio';
   const headlineTitle = content?.heroHeadlineTitle || 'whereisit';
-  const ctaPrimary = content?.heroCtaPrimary || 'Go to catalog';
-  const ctaSecondary = content?.heroCtaSecondary || 'Custom design';
-  const specLayer = featuredProduct?.layerResolution || content?.heroSpecLayer || '0.12mm Ultra-Fine Adaptive Layering';
-  const specMaterial = featuredProduct?.materials?.split(',')[0] || content?.heroSpecMaterial || 'Bio-Composite Materials';
-  const shortcut1Title = content?.heroShortcut1Title || 'Ready to buy catalog';
-  const shortcut1Img = content?.heroShortcut1Image || 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=600&q=80';
-  const shortcut2Title = content?.heroShortcut2Title || 'Custom consultation';
-  const shortcut2Img = content?.heroShortcut2Image || 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=format&fit=crop&w=600&q=80';
+  const specLayer = content?.heroSpecLayer || '0.12mm Topografi 3D Timbul';
+  const specMaterial = content?.heroSpecMaterial || '3D Print Custom Objects';
 
   return (
-    <section className="relative pt-6 pb-20 md:pt-10 md:pb-28 overflow-hidden">
+    <section className="relative pt-6 pb-16 md:pt-10 md:pb-24 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Massive Editorial Header Typography (Image 1 reference) */}
+        {/* Massive Editorial Header Typography */}
         <div className="relative border-b border-transparent">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between">
             <h1 className="text-[15vw] sm:text-[14vw] md:text-[12.5vw] font-black tracking-[-0.05em] leading-[0.88] text-[#14191F] select-none lowercase">
               {headlineTitle.includes('is') ? (
                 <>
-                  {headlineTitle.split('is')[0]}<span className="text-[#5C7489]">is</span>{headlineTitle.split('is')[1]}
+                  {headlineTitle.split('is')[0]}
+                  <span className="text-[#5C7489]">is</span>
+                  {headlineTitle.split('is')[1]}
                 </>
               ) : (
-                headlineTitle
+                <BlurText text={headlineTitle} />
               )}
             </h1>
             <span className="text-sm sm:text-base md:text-lg font-medium text-[#5C7489] tracking-wider uppercase sm:self-end sm:mb-4 sm:ml-4">
@@ -59,123 +45,123 @@ export default function Hero({
           </div>
         </div>
 
-        {/* Central Composition with Hero Visual, Narrative on Left, and Shortcut Cards on Right */}
+        {/* Central Composition */}
         <div className="mt-8 md:mt-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative">
-          
-          {/* Left Column: Brand Statement & CTA */}
+          {/* Left Column: Brand Statement & Primary Keychain CTA */}
           <div className="lg:col-span-4 z-10 flex flex-col justify-center space-y-6">
             <p className="text-base sm:text-lg text-[#44505C] leading-relaxed font-normal max-w-sm">
               {brandTagline}
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <button
-                onClick={onGoToCatalog}
-                className="inline-flex items-center justify-center px-7 py-3.5 rounded-full bg-[#14191F] text-[#F8F6F1] font-medium text-sm hover:bg-[#5C7489] hover:shadow-lg transition-all duration-200"
+              <MagneticCta>
+                <Link
+                  href="/preorder/keychain-strava"
+                  className="min-h-[44px] inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-[#14191F] text-[#F8F6F1] font-medium text-sm hover:bg-[#5C7489] hover:shadow-lg transition-all duration-200"
+                >
+                  <span>Pre-Order Keychain Strava</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </MagneticCta>
+
+              <Link
+                href="/track"
+                className="min-h-[44px] inline-flex items-center gap-2 px-5 py-3.5 rounded-full bg-[#ECE6DC] text-[#14191F] font-medium text-sm hover:bg-[#DFD8CC] transition-colors"
               >
-                {ctaPrimary}
-              </button>
-              
-              <button
-                onClick={onGoToCustom}
-                className="inline-flex items-center gap-2 px-5 py-3.5 rounded-full bg-[#ECE6DC] text-[#14191F] font-medium text-sm hover:bg-[#DFD8CC] transition-colors"
-              >
-                <Sparkles className="w-4 h-4 text-[#5C7489]" />
-                <span>{ctaSecondary}</span>
-              </button>
+                <Search className="w-4 h-4 text-[#5C7489]" />
+                <span>Lacak Pesanan</span>
+              </Link>
             </div>
 
-            {/* Subtle Studio Credentials */}
-            <div className="pt-4 flex items-center gap-6 text-xs text-[#7B8B9A] uppercase tracking-wider font-medium">
+            <div className="pt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-[#556473] uppercase tracking-wider font-medium">
               <div>• {specLayer}</div>
               <div>• {specMaterial}</div>
             </div>
           </div>
 
-          {/* Center Column: Dominant Hero 3D Printed Object Visual */}
+          {/* Center Column: Primary Buyable Product Visual (Keychain Shot #1: keychain-04.jpg) */}
           <div className="lg:col-span-5 relative flex items-center justify-center py-4 lg:py-0">
-            {/* Ambient soft glow backdrop */}
             <div className="absolute w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-[#5C7489]/10 blur-3xl -z-10 pointer-events-none"></div>
 
-            <div 
-              onClick={() => featuredProduct && onSelectProduct && onSelectProduct(featuredProduct)}
-              className="relative w-full max-w-md sm:max-w-lg aspect-square group cursor-pointer"
+            <Link
+              href="/preorder/keychain-strava"
+              className="relative w-full max-w-md sm:max-w-lg aspect-square group block"
+              aria-label={`Lihat ${STRAVA_PRODUCT_CONFIG.name}`}
             >
-              {/* Sculptural Product Visual */}
-              <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 hover:scale-[1.02]">
-                <Image
-                  src={heroImage}
-                  alt={heroTitle}
-                  fill
-                  className="object-cover"
-                  priority
+              <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 hover:scale-[1.02] bg-[#14191F]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/images/strava-keychain/keychain-04.jpg"
+                  alt={STRAVA_PRODUCT_CONFIG.name}
+                  width={1024}
+                  height={1024}
+                  fetchPriority="high"
+                  className="w-full h-full object-cover"
                 />
-                
-                {/* Floating pill badge connected to database */}
-                <div className="absolute bottom-4 left-4 right-4 bg-[#14191F]/90 backdrop-blur-md text-white text-xs px-4 py-2 rounded-2xl font-medium flex items-center justify-between border border-white/10 shadow-lg">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#5C7489] animate-pulse"></span>
-                    <span className="font-semibold">{heroTitle}</span>
+
+                <div className="absolute bottom-4 left-4 right-4 bg-[#14191F]/90 backdrop-blur-md text-white text-xs px-4 py-2.5 rounded-2xl font-medium flex items-center justify-between gap-2 border border-white/10 shadow-lg">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-2 h-2 rounded-full bg-[#5C7489] flex-shrink-0"></span>
+                    <span className="font-semibold truncate">{STRAVA_PRODUCT_CONFIG.name}</span>
                   </div>
-                  <span className="text-[#8BA1B4] font-mono">{heroPrice}</span>
+                  <span className="text-[#8BA1B4] font-mono flex-shrink-0">Rp119.000</span>
                 </div>
               </div>
-            </div>
+            </Link>
           </div>
 
-          {/* Right Column: Shortcut Cards (Exact match to Image 1) */}
+          {/* Right Column: Shortcut Cards (Unique Shots keychain-05.jpg & keychain-06.jpg) */}
           <div className="lg:col-span-3 flex flex-row lg:flex-col gap-4 sm:gap-6 justify-center">
-            
-            {/* Card 1: Ready to Buy */}
-            <button
-              onClick={onGoToCatalog}
+            <Link
+              href="/preorder/keychain-strava#variations"
               className="flex-1 group relative block text-left bg-[#14191F] rounded-2xl overflow-hidden p-3 transition-transform duration-300 hover:-translate-y-1 shadow-md border border-[#232D37]"
             >
               <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden mb-3">
-                <Image
-                  src={shortcut1Img}
-                  alt={shortcut1Title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/images/strava-keychain/keychain-05.jpg"
+                  alt="Keychain Strava 10x5 cm Emoney dipakai di celana"
+                  width={1024}
+                  height={1024}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
               <div className="flex items-center justify-between px-1.5 pb-1">
                 <span className="text-xs sm:text-sm font-semibold text-white tracking-wide">
-                  {shortcut1Title}
+                  3 Varian Pre-Order
+                </span>
+                <span className="text-white group-hover:translate-x-1 transition-transform">
+                  →
+                </span>
+              </div>
+            </Link>
+
+            <button
+              type="button"
+              onClick={onGoToLineup}
+              className="flex-1 group relative block text-left bg-[#14191F] rounded-2xl overflow-hidden p-3 transition-transform duration-300 hover:-translate-y-1 shadow-md border border-[#232D37]"
+            >
+              <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden mb-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/images/strava-keychain/keychain-06.jpg"
+                  alt="Keychain Strava di stasiun MRT Jakarta"
+                  width={1023}
+                  height={1023}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+              <div className="flex items-center justify-between px-1.5 pb-1">
+                <span className="text-xs sm:text-sm font-semibold text-white tracking-wide">
+                  Produk Segera Hadir
                 </span>
                 <span className="text-white group-hover:translate-x-1 transition-transform">
                   →
                 </span>
               </div>
             </button>
-
-            {/* Card 2: Custom Order */}
-            <button
-              onClick={onGoToCustom}
-              className="flex-1 group relative block text-left bg-[#14191F] rounded-2xl overflow-hidden p-3 transition-transform duration-300 hover:-translate-y-1 shadow-md border border-[#232D37]"
-            >
-              <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden mb-3">
-                <Image
-                  src={shortcut2Img}
-                  alt={shortcut2Title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <div className="flex items-center justify-between px-1.5 pb-1">
-                <span className="text-xs sm:text-sm font-semibold text-white tracking-wide">
-                  {shortcut2Title}
-                </span>
-                <span className="text-white group-hover:translate-x-1 transition-transform">
-                  →
-                </span>
-              </div>
-            </button>
-
           </div>
-
         </div>
-
       </div>
     </section>
   );

@@ -6,6 +6,7 @@ import Logo from '@/components/brand/Logo';
 import { SlidersHorizontal, LogOut, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { StoreSettings } from '@/types';
+import { getWhatsAppAdminLink } from '@/data/stravaKeychainConfig';
 
 interface FooterProps {
   storeSettings?: StoreSettings;
@@ -37,112 +38,166 @@ export default function Footer({ storeSettings }: FooterProps) {
     }
   };
 
-  const contactPhone = storeSettings?.contactPhone || '+62 812-3456-7890';
-  const contactEmail = storeSettings?.contactEmail || 'studio@whereisit.design';
-  const studioAddress = storeSettings?.studioAddress || 'Workshop Studio 04, Jl. Senopati No. 82, Jakarta Selatan, 12190';
+  const waNumber = process.env.NEXT_PUBLIC_WA_ADMIN_NUMBER || '6287776523066';
+  const contactEmail = 'whereisit26@gmail.com';
+  const studioAddress = storeSettings?.studioAddress || 'Kab. Karawang & Jakarta, Indonesia';
 
   return (
-    <footer className="bg-[#14191F] text-white pt-20 pb-12 border-t border-[#232D37]">
+    <footer className="bg-[#14191F] text-white pt-16 pb-12 border-t border-[#232D37]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Top Row: Big Brand Statement & Newsletter */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pb-16 border-b border-[#24303C]">
+        {/* Top Row: Brand Statement & Email Drops */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pb-14 border-b border-[#24303C]">
           <div className="lg:col-span-6 space-y-4">
             <Logo customLogoUrl={storeSettings?.footerLogoUrl} variant="full" theme="dark" size="lg" showStudioTag />
             <p className="text-sm text-[#8E9FAA] max-w-md leading-relaxed">
-              A bespoke 3D design studio creating tactile, functional, and sculptural objects. We bridge human intent and algorithmic precision for spaces that value quiet luxury.
+              Transforms personal data, achievements, and everyday routines into meaningful physical products. Personal data. Physical products. Meaningful experiences.
             </p>
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pt-2 text-xs text-[#8E9FAA]">
-              <span>{studioAddress}</span>
+              <span>Lokasi Seller: {studioAddress}</span>
               <span className="hidden sm:inline">•</span>
-              <span>Mon - Sat 09:00 - 18:00</span>
+              <span>Rating Shopee 5.0</span>
             </div>
           </div>
 
           <div className="lg:col-span-6 flex flex-col justify-between">
             <div>
-              <span className="text-xs uppercase tracking-widest text-[#8BA1B4] font-bold">Studio Drops & Releases</span>
-              <h4 className="text-lg font-bold text-white mt-1">Receive early access to limited edition objects</h4>
-              <p className="text-xs text-[#8E9FAA] mt-1">No spam. Only curated drops, private studio openings, and material experiments.</p>
+              <span className="text-xs uppercase tracking-widest text-[#8BA1B4] font-bold">Studio Updates</span>
+              <h4 className="text-lg font-bold text-white mt-1">Kabar Rilis Produk Baru WhereIsIt</h4>
+              <p className="text-xs text-[#8E9FAA] mt-1">
+                Daftarkan email kamu untuk mendapatkan info rilis batch terbaru.
+              </p>
             </div>
 
             <form onSubmit={handleSubscribe} className="mt-4 flex max-w-md">
+              <label htmlFor="footer-email" className="sr-only">Alamat Email</label>
               <input
+                id="footer-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email address"
+                placeholder="Masukkan alamat email kamu"
                 required
-                className="flex-1 px-4 py-3 rounded-l-full bg-[#1A222A] border border-[#2B3846] text-xs text-white placeholder-[#6C7E8E] focus:outline-none focus:border-[#8BA1B4]"
+                className="flex-1 min-h-[44px] px-4 py-3 rounded-l-full bg-[#1A222A] border border-[#2B3846] text-xs text-white placeholder-[#8E9FAA] focus:outline-none focus:border-[#8BA1B4]"
               />
               <button
                 type="submit"
                 disabled={status === 'loading'}
-                className="px-6 py-3 rounded-r-full bg-[#5C7489] hover:bg-[#6D879E] text-white text-xs font-semibold transition-colors disabled:opacity-50"
+                className="min-h-[44px] px-6 py-3 rounded-r-full bg-[#5C7489] hover:bg-[#6D879E] text-white text-xs font-semibold transition-colors disabled:opacity-50"
               >
-                {status === 'loading' ? 'Joining...' : 'Join'}
+                {status === 'loading' ? 'Menyimpan...' : 'Gabung'}
               </button>
             </form>
             {status === 'success' && (
               <p className="text-xs text-emerald-400 mt-2 flex items-center gap-1.5">
                 <CheckCircle className="w-3.5 h-3.5" />
-                <span>Thank you. You are on the private studio dispatch list.</span>
+                <span>Terima kasih. Email kamu tercatat untuk pembaruan studio.</span>
               </p>
             )}
           </div>
         </div>
 
-        {/* Middle Navigation Sitemap */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 py-12 text-xs text-[#8E9FAA] border-b border-[#24303C]">
+        {/* Sitemap (3 Real Functional Columns) */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 py-12 text-xs text-[#8E9FAA] border-b border-[#24303C]">
           <div className="space-y-3">
-            <h5 className="font-bold text-white uppercase tracking-wider text-[11px]">Collection</h5>
-            <ul className="space-y-2">
+            <h5 className="font-bold text-white uppercase tracking-wider text-[11px]">Produk &amp; Rilis</h5>
+            <ul className="space-y-2.5">
               <li>
                 <Link href="/preorder/keychain-strava" className="text-[#8BA1B4] hover:text-white transition-colors font-bold flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#8BA1B4]"></span>
-                  <span>Pre-Order Keychain Strava</span>
+                  <span>Keychain Strava (Pre-Order)</span>
                 </Link>
               </li>
-              <li><Link href="#catalog" className="hover:text-white transition-colors">Small Furniture</Link></li>
-              <li><Link href="#catalog" className="hover:text-white transition-colors">Desk Objects</Link></li>
-              <li><Link href="#catalog" className="hover:text-white transition-colors">Home & Decor</Link></li>
-              <li><Link href="#catalog" className="hover:text-white transition-colors">Figurines & Collectibles</Link></li>
+              <li>
+                <Link href="/strava-route-lamp" className="hover:text-white transition-colors">
+                  Strava Route Lamp (Coming Soon)
+                </Link>
+              </li>
+              <li>
+                <Link href="/smart-cube" className="hover:text-white transition-colors">
+                  Smart Cube (Coming Soon)
+                </Link>
+              </li>
+              <li>
+                <Link href="/#lineup" className="hover:text-white transition-colors">
+                  Lineup Segera Hadir
+                </Link>
+              </li>
             </ul>
           </div>
 
           <div className="space-y-3">
-            <h5 className="font-bold text-white uppercase tracking-wider text-[11px]">Custom Studio</h5>
-            <ul className="space-y-2">
-              <li><Link href="#custom-design" className="hover:text-white transition-colors">Custom Your Design</Link></li>
-              <li><Link href="#custom-character" className="hover:text-white transition-colors">Personal Keepsake Figurines</Link></li>
-              <li><Link href="#custom-design" className="hover:text-white transition-colors">Spatial Consultation</Link></li>
-              <li><Link href="#custom-character" className="hover:text-white transition-colors">Photo-to-3D Process</Link></li>
-            </ul>
-          </div>
-
-          <div className="space-y-3">
-            <h5 className="font-bold text-white uppercase tracking-wider text-[11px]">Transparency</h5>
-            <ul className="space-y-2">
+            <h5 className="font-bold text-white uppercase tracking-wider text-[11px]">Layanan &amp; Transparansi</h5>
+            <ul className="space-y-2.5">
               <li>
                 <Link href="/track" className="text-[#8BA1B4] hover:text-white transition-colors font-bold">
                   Lacak Pesanan (Track PO)
                 </Link>
               </li>
-              <li><Link href="#delivery" className="hover:text-white transition-colors">Delivery & Insured Logistics</Link></li>
-              <li><Link href="#delivery" className="hover:text-white transition-colors">Payment Methods</Link></li>
-              <li><Link href="#about" className="hover:text-white transition-colors">Material Safety & Eco-PLA</Link></li>
-              <li><Link href="#delivery" className="hover:text-white transition-colors">Transit Guarantee</Link></li>
+              <li>
+                <Link href="/preorder/keychain-strava/data" className="hover:text-white transition-colors">
+                  Form Data Strava (Pasca Bayar)
+                </Link>
+              </li>
+              <li>
+                <Link href="/preorder/keychain-strava#queue" className="hover:text-white transition-colors">
+                  Antrian Produksi Live
+                </Link>
+              </li>
+              <li>
+                <Link href="/preorder/keychain-strava#faq" className="hover:text-white transition-colors">
+                  FAQ Pre-Order
+                </Link>
+              </li>
+              <li>
+                <Link href="/#about" className="hover:text-white transition-colors">
+                  Studio &amp; Philosophy
+                </Link>
+              </li>
             </ul>
           </div>
 
           <div className="space-y-3">
-            <h5 className="font-bold text-white uppercase tracking-wider text-[11px]">Studio Contact</h5>
-            <ul className="space-y-2">
-              <li><span className="text-[#8E9FAA]">WhatsApp: {contactPhone}</span></li>
-              <li><span className="text-[#8E9FAA]">Email: {contactEmail}</span></li>
-              <li><span className="text-[#8E9FAA]">Instagram: @whereisit.studio</span></li>
-              
-              {/* ONLY RENDERED IF ADMIN IS LOGGED IN */}
+            <h5 className="font-bold text-white uppercase tracking-wider text-[11px]">Kontak Resmi Studio</h5>
+            <ul className="space-y-2.5">
+              <li>
+                <a
+                  href={getWhatsAppAdminLink()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#8BA1B4] hover:text-white transition-colors font-semibold"
+                >
+                  WhatsApp Admin: +{waNumber}
+                </a>
+              </li>
+              <li>
+                <a
+                  href={`mailto:${contactEmail}`}
+                  className="hover:text-white transition-colors"
+                >
+                  Email: {contactEmail}
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.threads.com/@whereisit.ofc"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors"
+                >
+                  Threads &amp; Instagram: @whereisit.ofc
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://shopee.co.id/product/760174452/41886615712"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors"
+                >
+                  Shopee: WhereIsIt? (Kab. Karawang)
+                </a>
+              </li>
+
               {isAdmin && (
                 <li className="pt-2 border-t border-[#24303C] flex items-center justify-between">
                   <Link
@@ -150,14 +205,15 @@ export default function Footer({ storeSettings }: FooterProps) {
                     className="inline-flex items-center gap-1.5 text-[#8BA1B4] hover:text-white transition-colors font-medium"
                   >
                     <SlidersHorizontal className="w-3.5 h-3.5" />
-                    <span>Admin Dashboard</span>
+                    <span>Open Admin Dashboard</span>
                   </Link>
                   <button
+                    type="button"
                     onClick={() => logout()}
-                    className="text-[10px] text-red-400 hover:text-red-300"
-                    title="Logout"
+                    className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 font-medium"
                   >
-                    Logout
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Logout</span>
                   </button>
                 </li>
               )}
@@ -165,16 +221,11 @@ export default function Footer({ storeSettings }: FooterProps) {
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#6E8091] gap-4">
-          <p>© {new Date().getFullYear()} WhereIsIt Design Studio. All rights reserved.</p>
-          <div className="flex items-center gap-6">
-            <span>Privacy Policy</span>
-            <span>Terms of Craft</span>
-            <span>Bespoke Studio Agreement</span>
-          </div>
+        {/* Bottom Copyright */}
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-[#8E9FAA]">
+          <p>© {new Date().getFullYear()} WhereIsIt Studio. Kab. Karawang &amp; Jakarta.</p>
+          <p className="text-center sm:text-right">Personal data. Physical products. Meaningful experiences.</p>
         </div>
-
       </div>
     </footer>
   );
