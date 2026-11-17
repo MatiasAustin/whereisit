@@ -78,6 +78,22 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handlePurgeLegacy = async () => {
+    if (!confirm('Bersihkan semua produk placeholder furniture/mainan lama dari database Supabase?')) return;
+    try {
+      const res = await fetch('/api/products?action=purge-legacy', { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        showSuccess(data.message || 'Pembersihan produk placeholder berhasil.');
+        await fetchProducts();
+      } else {
+        showError(data.error || 'Gagal membersihkan.');
+      }
+    } catch {
+      showError('Gagal membersihkan produk placeholder.');
+    }
+  };
+
   const handleToggleStatus = async (product: Product) => {
     const nextStatus = product.status === 'ACTIVE' ? 'DRAFT' : 'ACTIVE';
     try {
@@ -491,6 +507,19 @@ export default function AdminProductsPage() {
               <p className="text-[11px] text-[#8E9FAA]">Tidak ada produk yang cocok dengan filter atau kata kunci pencarian.</p>
             </div>
           )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 bg-[#FAF8F5] border-t border-[#ECE6DC] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#7A8B99]">
+          <span>
+            Katalog ini mengatur objek yang tampil di landing page studio dan opsi variasi pre-order.
+          </span>
+          <button
+            onClick={handlePurgeLegacy}
+            className="text-[11px] font-semibold text-[#5C7489] hover:text-red-600 transition-colors underline"
+          >
+            Bersihkan Produk Placeholder Lama
+          </button>
         </div>
 
       </div>

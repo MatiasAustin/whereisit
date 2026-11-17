@@ -32,7 +32,24 @@ export default function ComingSoonLineupSection() {
               {COMING_SOON_HIGHLIGHTS.map((item) => (
                 <StudioTiltCard key={item.id}>
                   <div className="h-full p-6 sm:p-8 rounded-3xl bg-white border border-[#E8E2D7] shadow-sm flex flex-col justify-between space-y-6">
-                    <div className="space-y-3">
+                    <div className="space-y-4">
+                      {/* Concept Image Preview */}
+                      {item.image && (
+                        <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] rounded-2xl overflow-hidden bg-[#14191F] border border-[#E8E2D7] group">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                          <div className="absolute top-3 left-3">
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#14191F]/80 backdrop-blur-md text-white border border-white/10">
+                              {item.badge}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#EDF3F7] text-[#3E5161] border border-[#C5D5E2]">
                           {item.badge}

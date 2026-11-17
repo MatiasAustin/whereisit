@@ -234,6 +234,33 @@ async function autoSeedSupabase(supabase: any) {
 
 // ---------------- PRODUCTS ---------------- //
 
+const LEGACY_PLACEHOLDER_IDS = ['prod-001', 'prod-002', 'prod-003', 'prod-004', 'prod-005', 'prod-006'];
+
+export async function purgeLegacyProducts(): Promise<{ purgedCount: number }> {
+  let purgedCount = 0;
+  const supabase = getSupabaseServerClient();
+  if (supabase) {
+    try {
+      const { data } = await supabase.from('products').select('id').in('id', LEGACY_PLACEHOLDER_IDS);
+      if (data && data.length > 0) {
+        await supabase.from('products').delete().in('id', LEGACY_PLACEHOLDER_IDS);
+        purgedCount += data.length;
+      }
+    } catch (err) {
+      console.warn('Purge legacy products in Supabase notice:', err);
+    }
+  }
+
+  const localList = readJsonFile<Product[]>(PRODUCTS_FILE, INITIAL_PRODUCTS);
+  const filtered = localList.filter((p) => !LEGACY_PLACEHOLDER_IDS.includes(p.id));
+  if (filtered.length !== localList.length) {
+    purgedCount += localList.length - filtered.length;
+    saveProducts(filtered);
+  }
+
+  return { purgedCount };
+}
+
 export async function getProducts(): Promise<Product[]> {
   const supabase = getSupabaseServerClient();
   if (supabase) {
@@ -243,11 +270,22 @@ export async function getProducts(): Promise<Product[]> {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error) {
-        if (data && data.length > 0) {
-          return data.map(mapProductFromDB);
+      if (!error && data) {
+        // Automatically purge any old legacy template placeholder products
+        const hasLegacy = data.some((r: any) => LEGACY_PLACEHOLDER_IDS.includes(r.id));
+        if (hasLegacy) {
+          try {
+            await supabase.from('products').delete().in('id', LEGACY_PLACEHOLDER_IDS);
+          } catch (err) {
+            console.warn('Auto-clean legacy products in Supabase notice:', err);
+          }
+        }
+
+        const validData = data.filter((r: any) => !LEGACY_PLACEHOLDER_IDS.includes(r.id));
+        if (validData.length > 0) {
+          return validData.map(mapProductFromDB);
         } else {
-          // Empty table in Supabase -> auto-seed!
+          // Empty table or only had legacy -> auto-seed real products
           await autoSeedSupabase(supabase);
           return INITIAL_PRODUCTS;
         }
@@ -256,7 +294,12 @@ export async function getProducts(): Promise<Product[]> {
       console.warn('Supabase query failed for products, falling back to local file storage:', err);
     }
   }
-  return readJsonFile<Product[]>(PRODUCTS_FILE, INITIAL_PRODUCTS);
+  const local = readJsonFile<Product[]>(PRODUCTS_FILE, INITIAL_PRODUCTS);
+  const filteredLocal = local.filter((p) => !LEGACY_PLACEHOLDER_IDS.includes(p.id));
+  if (filteredLocal.length !== local.length) {
+    saveProducts(filteredLocal.length > 0 ? filteredLocal : INITIAL_PRODUCTS);
+  }
+  return filteredLocal.length > 0 ? filteredLocal : INITIAL_PRODUCTS;
 }
 
 export function saveProducts(products: Product[]): void {
@@ -335,10 +378,12 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
 }
 
 export async function deleteProduct(id: string): Promise<boolean> {
+  let deletedFromSupabase = false;
   const supabase = getSupabaseServerClient();
   if (supabase) {
     try {
-      await supabase.from('products').delete().eq('id', id);
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (!error) deletedFromSupabase = true;
     } catch (err) {
       console.error('Failed to delete product in Supabase:', err);
     }
@@ -346,9 +391,11 @@ export async function deleteProduct(id: string): Promise<boolean> {
 
   const localList = readJsonFile<Product[]>(PRODUCTS_FILE, INITIAL_PRODUCTS);
   const filtered = localList.filter((p) => p.id !== id);
-  if (filtered.length === localList.length) return false;
-  saveProducts(filtered);
-  return true;
+  const deletedFromLocal = filtered.length !== localList.length;
+  if (deletedFromLocal) {
+    saveProducts(filtered);
+  }
+  return deletedFromLocal || deletedFromSupabase;
 }
 
 // ---------------- DESIGN INQUIRIES ---------------- //
@@ -1514,6 +1561,47 @@ export async function saveStravaCustomerData(
   }
 
   return { success: true };
+}
+
+export async function deleteStravaOrder(id: string): Promise<boolean> {
+  let deletedFromSupabase = false;
+  const supabase = getSupabaseServerClient();
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from('strava_orders')
+        .delete()
+        .or(`id.eq.${id},order_number.eq.${id}`);
+      if (!error) deletedFromSupabase = true;
+    } catch (err) {
+      console.error('Failed to delete strava order in Supabase:', err);
+    }
+  }
+
+  const list = readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
+  const filtered = list.filter((o) => o.id !== id && o.orderNumber !== id);
+  const deletedFromLocal = filtered.length !== list.length;
+  if (deletedFromLocal) {
+    writeJsonFile(STRAVA_ORDERS_FILE, filtered);
+  }
+  return deletedFromLocal || deletedFromSupabase;
+}
+
+export async function clearExampleStravaOrders(): Promise<number> {
+  const supabase = getSupabaseServerClient();
+  if (supabase) {
+    try {
+      await supabase.from('strava_orders').delete().eq('is_example', true);
+    } catch (err) {
+      console.error('Failed to delete example strava orders in Supabase:', err);
+    }
+  }
+
+  const list = readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
+  const realOrders = list.filter((o) => !o.isExample && !o.id.includes('EXAMPLE'));
+  const removedCount = list.length - realOrders.length;
+  writeJsonFile(STRAVA_ORDERS_FILE, realOrders);
+  return removedCount;
 }
 
 export async function getQueueSettings(): Promise<QueueSettings> {

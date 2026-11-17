@@ -32,6 +32,9 @@ const BADGES: { value: ProductBadge | ''; label: string }[] = [
 ];
 
 const PRESET_FINISHES = [
+  '10x5 cm',
+  '10x5 cm Emoney',
+  '10x5 cm Flazz',
   'Slate Dusty Blue',
   'Bone Alabaster',
   'Charcoal Noir',

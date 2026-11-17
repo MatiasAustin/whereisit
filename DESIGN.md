@@ -93,3 +93,28 @@ Allowed motion is strictly limited to **4 places**:
 - NO purple/neon gradients, NO rainbow shimmer buttons, NO particle/stars backgrounds, NO WebGL/Three.js globes, NO hyperspeed/cursor trails.
 - NO animations on checkout form inputs or `/track` status steps (must remain instant and functional).
 - NO invented product names, prices, testimonials, review counts, or stock running photos.
+
+---
+
+## 6. Component Locks (FROZEN BY USER REQUEST — DO NOT CHANGE)
+
+The following components and layouts are strictly **LOCKED** as per user directive on 17 Nov 2026:
+
+1. **Navbar & Announcement Bar** (`src/components/storefront/Navbar.tsx`):
+   - Top Announcement Bar: *"Pre-Order Dibuka: Keychain Custom Data Strava x Where Is It? 3D print Custom (Pre-order, dikirim dalam 10 hari)"* with dark slate background (`#14191F`).
+   - Official Brand Logo: `whereisit.` with 3D cube mark and `3D OBJECTS STUDIO` sub-tagline.
+   - Navigation Links:
+     - `PO Pre-Order Keychain` (with `PO` badge in `#5C7489`)
+     - `Strava Lamp (Coming Soon)`
+     - `Smart Cube (Coming Soon)`
+     - `Lacak Pesanan`
+     - `Studio & Philosophy`
+   - Right Pill Button: `Pre-Order Sekarang` (dark pill `#14191F` with white text).
+
+2. **Hero Section Header** (`src/components/storefront/Hero.tsx`):
+   - Editorial Wordmark: `whereisit` with `is` accented in `#5C7489` and `3D DESIGN & OBJECTS STUDIO` uppercase tag.
+   - Brand Philosophy text on left column.
+   - Central interactive 3D print product card (`keychain-04.jpg`) with price tag `Rp119.000`.
+   - Right shortcut card (`3 Varian Pre-Order →` with `keychain-05.jpg`).
+
+**Rule:** Do NOT modify layout, styling, font sizes, text hierarchy, or link structures of these two components.

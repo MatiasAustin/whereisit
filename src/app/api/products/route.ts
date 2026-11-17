@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getProducts, createProduct } from '@/lib/storage';
+import { getProducts, createProduct, purgeLegacyProducts } from '@/lib/storage';
 
 export async function GET(request: Request) {
   try {
@@ -67,5 +67,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, data: newProduct }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to create product' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const action = searchParams.get('action');
+    if (action === 'purge-legacy') {
+      const res = await purgeLegacyProducts();
+      return NextResponse.json({ success: true, message: `${res.purgedCount} produk placeholder lama berhasil dihapus`, data: res });
+    }
+    return NextResponse.json({ success: false, error: 'Aksi tidak dikenal' }, { status: 400 });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: 'Gagal menjalankan pembersihan' }, { status: 500 });
   }
 }

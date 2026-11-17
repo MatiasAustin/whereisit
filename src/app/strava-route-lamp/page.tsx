@@ -19,25 +19,62 @@ export default function StravaRouteLampComingSoonPage() {
       <main className="flex-grow">
         {/* Hero */}
         <section className="py-12 sm:py-20 border-b border-[#ECE6DC]">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
             <BlurFade>
-              <div className="space-y-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#5C7489] text-white">
-                    Coming Soon
-                  </span>
-                  <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-[#EDF3F7] text-[#3E5161] border border-[#C5D5E2]">
-                    Belum Bisa Dipesan
-                  </span>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+                {/* Left Column: Headline, Badges, Hook */}
+                <div className="lg:col-span-7 space-y-5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#5C7489] text-white">
+                      Coming Soon
+                    </span>
+                    <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-[#EDF3F7] text-[#3E5161] border border-[#C5D5E2]">
+                      Belum Bisa Dipesan
+                    </span>
+                    <span className="px-3 py-1 rounded-full text-[10px] font-semibold bg-[#FAF8F5] text-[#556473] border border-[#DDD5C7]">
+                      Personalized 3D Memorabilia
+                    </span>
+                  </div>
+
+                  <h1 className="text-3xl sm:text-5xl font-black text-[#14191F] tracking-tight leading-[1.08]">
+                    <BlurText text={lampInfo.name} />
+                  </h1>
+
+                  <p className="text-base sm:text-lg text-[#44505C] leading-relaxed">
+                    {lampInfo.hook}
+                  </p>
+
+                  <div className="pt-2 flex flex-wrap items-center gap-2 text-xs text-[#556473] font-medium">
+                    <span className="px-3 py-1.5 rounded-xl bg-white border border-[#E8E2D7]">
+                      • Acrylic Edge-Lit LED
+                    </span>
+                    <span className="px-3 py-1.5 rounded-xl bg-white border border-[#E8E2D7]">
+                      • 3D Printed Architectural Base
+                    </span>
+                    <span className="px-3 py-1.5 rounded-xl bg-white border border-[#E8E2D7]">
+                      • Your Personal Strava Route
+                    </span>
+                  </div>
                 </div>
 
-                <h1 className="text-3xl sm:text-5xl font-black text-[#14191F] tracking-tight leading-[1.08]">
-                  <BlurText text={lampInfo.name} />
-                </h1>
-
-                <p className="text-base sm:text-lg text-[#44505C] leading-relaxed max-w-3xl">
-                  {lampInfo.hook}
-                </p>
+                {/* Right Column: Hero Concept Visual */}
+                <div className="lg:col-span-5">
+                  <div className="relative w-full aspect-square max-w-md mx-auto rounded-3xl overflow-hidden shadow-2xl border border-[#ECE6DC] bg-[#14191F] group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/images/coming-soon/strava-route-lamp.jpg"
+                      alt="Personalized Strava Route Lamp 3D Concept"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute bottom-3.5 left-3.5 right-3.5 p-3 rounded-2xl bg-[#14191F]/90 backdrop-blur-md border border-white/10 text-white flex items-center justify-between text-xs shadow-lg">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span className="font-semibold text-[11px]">Acrylic Route Display Concept</span>
+                      </div>
+                      <span className="text-[#8BA1B4] text-[10px] font-mono">Bespoke 3D Studio</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </BlurFade>
 

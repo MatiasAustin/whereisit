@@ -18,7 +18,9 @@ import {
   MessageCircle,
   AlertCircle,
   Settings,
-  Save
+  Save,
+  Trash2,
+  Plus
 } from 'lucide-react';
 
 const STRAVA_STATUS_LIST: StravaOrderStatus[] = [
@@ -68,6 +70,24 @@ export default function OrdersPage() {
   const [editEstDate, setEditEstDate] = useState('');
   const [editAdminNotes, setEditAdminNotes] = useState('');
   const [savingDetail, setSavingDetail] = useState(false);
+
+  // Manual Pre-Order Modal State
+  const [showManualModal, setShowManualModal] = useState(false);
+  const [manualFullName, setManualFullName] = useState('');
+  const [manualPhone, setManualPhone] = useState('');
+  const [manualCity, setManualCity] = useState('Jakarta');
+  const [manualAddress, setManualAddress] = useState('');
+  const [manualEmail, setManualEmail] = useState('');
+  const [manualVariationId, setManualVariationId] = useState('var-10x5');
+  const [manualVariationName, setManualVariationName] = useState('10x5 cm');
+  const [manualPrice, setManualPrice] = useState(119000);
+  const [manualStatus, setManualStatus] = useState<StravaOrderStatus>('Data Diterima — Menunggu Konfirmasi Desain');
+  const [manualPayment, setManualPayment] = useState('WhatsApp Manual Order');
+  const [manualStravaUrl, setManualStravaUrl] = useState('');
+  const [manualEventName, setManualEventName] = useState('');
+  const [manualEngravedText, setManualEngravedText] = useState('');
+  const [manualNotes, setManualNotes] = useState('');
+  const [savingManual, setSavingManual] = useState(false);
 
   // Fetch regular orders
   const fetchOrders = async () => {
@@ -236,6 +256,106 @@ export default function OrdersPage() {
     setEditAdminNotes(order.production?.internalAdminNotes || '');
   };
 
+  // Delete Strava Order from Queue
+  const handleDeleteStravaOrder = async (id: string, orderNumber?: string) => {
+    const label = orderNumber || id;
+    if (!confirm(`Hapus pesanan "${label}" dari antrian produksi? Tindakan ini tidak dapat dibatalkan.`)) return;
+    try {
+      const res = await fetch(`/api/strava-orders?orderId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        showSuccess(data.message || `Pesanan ${label} berhasil dihapus.`);
+        setStravaOrders((prev) => prev.filter((o) => o.id !== id && o.orderNumber !== id));
+        if (selectedStravaOrder && (selectedStravaOrder.id === id || selectedStravaOrder.orderNumber === id)) {
+          setSelectedStravaOrder(null);
+        }
+      } else {
+        showError(data.error || 'Gagal menghapus pesanan.');
+      }
+    } catch {
+      showError('Gagal menghapus pesanan.');
+    }
+  };
+
+  // Clear Example/Mock Orders
+  const handleClearExampleOrders = async () => {
+    if (!confirm('Hapus semua pesanan contoh uji coba dari antrian produksi?')) return;
+    try {
+      const res = await fetch('/api/strava-orders?action=clear-examples', { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        showSuccess(data.message || 'Pesanan contoh uji coba berhasil dibersihkan!');
+        await fetchStravaOrders();
+      } else {
+        showError(data.error || 'Gagal membersihkan pesanan contoh.');
+      }
+    } catch {
+      showError('Gagal membersihkan pesanan contoh.');
+    }
+  };
+
+  // Create Manual Pre-Order
+  const handleCreateManualOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualFullName.trim() || !manualPhone.trim()) {
+      showError('Nama lengkap dan nomor WhatsApp wajib diisi');
+      return;
+    }
+    setSavingManual(true);
+    try {
+      const res = await fetch('/api/strava-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer: {
+            fullName: manualFullName.trim(),
+            phone: manualPhone.trim(),
+            email: manualEmail.trim() || undefined,
+            city: manualCity.trim() || 'Indonesia',
+            address: manualAddress.trim() || undefined,
+          },
+          variationId: manualVariationId,
+          variationName: manualVariationName,
+          price: Number(manualPrice),
+          subtotal: Number(manualPrice),
+          shippingFee: 0,
+          total: Number(manualPrice),
+          status: manualStatus,
+          paymentMethod: manualPayment,
+          stravaData: manualStravaUrl.trim() ? {
+            stravaUrl: manualStravaUrl.trim(),
+            eventName: manualEventName.trim() || 'Custom Route Run',
+            engravedText: manualEngravedText.trim(),
+            adminNotes: manualNotes.trim(),
+          } : undefined,
+          internalAdminNotes: manualNotes.trim() || 'Pesanan manual via WhatsApp admin',
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Gagal membuat pesanan');
+      }
+
+      showSuccess('Pesanan manual berhasil ditambahkan dan masuk antrian live!');
+      setShowManualModal(false);
+      // Reset form
+      setManualFullName('');
+      setManualPhone('');
+      setManualAddress('');
+      setManualEmail('');
+      setManualStravaUrl('');
+      setManualEventName('');
+      setManualEngravedText('');
+      setManualNotes('');
+      await fetchStravaOrders();
+    } catch (err: any) {
+      showError(err.message || 'Gagal membuat pesanan manual');
+    } finally {
+      setSavingManual(false);
+    }
+  };
+
   // Save Queue Lead Settings
   const handleSaveQueueSettings = async () => {
     setSavingSettings(true);
@@ -366,19 +486,38 @@ export default function OrdersPage() {
             </div>
 
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+              <button
+                onClick={() => setShowManualModal(true)}
+                className="px-4 py-2 rounded-xl bg-[#14191F] text-white text-xs font-bold hover:bg-[#5C7489] transition-colors flex items-center gap-1.5 shadow-sm"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Tambah Order Manual</span>
+              </button>
+
+              {stravaOrders.some((o) => o.isExample || o.id.includes('EXAMPLE')) && (
+                <button
+                  onClick={handleClearExampleOrders}
+                  className="px-3.5 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold hover:bg-amber-100 transition-colors flex items-center gap-1.5"
+                  title="Hapus pesanan contoh uji coba agar antrian hanya berisi pesanan riil"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-amber-700" />
+                  <span>Bersihkan Contoh Uji Coba ({stravaOrders.filter((o) => o.isExample || o.id.includes('EXAMPLE')).length})</span>
+                </button>
+              )}
+
               <a
                 href="/admin/content/keychain-media"
-                className="px-4 py-2 rounded-xl bg-[#14191F] text-white text-xs font-bold hover:bg-[#5C7489] transition-colors flex items-center gap-1.5"
+                className="px-4 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-semibold text-[#14191F] hover:bg-[#F2EDE4] transition-colors flex items-center gap-1.5"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Kelola Foto &amp; Video YouTube</span>
+                <Sparkles className="w-3.5 h-3.5 text-[#5C7489]" />
+                <span>Media &amp; YouTube</span>
               </a>
               <button
                 onClick={() => setShowSettingsModal(true)}
                 className="px-4 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-semibold text-[#14191F] hover:bg-[#F2EDE4] transition-colors flex items-center gap-1.5"
               >
                 <Settings className="w-3.5 h-3.5" />
-                <span>Ubah Estimasi Lead Time</span>
+                <span>Lead Time</span>
               </button>
             </div>
           </div>
@@ -503,12 +642,21 @@ export default function OrdersPage() {
                           </td>
 
                           <td className="px-6 py-4 text-right">
-                            <button
-                              onClick={() => openStravaDetail(o)}
-                              className="px-3 py-1.5 rounded-xl bg-[#14191F] text-white hover:bg-[#5C7489] text-xs font-semibold transition-colors shadow-xs"
-                            >
-                              Detail & Kelola
-                            </button>
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => openStravaDetail(o)}
+                                className="px-3 py-1.5 rounded-xl bg-[#14191F] text-white hover:bg-[#5C7489] text-xs font-semibold transition-colors shadow-xs"
+                              >
+                                Detail &amp; Kelola
+                              </button>
+                              <button
+                                onClick={() => handleDeleteStravaOrder(o.id, o.orderNumber)}
+                                className="p-1.5 rounded-xl bg-white border border-[#DDD5C7] text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                                title={`Hapus pesanan #${o.id} dari antrian`}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -900,28 +1048,39 @@ export default function OrdersPage() {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                <a
-                  href={getWhatsAppAdminLink(
-                    selectedStravaOrder.id,
-                    `Halo ${selectedStravaOrder.customer.fullName}, kami dari WhereIsIt ingin mengonfirmasi preview desain rute Strava kamu.`
-                  )}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-[#14191F] font-bold text-xs hover:bg-[#F2EDE4] transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <MessageCircle className="w-4 h-4 text-emerald-600" />
-                  <span>Chat Pembeli via WhatsApp</span>
-                </a>
-
                 <button
                   type="button"
-                  onClick={handleSaveStravaDetail}
-                  disabled={savingDetail}
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#14191F] hover:bg-[#5C7489] text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-50"
+                  onClick={() => handleDeleteStravaOrder(selectedStravaOrder.id, selectedStravaOrder.orderNumber)}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs transition-colors flex items-center justify-center gap-1.5 border border-red-200"
                 >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>{savingDetail ? 'Menyimpan...' : 'Simpan Perubahan Detail'}</span>
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Hapus Pesanan Ini</span>
                 </button>
+
+                <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
+                  <a
+                    href={getWhatsAppAdminLink(
+                      selectedStravaOrder.id,
+                      `Halo ${selectedStravaOrder.customer.fullName}, kami dari WhereIsIt ingin mengonfirmasi preview desain rute Strava kamu.`
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-[#14191F] font-bold text-xs hover:bg-[#F2EDE4] transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <MessageCircle className="w-4 h-4 text-emerald-600" />
+                    <span>Chat WhatsApp</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveStravaDetail}
+                    disabled={savingDetail}
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#14191F] hover:bg-[#5C7489] text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-50"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>{savingDetail ? 'Menyimpan...' : 'Simpan Detail'}</span>
+                  </button>
+                </div>
               </div>
 
             </div>
@@ -984,6 +1143,251 @@ export default function OrdersPage() {
                 {savingSettings ? 'Menyimpan...' : 'Terapkan ke Antrian Publik'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------- MODAL: TAMBAH PESANAN MANUAL ---------------- */}
+      {showManualModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-sm overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-white rounded-3xl p-6 sm:p-8 border border-[#E8E2D7] shadow-2xl space-y-6 my-8 max-h-[90vh] overflow-y-auto no-scrollbar">
+            <div className="flex items-center justify-between pb-4 border-b border-[#ECE6DC]">
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-[#5C7489]">
+                  Manual Pre-Order Entry
+                </span>
+                <h3 className="text-lg font-black text-[#14191F]">
+                  + Tambah Pesanan Pre-Order Manual
+                </h3>
+                <p className="text-xs text-[#7A8B99]">
+                  Input pesanan dari chat WhatsApp / Shopee untuk masuk antrian live studio.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowManualModal(false)}
+                className="p-2 rounded-full hover:bg-[#FAF8F5] text-[#7A8B99] hover:text-[#14191F]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateManualOrder} className="space-y-4">
+              {/* Customer Info */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-xs font-bold text-[#44505C] mb-1">
+                    Nama Lengkap Pelari / Pemesan *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Budi Santoso"
+                    value={manualFullName}
+                    onChange={(e) => setManualFullName(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs focus:outline-none focus:border-[#5C7489]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#44505C] mb-1">
+                    Nomor WhatsApp (Aktif) *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="e.g. 081234567890"
+                    value={manualPhone}
+                    onChange={(e) => setManualPhone(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs focus:outline-none focus:border-[#5C7489]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#44505C] mb-1">
+                    Kota Pengiriman
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Jakarta Selatan"
+                    value={manualCity}
+                    onChange={(e) => setManualCity(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs focus:outline-none focus:border-[#5C7489]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#44505C] mb-1">
+                    Email (Opsional)
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="e.g. budi@gmail.com"
+                    value={manualEmail}
+                    onChange={(e) => setManualEmail(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs focus:outline-none focus:border-[#5C7489]"
+                  />
+                </div>
+              </div>
+
+              {/* Product & Variation Selection */}
+              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#ECE6DC] space-y-3">
+                <label className="block text-xs font-bold text-[#14191F]">
+                  Pilih Variasi Produk Pre-Order *
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {[
+                    { id: 'var-10x5', name: '10x5 cm', price: 119000, desc: 'Standard 3D Print' },
+                    { id: 'var-emoney', name: '10x5 cm Emoney', price: 150000, desc: 'Termasuk E-Money' },
+                    { id: 'var-flazz', name: '10x5 cm Flazz', price: 200000, desc: 'Termasuk BCA Flazz' },
+                  ].map((v) => (
+                    <div
+                      key={v.id}
+                      onClick={() => {
+                        setManualVariationId(v.id);
+                        setManualVariationName(v.name);
+                        setManualPrice(v.price);
+                      }}
+                      className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                        manualVariationId === v.id
+                          ? 'bg-[#14191F] text-white border-[#14191F] shadow-sm'
+                          : 'bg-white text-[#14191F] border-[#DDD5C7] hover:bg-[#FAF8F5]'
+                      }`}
+                    >
+                      <div className="font-bold text-xs">{v.name}</div>
+                      <div className={`text-[11px] font-mono mt-0.5 ${manualVariationId === v.id ? 'text-[#8BA1B4]' : 'text-[#5C7489]'}`}>
+                        Rp{v.price.toLocaleString('id-ID')}
+                      </div>
+                      <div className={`text-[10px] mt-1 ${manualVariationId === v.id ? 'text-white/70' : 'text-[#7A8B99]'}`}>
+                        {v.desc}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#556473] mb-1">
+                      Harga Total (Rp)
+                    </label>
+                    <input
+                      type="number"
+                      value={manualPrice}
+                      onChange={(e) => setManualPrice(Number(e.target.value))}
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs font-mono font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#556473] mb-1">
+                      Metode Pembayaran
+                    </label>
+                    <select
+                      value={manualPayment}
+                      onChange={(e) => setManualPayment(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs font-semibold"
+                    >
+                      <option value="WhatsApp Manual Order">WhatsApp Manual Transfer</option>
+                      <option value="Shopee Order">Shopee Indonesia</option>
+                      <option value="Mayar QRIS">Mayar QRIS (Sudah Lunas)</option>
+                      <option value="Cash / Studio Walk-In">Studio Walk-In</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Initial Production Stage */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-xs font-bold text-[#44505C] mb-1">
+                    Tahap Produksi Awal
+                  </label>
+                  <select
+                    value={manualStatus}
+                    onChange={(e) => setManualStatus(e.target.value as StravaOrderStatus)}
+                    className="w-full px-3 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-semibold text-[#14191F]"
+                  >
+                    {STRAVA_STATUS_LIST.map((st) => (
+                      <option key={st} value={st}>
+                        {st}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#44505C] mb-1">
+                    Link Aktivitas Strava (Opsional)
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://www.strava.com/activities/..."
+                    value={manualStravaUrl}
+                    onChange={(e) => setManualStravaUrl(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Event details & Engraving */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-xs font-bold text-[#44505C] mb-1">
+                    Nama Event / Lomba (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Borobudur Marathon 2026"
+                    value={manualEventName}
+                    onChange={(e) => setManualEventName(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#44505C] mb-1">
+                    Teks Grafir / Custom Text (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. SUB 4 PB - 42.195 KM"
+                    value={manualEngravedText}
+                    onChange={(e) => setManualEngravedText(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#44505C] mb-1">
+                  Catatan Workshop / Catatan Pesanan
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Catatan khusus request warna filament, instruksi khusus, dll..."
+                  value={manualNotes}
+                  onChange={(e) => setManualNotes(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs"
+                />
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#ECE6DC]">
+                <button
+                  type="button"
+                  onClick={() => setShowManualModal(false)}
+                  className="px-4 py-2.5 rounded-xl border border-[#DDD5C7] text-xs font-semibold text-[#556473] hover:bg-[#FAF8F5]"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingManual}
+                  className="px-6 py-2.5 rounded-xl bg-[#14191F] hover:bg-[#5C7489] text-white text-xs font-bold transition-colors shadow-sm disabled:opacity-50"
+                >
+                  {savingManual ? 'Menyimpan...' : 'Simpan &amp; Masukkan Antrian'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

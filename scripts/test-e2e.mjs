@@ -280,6 +280,71 @@ async function runTests() {
   });
   console.log('✓ YouTube Shorts (9:16) / Full Video (16:9) detection & /api/strava-media persistence verified.');
 
+  // Test 9: Real Products Sync & No Legacy Placeholders
+  console.log('\n[9] Testing Products Sync & No Legacy Placeholders ...');
+  const resProducts = await fetch(`${BASE}/api/products`);
+  if (!resProducts.ok) throw new Error(`Products API returned ${resProducts.status}`);
+  const dataProducts = await resProducts.json();
+  if (!dataProducts.success || !Array.isArray(dataProducts.data)) {
+    throw new Error('Products API did not return success with array');
+  }
+  const hasLegacyProduct = dataProducts.data.some((p) =>
+    ['prod-001', 'prod-002', 'prod-003', 'prod-004', 'prod-005', 'prod-006'].includes(p.id) ||
+    p.name.includes('Monolith') ||
+    p.name.includes('Komorebi')
+  );
+  if (hasLegacyProduct) {
+    throw new Error('Products API still contains legacy placeholder items!');
+  }
+  const hasRealStravaProduct = dataProducts.data.some((p) => p.slug === 'keychain-strava');
+  if (!hasRealStravaProduct) {
+    throw new Error('Products API missing real Strava Keychain product');
+  }
+  console.log(`✓ Products API verified (${dataProducts.data.length} real studio product(s), 0 legacy placeholders).`);
+
+  // Test 10: Manual Order Creation & Delete Sync with Production Queue
+  console.log('\n[10] Testing Manual Order Creation & Deletion Sync with Antrian Produksi ...');
+  const resManualOrder = await fetch(`${BASE}/api/strava-orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
+    body: JSON.stringify({
+      customer: {
+        fullName: 'Test Pelari Manual',
+        phone: '081234567888',
+        city: 'Bandung',
+      },
+      variationId: 'var-emoney',
+      variationName: '10x5 cm Emoney',
+      price: 150000,
+      status: 'Produksi',
+      paymentMethod: 'WhatsApp Manual Transfer',
+    }),
+  });
+  const dataManualOrder = await resManualOrder.json();
+  if (!dataManualOrder.success || !dataManualOrder.data?.id) {
+    throw new Error(`Failed creating manual order: ${JSON.stringify(dataManualOrder)}`);
+  }
+  const manualOrderId = dataManualOrder.data.id;
+
+  // Verify it appears in public queue
+  const resQueueAfter = await fetch(`${BASE}/api/strava-orders/queue`);
+  const dataQueueAfter = await resQueueAfter.json();
+  const foundManualInQueue = dataQueueAfter.data.queue.some((q) => q.id.includes(manualOrderId.slice(0, 8)));
+  if (!foundManualInQueue) {
+    throw new Error('Manual order did not sync into public production queue!');
+  }
+
+  // Delete the manual order
+  const resDeleteOrder = await fetch(`${BASE}/api/strava-orders?orderId=${encodeURIComponent(manualOrderId)}`, {
+    method: 'DELETE',
+    headers: { Cookie: cookieHeader },
+  });
+  const dataDeleteOrder = await resDeleteOrder.json();
+  if (!dataDeleteOrder.success) {
+    throw new Error(`Failed deleting manual order: ${JSON.stringify(dataDeleteOrder)}`);
+  }
+  console.log('✓ Manual order creation, public queue sync, and order deletion verified successfully.');
+
   // Clean up synthetic test records so seed data stays pristine
   const ordersFile = path.join(process.cwd(), 'data', 'strava-orders.json');
   if (fs.existsSync(ordersFile)) {

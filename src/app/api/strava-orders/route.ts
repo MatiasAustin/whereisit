@@ -5,9 +5,13 @@ import {
   updateStravaOrderStatus,
   getQueueSettings,
   computeEstimatedCompletion,
+  createStravaOrder,
+  deleteStravaOrder,
+  clearExampleStravaOrders,
 } from '@/lib/storage';
+import { generateOrderId } from '@/lib/mayar';
 import { cookies } from 'next/headers';
-import { StravaOrderStatus } from '@/types';
+import { StravaOrderStatus, StravaPreOrder } from '@/types';
 
 function normalizePhone(phone: string): string {
   const digits = phone.replace(/\D/g, '');
@@ -139,5 +143,136 @@ export async function PATCH(request: Request) {
   } catch (error: any) {
     console.error('Error updating strava order:', error);
     return NextResponse.json({ success: false, error: error.message || 'Gagal memperbarui pesanan' }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    // Admin verification
+    const cookieStore = await cookies();
+    const session = cookieStore.get('whereisit_admin_session');
+    if (!session || session.value !== 'authenticated') {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Admin session required' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const {
+      customer,
+      variationId = 'var-10x5',
+      variationName = '10x5 cm',
+      price = 119000,
+      subtotal = 119000,
+      shippingFee = 0,
+      total = 119000,
+      status = 'Data Diterima — Menunggu Konfirmasi Desain',
+      paymentMethod = 'WhatsApp Manual Order',
+      stravaData,
+      internalAdminNotes,
+    } = body;
+
+    if (!customer?.fullName || !customer?.phone) {
+      return NextResponse.json({ success: false, error: 'Nama dan nomor WhatsApp pelanggan wajib diisi' }, { status: 400 });
+    }
+
+    const orderId = generateOrderId();
+    const newOrder: StravaPreOrder = {
+      id: orderId,
+      orderNumber: orderId,
+      productType: 'keychain-strava',
+      variationId,
+      variationName,
+      customer: {
+        fullName: customer.fullName.trim(),
+        phone: customer.phone.trim(),
+        email: customer.email?.trim() || `${customer.phone.replace(/\D/g, '')}@wa.order`,
+        address: customer.address?.trim() || 'Alamat dikonfirmasi via WhatsApp',
+        city: customer.city?.trim() || 'Indonesia',
+        postalCode: customer.postalCode?.trim() || '',
+      },
+      price: Number(price),
+      subtotal: Number(subtotal),
+      shippingFee: Number(shippingFee),
+      total: Number(total),
+      status: status as StravaOrderStatus,
+      paymentMethod,
+      paymentDetails: {
+        channel: 'Manual Admin',
+        paidAt: new Date().toISOString(),
+      },
+      stravaData: stravaData ? {
+        stravaUrl: stravaData.stravaUrl || '',
+        images: stravaData.images || ['/images/strava-keychain/keychain-04.jpg'],
+        eventName: stravaData.eventName || 'Custom Route Run',
+        eventDate: stravaData.eventDate || new Date().toISOString().split('T')[0],
+        distance: stravaData.distance || '10.0 km',
+        pace: stravaData.pace || '05:30 /km',
+        duration: stravaData.duration || '00:55:00',
+        engravedText: stravaData.engravedText || '',
+        adminNotes: stravaData.adminNotes || '',
+        submittedAt: new Date().toISOString(),
+      } : undefined,
+      production: {
+        internalAdminNotes: internalAdminNotes || 'Pesanan manual diinput dari Admin Dashboard',
+      },
+      isExample: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const created = await createStravaOrder(newOrder);
+    return NextResponse.json({ success: true, data: created, message: 'Pesanan pre-order berhasil dibuat dan masuk antrian produksi!' }, { status: 201 });
+  } catch (error: any) {
+    console.error('Error creating manual strava order:', error);
+    return NextResponse.json({ success: false, error: error.message || 'Gagal membuat pesanan' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    // Admin verification
+    const cookieStore = await cookies();
+    const session = cookieStore.get('whereisit_admin_session');
+    if (!session || session.value !== 'authenticated') {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Admin session required' }, { status: 401 });
+    }
+
+    const url = new URL(request.url);
+    const action = url.searchParams.get('action');
+    const queryOrderId = url.searchParams.get('orderId');
+
+    // Action 1: Clear example/mock orders
+    if (action === 'clear-examples') {
+      const removedCount = await clearExampleStravaOrders();
+      return NextResponse.json({
+        success: true,
+        removedCount,
+        message: `${removedCount} pesanan contoh uji coba berhasil dibersihkan dari antrian!`,
+      });
+    }
+
+    // Action 2: Delete specific order
+    let orderIdToDelete = queryOrderId;
+    if (!orderIdToDelete) {
+      try {
+        const body = await request.json();
+        orderIdToDelete = body.orderId || body.id;
+      } catch {
+        // no body
+      }
+    }
+
+    if (!orderIdToDelete) {
+      return NextResponse.json({ success: false, error: 'orderId wajib diisi untuk menghapus pesanan' }, { status: 400 });
+    }
+
+    const deleted = await deleteStravaOrder(orderIdToDelete.trim());
+    if (!deleted) {
+      return NextResponse.json({ success: false, error: 'Pesanan tidak ditemukan' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, message: `Pesanan ${orderIdToDelete} berhasil dihapus dari antrian produksi.` });
+  } catch (error: any) {
+    console.error('Error deleting strava order:', error);
+    return NextResponse.json({ success: false, error: error.message || 'Gagal menghapus pesanan' }, { status: 500 });
   }
 }
