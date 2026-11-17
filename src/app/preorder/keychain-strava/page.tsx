@@ -8,6 +8,7 @@ import StravaGallery from '@/components/strava/StravaGallery';
 import ProductionQueueWidget from '@/components/strava/ProductionQueueWidget';
 import MayarCheckoutModal from '@/components/strava/MayarCheckoutModal';
 import { STRAVA_PRODUCT_CONFIG, getWhatsAppAdminLink } from '@/data/stravaKeychainConfig';
+import { StravaMediaConfig } from '@/types';
 import { formatRupiah } from '@/lib/utils';
 import {
   BlurFade,
@@ -34,6 +35,7 @@ export default function StravaKeychainLandingPage() {
   const [adminLeadNote, setAdminLeadNote] = useState<string>(
     '5-7 hari kerja sejak desain dikonfirmasi'
   );
+  const [mediaConfig, setMediaConfig] = useState<StravaMediaConfig | null>(null);
 
   useEffect(() => {
     fetch('/api/strava-orders/queue')
@@ -41,6 +43,15 @@ export default function StravaKeychainLandingPage() {
       .then((data) => {
         if (data.success && data.data?.stats?.customNote) {
           setAdminLeadNote(data.data.stats.customNote);
+        }
+      })
+      .catch(() => {});
+
+    fetch('/api/strava-media')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setMediaConfig(data.data);
         }
       })
       .catch(() => {});
@@ -163,7 +174,7 @@ export default function StravaKeychainLandingPage() {
                   <div className="relative z-10 aspect-square rounded-2xl overflow-hidden bg-[#182027] border border-[#26333E] flex items-center justify-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src="/images/strava-keychain/keychain-04.jpg"
+                      src={mediaConfig?.heroImage || '/images/strava-keychain/keychain-04.jpg'}
                       alt={STRAVA_PRODUCT_CONFIG.name}
                       width={1024}
                       height={1024}
@@ -214,7 +225,7 @@ export default function StravaKeychainLandingPage() {
               </div>
 
               <div className="mt-6">
-                <StravaGallery />
+                <StravaGallery items={mediaConfig?.gallery} />
               </div>
             </BlurFade>
           </div>
@@ -371,12 +382,12 @@ export default function StravaKeychainLandingPage() {
                       }`}
                     >
                       <div className="space-y-4">
-                        {/* Distinct variation photo (shot 1, shot 2, shot 3) */}
-                        {v.image && (
+                        {/* Distinct variation photo (auto-compressed & admin editable) */}
+                        {(mediaConfig?.variationImages?.[v.id] || v.image) && (
                           <div className="aspect-square w-full rounded-2xl overflow-hidden bg-[#14191F] border border-[#E8E2D7]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                              src={v.image}
+                              src={mediaConfig?.variationImages?.[v.id] || v.image}
                               alt={`${STRAVA_PRODUCT_CONFIG.name} - ${v.name}`}
                               width={512}
                               height={512}

@@ -365,13 +365,22 @@ export default function OrdersPage() {
               </div>
             </div>
 
-            <button
-              onClick={() => setShowSettingsModal(true)}
-              className="px-4 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-semibold text-[#14191F] hover:bg-[#F2EDE4] transition-colors flex items-center gap-1.5 self-start sm:self-auto"
-            >
-              <Settings className="w-3.5 h-3.5" />
-              <span>Ubah Estimasi Lead Time</span>
-            </button>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+              <a
+                href="/admin/content/keychain-media"
+                className="px-4 py-2 rounded-xl bg-[#14191F] text-white text-xs font-bold hover:bg-[#5C7489] transition-colors flex items-center gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Kelola Foto &amp; Video YouTube</span>
+              </a>
+              <button
+                onClick={() => setShowSettingsModal(true)}
+                className="px-4 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-semibold text-[#14191F] hover:bg-[#F2EDE4] transition-colors flex items-center gap-1.5"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                <span>Ubah Estimasi Lead Time</span>
+              </button>
+            </div>
           </div>
 
           {/* Main Table Card for Strava */}

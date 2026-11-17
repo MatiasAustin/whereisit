@@ -24,7 +24,13 @@ export default function ImageUploadWithCompress({
   className = '',
 }: ImageUploadWithCompressProps) {
   const [compressing, setCompressing] = useState(false);
-  const [stats, setStats] = useState<{ original: string; compressed: string; saved: number } | null>(null);
+  const [stats, setStats] = useState<{
+    original: string;
+    compressed: string;
+    saved: number;
+    dimensions: string;
+    format: string;
+  } | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,6 +49,8 @@ export default function ImageUploadWithCompress({
         original: result.originalSizeFormatted,
         compressed: result.compressedSizeFormatted,
         saved: result.savedPercent,
+        dimensions: result.width && result.height ? `${result.width}x${result.height}` : 'SVG',
+        format: result.file.type === 'image/webp' ? 'WebP' : result.file.type.replace('image/', '').toUpperCase(),
       });
       onChange(result.dataUrl);
     } catch (err) {
@@ -131,10 +139,10 @@ export default function ImageUploadWithCompress({
 
           {/* Auto-compress info badge */}
           {stats && (
-            <div className="mt-2 w-full p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] flex items-center justify-between font-medium">
+            <div className="mt-2 w-full p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] flex flex-wrap items-center justify-between gap-2 font-medium">
               <span className="flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Auto-Compressed</span>
+                <span>Auto-Compressed ({stats.format} • {stats.dimensions})</span>
               </span>
               <span>
                 {stats.original} → <strong className="font-mono">{stats.compressed}</strong> ({stats.saved}% saved)

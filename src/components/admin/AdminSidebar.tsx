@@ -51,7 +51,7 @@ export function AdminSidebar() {
     'Sales': true,
     'Products': true,
     'Studio Custom': true,
-    'Content': false,
+    'Content & CMS': true,
     'Marketing': false,
     'Settings': false,
   });
@@ -112,6 +112,7 @@ export function AdminSidebar() {
       name: 'Content & CMS',
       icon: FileText,
       subItems: [
+        { name: 'Keychain Media & Video', href: '/admin/content/keychain-media' },
         { name: 'Homepage Editor', href: '/admin/content/homepage' },
         { name: 'Announcements', href: '/admin/content/announcements' },
         { name: 'Studio Journal', href: '/admin/content/blog' },
@@ -233,7 +234,7 @@ export function AdminSidebar() {
           </div>
           <div className="overflow-hidden">
             <p className="text-white font-semibold truncate leading-tight">Studio Master</p>
-            <p className="text-[10px] text-[#6C7E8E] truncate">admin@whereisit.design</p>
+            <p className="text-[10px] text-[#6C7E8E] truncate">whereisit26@gmail.com</p>
           </div>
         </div>
 

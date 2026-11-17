@@ -2,13 +2,43 @@
 
 import React, { useState, useEffect } from 'react';
 import { STRAVA_PRODUCT_CONFIG } from '@/data/stravaKeychainConfig';
+import { StravaGalleryMediaItem } from '@/types';
+import {
+  parseYouTubeUrl,
+  resolveEffectiveAspectRatio,
+  getGalleryStageContainerClass,
+} from '@/lib/youtube';
 import { Play, Image as ImageIcon, Video, AlertCircle, Maximize2, ExternalLink, Flame, X } from 'lucide-react';
 
-export default function StravaGallery() {
-  const items = STRAVA_PRODUCT_CONFIG.gallery;
+interface StravaGalleryProps {
+  items?: StravaGalleryMediaItem[];
+}
+
+export default function StravaGallery({ items: externalItems }: StravaGalleryProps) {
+  const defaultItems: StravaGalleryMediaItem[] = STRAVA_PRODUCT_CONFIG.gallery.map((g) => ({
+    id: g.id,
+    type: g.type,
+    title: g.title,
+    caption: g.caption,
+    src: g.src,
+    badge: 'badge' in g ? g.badge : undefined,
+    highlightBadge: 'highlightBadge' in g ? g.highlightBadge : undefined,
+    videoFormat: g.type === 'video' ? 'auto' : undefined,
+    aspectRatio: g.type === 'video' ? 'auto' : '1:1',
+    isTodo: 'isTodo' in g ? Boolean(g.isTodo) : false,
+    todoLabel: 'todoLabel' in g ? g.todoLabel : undefined,
+  }));
+
+  const items = externalItems && externalItems.length > 0 ? externalItems : defaultItems;
   const [activeIndex, setActiveIndex] = useState(0);
-  const activeItem = items[activeIndex];
+  const activeItem = items[activeIndex] || items[0];
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
+
+  useEffect(() => {
+    if (activeIndex >= items.length) {
+      setActiveIndex(0);
+    }
+  }, [items.length, activeIndex]);
 
   useEffect(() => {
     if (!fullscreenOpen) return;
@@ -21,10 +51,14 @@ export default function StravaGallery() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [fullscreenOpen]);
 
+  const ytInfo = activeItem.type === 'video' ? parseYouTubeUrl(activeItem.src) : null;
+  const effectiveRatio = resolveEffectiveAspectRatio(activeItem);
+  const adaptiveStageClass = getGalleryStageContainerClass(effectiveRatio);
+
   return (
     <div className="w-full space-y-4">
       {/* Main Showcase Stage */}
-      <div className="relative aspect-square sm:aspect-[16/10] rounded-3xl bg-[#14191F] overflow-hidden border border-[#26333E] shadow-2xl flex flex-col justify-between">
+      <div className="relative rounded-3xl bg-[#14191F] overflow-hidden border border-[#26333E] shadow-2xl flex flex-col justify-between min-h-[380px] sm:min-h-[460px]">
         {/* Top Badges */}
         <div className="relative z-20 p-4 sm:p-6 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 flex-wrap">
@@ -32,7 +66,13 @@ export default function StravaGallery() {
               {activeItem.type === 'video' ? (
                 <>
                   <Video className="w-3 h-3 text-[#8BA1B4]" aria-hidden="true" />
-                  <span>Video Bukti Threads</span>
+                  <span>
+                    {ytInfo?.isYouTube
+                      ? effectiveRatio === '9:16'
+                        ? 'YouTube Shorts (9:16)'
+                        : `YouTube Video (${effectiveRatio})`
+                      : 'Video Bukti Threads'}
+                  </span>
                 </>
               ) : (
                 <>
@@ -51,7 +91,7 @@ export default function StravaGallery() {
           </div>
 
           <div className="flex items-center gap-2">
-            {activeItem.type === 'image' && (
+            {activeItem.type === 'image' && activeItem.src && (
               <button
                 type="button"
                 onClick={() => setFullscreenOpen(true)}
@@ -68,18 +108,32 @@ export default function StravaGallery() {
           </div>
         </div>
 
-        {/* Center Visual Content */}
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-2 sm:p-6">
+        {/* Center Visual Content (Adapts dynamically to video ratio: 9:16 Shorts vs 16:9 Full vs 4:5 vs 1:1) */}
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-3 py-2 sm:px-6 sm:py-4">
           {activeItem.type === 'video' ? (
-            !activeItem.isTodo ? (
-              <video
-                src={activeItem.src}
-                controls
-                playsInline
-                className="max-h-[300px] sm:max-h-[420px] w-full max-w-2xl rounded-2xl border border-white/10 bg-black"
-              />
+            !activeItem.isTodo && activeItem.src ? (
+              ytInfo?.isYouTube && ytInfo.embedUrl ? (
+                <div className={`${adaptiveStageClass} rounded-2xl overflow-hidden border border-white/15 bg-black shadow-2xl`}>
+                  <iframe
+                    src={ytInfo.embedUrl}
+                    title={activeItem.title}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              ) : (
+                <div className={`${adaptiveStageClass} rounded-2xl overflow-hidden border border-white/15 bg-black shadow-2xl`}>
+                  <video
+                    src={activeItem.src}
+                    controls
+                    playsInline
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              )
             ) : (
-              <div className="w-full max-w-md space-y-4 text-center my-auto px-4">
+              <div className="w-full max-w-md space-y-4 text-center my-auto px-4 py-8">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#5C7489]/20 border border-[#5C7489]/40 text-[#8BA1B4] flex items-center justify-center mx-auto">
                   <Play className="w-8 h-8 fill-current ml-1 text-[#8BA1B4]" aria-hidden="true" />
                 </div>
@@ -95,19 +149,19 @@ export default function StravaGallery() {
 
                 <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-200 text-[11px] font-medium">
                   <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" />
-                  <span>{activeItem.todoLabel}</span>
+                  <span>{activeItem.todoLabel || 'TODO: Belum ada video terpasang'}</span>
                 </div>
               </div>
             )
           ) : (
-            <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-2xl group">
+            <div className={`${adaptiveStageClass} relative flex items-center justify-center overflow-hidden rounded-2xl group`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={activeItem.src}
                 alt={activeItem.title}
                 width={1024}
                 height={1024}
-                className="max-h-[300px] sm:max-h-[440px] w-auto max-w-full object-contain rounded-2xl shadow-2xl transition-transform duration-300 group-hover:scale-[1.02]"
+                className="max-h-[460px] w-full h-full object-contain rounded-2xl transition-transform duration-300 group-hover:scale-[1.02]"
               />
             </div>
           )}
@@ -123,23 +177,35 @@ export default function StravaGallery() {
           <a
             href={
               activeItem.type === 'video'
-                ? STRAVA_PRODUCT_CONFIG.sourceOfTruth.threadsUrl
+                ? ytInfo?.isYouTube
+                  ? activeItem.src
+                  : STRAVA_PRODUCT_CONFIG.sourceOfTruth.threadsUrl
                 : STRAVA_PRODUCT_CONFIG.sourceOfTruth.shopeeUrl
             }
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#8BA1B4] hover:text-white transition-colors underline underline-offset-4 flex-shrink-0 min-h-[36px]"
           >
-            <span>{activeItem.type === 'video' ? 'Lihat di Threads @jaynrrrrr' : 'Shopee WhereIsIt?'}</span>
+            <span>
+              {activeItem.type === 'video'
+                ? ytInfo?.isYouTube
+                  ? 'Tonton di YouTube'
+                  : 'Lihat di Threads @jaynrrrrr'
+                : 'Shopee WhereIsIt?'}
+            </span>
             <ExternalLink className="w-3 h-3" aria-hidden="true" />
           </a>
         </div>
       </div>
 
-      {/* Thumbnail Selector Row (Strictly 3 unique photos + 3 video proof slots) */}
+      {/* Thumbnail Selector Row */}
       <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-2">
         {items.map((item, idx) => {
           const isSelected = activeIndex === idx;
+          const thumbYt = item.type === 'video' ? parseYouTubeUrl(item.src) : null;
+          const thumbRatio = resolveEffectiveAspectRatio(item);
+          const videoThumbSrc = item.thumbnailUrl || thumbYt?.thumbnailUrl;
+
           return (
             <button
               key={item.id}
@@ -165,6 +231,23 @@ export default function StravaGallery() {
                   />
                   <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-black/70 text-white font-mono">
                     #{idx + 1}
+                  </span>
+                </>
+              ) : videoThumbSrc && !item.isTodo ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={videoThumbSrc}
+                    alt={item.title}
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                  />
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                    <Play className="w-5 h-5 text-white fill-white" aria-hidden="true" />
+                  </div>
+                  <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-black/75 text-white font-mono">
+                    {thumbRatio === '9:16' ? 'Shorts' : thumbRatio}
                   </span>
                 </>
               ) : (

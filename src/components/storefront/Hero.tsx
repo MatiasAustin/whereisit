@@ -21,6 +21,8 @@ export default function Hero({ onGoToLineup, storeSettings }: HeroProps) {
   const headlineTitle = content?.heroHeadlineTitle || 'whereisit';
   const specLayer = content?.heroSpecLayer || '0.12mm Topografi 3D Timbul';
   const specMaterial = content?.heroSpecMaterial || '3D Print Custom Objects';
+  const shortcut1Image = content?.heroShortcut1Image || '/images/strava-keychain/keychain-05.jpg';
+  const shortcut2Image = content?.heroShortcut2Image || '/images/strava-keychain/keychain-06.jpg';
 
   return (
     <section className="relative pt-6 pb-16 md:pt-10 md:pb-24 overflow-hidden">
@@ -119,7 +121,7 @@ export default function Hero({ onGoToLineup, storeSettings }: HeroProps) {
               <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden mb-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/images/strava-keychain/keychain-05.jpg"
+                  src={shortcut1Image}
                   alt="Keychain Strava 10x5 cm Emoney dipakai di celana"
                   width={1024}
                   height={1024}
@@ -144,7 +146,7 @@ export default function Hero({ onGoToLineup, storeSettings }: HeroProps) {
               <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden mb-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/images/strava-keychain/keychain-06.jpg"
+                  src={shortcut2Image}
                   alt="Keychain Strava di stasiun MRT Jakarta"
                   width={1023}
                   height={1023}

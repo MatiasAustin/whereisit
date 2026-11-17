@@ -19,8 +19,10 @@ import {
   StravaCustomData,
   PublicQueueItem,
   QueueSettings,
-  NotifyListEntry
+  NotifyListEntry,
+  StravaMediaConfig
 } from '@/types';
+import { STRAVA_PRODUCT_CONFIG } from '@/data/stravaKeychainConfig';
 import { INITIAL_PRODUCTS } from './initialData';
 import { 
   INITIAL_CUSTOMERS, 
@@ -50,6 +52,7 @@ const JOURNAL_FILE = path.join(DATA_DIR, 'journal.json');
 const STRAVA_ORDERS_FILE = path.join(DATA_DIR, 'strava-orders.json');
 const QUEUE_SETTINGS_FILE = path.join(DATA_DIR, 'queue-settings.json');
 const NOTIFY_LIST_FILE = path.join(DATA_DIR, 'notify-list.json');
+const STRAVA_MEDIA_FILE = path.join(DATA_DIR, 'strava-media.json');
 
 function ensureDirectoryExists() {
   if (!fs.existsSync(DATA_DIR)) {
@@ -1691,6 +1694,84 @@ export async function addNotifyListEntry(
   writeJsonFile(NOTIFY_LIST_FILE, list);
   return newEntry;
 }
+
+// ---------------- STRAVA KEYCHAIN MEDIA & YOUTUBE CONFIG ---------------- //
+
+export function getDefaultStravaMediaConfig(): StravaMediaConfig {
+  const variationImages: Record<string, string> = {};
+  for (const v of STRAVA_PRODUCT_CONFIG.variations) {
+    if (v.image) variationImages[v.id] = v.image;
+  }
+
+  return {
+    heroImage: '/images/strava-keychain/keychain-04.jpg',
+    variationImages,
+    gallery: STRAVA_PRODUCT_CONFIG.gallery.map((g) => ({
+      id: g.id,
+      type: g.type,
+      title: g.title,
+      caption: g.caption,
+      src: g.src,
+      badge: 'badge' in g ? g.badge : undefined,
+      highlightBadge: 'highlightBadge' in g ? g.highlightBadge : undefined,
+      videoFormat: g.type === 'video' ? 'auto' : undefined,
+      aspectRatio: g.type === 'video' ? 'auto' : '1:1',
+      isTodo: 'isTodo' in g ? Boolean(g.isTodo) : false,
+      todoLabel: 'todoLabel' in g ? g.todoLabel : undefined,
+    })),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+export async function getStravaMediaConfig(): Promise<StravaMediaConfig> {
+  const fallback = getDefaultStravaMediaConfig();
+  const supabase = getSupabaseServerClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('store_settings')
+        .select('data')
+        .eq('id', 'strava_media')
+        .single();
+      if (!error && data?.data) {
+        return {
+          ...fallback,
+          ...(data.data as Partial<StravaMediaConfig>),
+        };
+      }
+    } catch {}
+  }
+  return readJsonFile<StravaMediaConfig>(STRAVA_MEDIA_FILE, fallback);
+}
+
+export async function updateStravaMediaConfig(
+  updates: Partial<StravaMediaConfig>
+): Promise<StravaMediaConfig> {
+  const current = await getStravaMediaConfig();
+  const updated: StravaMediaConfig = {
+    ...current,
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  };
+
+  writeJsonFile(STRAVA_MEDIA_FILE, updated);
+
+  const supabase = getSupabaseServerClient();
+  if (supabase) {
+    try {
+      await supabase.from('store_settings').upsert({
+        id: 'strava_media',
+        data: updated,
+        updated_at: updated.updatedAt,
+      });
+    } catch (err) {
+      console.error('Failed to persist strava_media to Supabase:', err);
+    }
+  }
+
+  return updated;
+}
+
 
 
 

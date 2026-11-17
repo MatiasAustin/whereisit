@@ -231,6 +231,55 @@ async function runTests() {
   }
   console.log(`✓ Queue verified: ${foundInQueue.id} | ${foundInQueue.maskedName} | Est: ${foundInQueue.estimatedDate}`);
 
+  // Test 8: Strava Media Manager + YouTube Shorts (9:16) vs Full (16:9) Detection
+  console.log('\n[8] Testing Media Manager & YouTube Shorts/Full Ratio Detection ...');
+  const resMetaShort = await fetch(`${BASE}/api/media/youtube-meta?url=${encodeURIComponent('https://www.youtube.com/shorts/dQw4w9WgXcQ')}`);
+  const metaShort = await resMetaShort.json();
+  if (!metaShort.success || metaShort.data.detectedFormat !== 'short' || metaShort.data.detectedRatio !== '9:16') {
+    throw new Error(`YouTube Shorts detection failed: ${JSON.stringify(metaShort)}`);
+  }
+
+  const resMetaFull = await fetch(`${BASE}/api/media/youtube-meta?url=${encodeURIComponent('https://youtu.be/dQw4w9WgXcQ')}`);
+  const metaFull = await resMetaFull.json();
+  if (!metaFull.success || metaFull.data.detectedFormat !== 'full' || metaFull.data.detectedRatio !== '16:9') {
+    throw new Error(`YouTube Full detection failed: ${JSON.stringify(metaFull)}`);
+  }
+
+  const resMediaPage = await fetch(`${BASE}/admin/content/keychain-media`);
+  if (!resMediaPage.ok) throw new Error(`Media admin page returned ${resMediaPage.status}`);
+
+  const resMediaPut = await fetch(`${BASE}/api/strava-media`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
+    body: JSON.stringify({
+      heroImage: '/images/strava-keychain/keychain-04.jpg',
+      gallery: [
+        {
+          id: 'vid-yt-test',
+          type: 'video',
+          title: 'Test Shorts MRT',
+          caption: 'Video 9:16',
+          src: 'https://www.youtube.com/shorts/dQw4w9WgXcQ',
+          videoFormat: 'short',
+          aspectRatio: '9:16',
+          isTodo: false,
+        },
+      ],
+    }),
+  });
+  const mediaPutJson = await resMediaPut.json();
+  if (!mediaPutJson.success || mediaPutJson.data.gallery[0].aspectRatio !== '9:16') {
+    throw new Error(`Failed saving YouTube media config: ${JSON.stringify(mediaPutJson)}`);
+  }
+
+  // Restore clean default media config
+  await fetch(`${BASE}/api/strava-media`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
+    body: JSON.stringify({ resetToDefault: true }),
+  });
+  console.log('✓ YouTube Shorts (9:16) / Full Video (16:9) detection & /api/strava-media persistence verified.');
+
   // Clean up synthetic test records so seed data stays pristine
   const ordersFile = path.join(process.cwd(), 'data', 'strava-orders.json');
   if (fs.existsSync(ordersFile)) {

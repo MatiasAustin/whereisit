@@ -287,6 +287,31 @@ export interface StravaVariation {
   todoNote?: string;
 }
 
+export type VideoFormatOption = 'auto' | 'short' | 'full';
+export type VideoRatioOption = 'auto' | '16:9' | '9:16' | '4:5' | '1:1';
+
+export interface StravaGalleryMediaItem {
+  id: string;
+  type: 'image' | 'video';
+  title: string;
+  caption: string;
+  src: string;
+  badge?: string;
+  highlightBadge?: string;
+  videoFormat?: VideoFormatOption;
+  aspectRatio?: VideoRatioOption;
+  thumbnailUrl?: string;
+  isTodo?: boolean;
+  todoLabel?: string;
+}
+
+export interface StravaMediaConfig {
+  heroImage: string;
+  variationImages: Record<string, string>;
+  gallery: StravaGalleryMediaItem[];
+  updatedAt: string;
+}
+
 export interface NotifyListEntry {
   id: string;
   name: string;
