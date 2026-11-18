@@ -23,9 +23,9 @@ export default function Hero({ onGoToLineup, storeSettings }: HeroProps) {
   const specMaterial = content?.heroSpecMaterial || '3D Print Custom Objects';
   const heroMainImage = content?.heroMainImage || '/images/strava-keychain/keychain-04.jpg';
   const heroMainLabel = content?.heroMainLabel || STRAVA_PRODUCT_CONFIG.name;
-  const heroMainPrice = content?.heroMainPrice || 'Rp180.000';
+  const heroMainPrice = content?.heroMainPrice || 'Rp119.000';
   const heroMainLink = content?.heroMainLink || '/preorder/keychain-strava';
-  const shortcut1Title = content?.heroShortcut1Title || '2 Varian Pre-Order';
+  const shortcut1Title = content?.heroShortcut1Title || '3 Varian Pre-Order';
   const shortcut1Image = content?.heroShortcut1Image || '/images/strava-keychain/keychain-05.jpg';
   const shortcut2Title = content?.heroShortcut2Title || 'Produk Segera Hadir';
   const shortcut2Image = content?.heroShortcut2Image || '/images/strava-keychain/keychain-06.jpg';

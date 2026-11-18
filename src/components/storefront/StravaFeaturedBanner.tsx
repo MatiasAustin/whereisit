@@ -43,7 +43,7 @@ export default function StravaFeaturedBanner() {
                   <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-[#26333E] text-[#D5E1E9] border border-[#3E5161] flex items-center gap-1.5">
                     <Flame className="w-3 h-3 text-[#8BA1B4]" />
                     <span>
-                      Viral di Threads (<NumberTicker value={88.2} decimals={1} suffix="K" /> Views)
+                      Pre-Order Viral di Threads (88.2K Views)
                     </span>
                   </span>
                   <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-[#26333E] text-amber-300 border border-[#3E5161] flex items-center gap-1">

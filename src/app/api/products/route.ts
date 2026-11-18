@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getProducts, createProduct, purgeLegacyProducts } from '@/lib/storage';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const NO_CACHE_HEADERS = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+};
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -29,9 +38,9 @@ export async function GET(request: Request) {
       );
     }
 
-    return NextResponse.json({ success: true, data: products });
+    return NextResponse.json({ success: true, data: products }, { headers: NO_CACHE_HEADERS });
   } catch (error) {
-    return NextResponse.json({ success: false, error: 'Failed to fetch products' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Failed to fetch products' }, { status: 500, headers: NO_CACHE_HEADERS });
   }
 }
 
@@ -39,7 +48,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     if (!body.name || !body.price) {
-      return NextResponse.json({ success: false, error: 'Name and price are required' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Name and price are required' }, { status: 400, headers: NO_CACHE_HEADERS });
     }
 
     const newProduct = await createProduct({
@@ -64,9 +73,9 @@ export async function POST(request: Request) {
       tags: body.tags || ['bespoke', '3d-printed'],
     });
 
-    return NextResponse.json({ success: true, data: newProduct }, { status: 201 });
+    return NextResponse.json({ success: true, data: newProduct }, { status: 201, headers: NO_CACHE_HEADERS });
   } catch (error) {
-    return NextResponse.json({ success: false, error: 'Failed to create product' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Failed to create product' }, { status: 500, headers: NO_CACHE_HEADERS });
   }
 }
 
@@ -76,10 +85,10 @@ export async function DELETE(request: Request) {
     const action = searchParams.get('action');
     if (action === 'purge-legacy') {
       const res = await purgeLegacyProducts();
-      return NextResponse.json({ success: true, message: `${res.purgedCount} produk placeholder lama berhasil dihapus`, data: res });
+      return NextResponse.json({ success: true, message: `${res.purgedCount} produk placeholder lama berhasil dihapus`, data: res }, { headers: NO_CACHE_HEADERS });
     }
-    return NextResponse.json({ success: false, error: 'Aksi tidak dikenal' }, { status: 400 });
+    return NextResponse.json({ success: false, error: 'Aksi tidak dikenal' }, { status: 400, headers: NO_CACHE_HEADERS });
   } catch (error) {
-    return NextResponse.json({ success: false, error: 'Gagal menjalankan pembersihan' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Gagal menjalankan pembersihan' }, { status: 500, headers: NO_CACHE_HEADERS });
   }
 }

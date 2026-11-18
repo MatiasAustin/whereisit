@@ -6,12 +6,16 @@ import {
   getStravaOrders,
   getNotifyList,
   getStoreSettings,
+  getStravaMediaConfig,
   getCollections,
   getCustomers,
   getDiscounts,
   getReviews,
   getJournalArticles,
 } from '@/lib/storage';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function POST() {
   try {
@@ -60,8 +64,8 @@ export async function POST() {
           dimensions: p.dimensions || '',
           weight: p.weight || '',
           layer_resolution: p.layerResolution || '',
-          color_options: p.colorOptions || ['10x5 cm', '10x5 cm Emoney', '10x5 cm Flazz'],
-          images: [
+          color_options: p.colorOptions || ['5.7x9.4 cm', '5.7x9.4 cm Emoney', '5.7x9.4 cm Flazz'],
+          images: Array.isArray(p.images) && p.images.length > 0 ? p.images : [
             '/images/strava-keychain/keychain-04.jpg',
             '/images/strava-keychain/keychain-05.jpg',
             '/images/strava-keychain/keychain-06.jpg',
@@ -261,10 +265,42 @@ export async function POST() {
       report['journal_articles'] = { count: 0, error: e.message };
     }
 
+    // 10. Store Settings
+    try {
+      const settings = await getStoreSettings();
+      const { error } = await supabase.from('store_settings').upsert({
+        id: 'default',
+        data: settings,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' });
+      report['store_settings'] = { count: 1, error: error?.message };
+    } catch (e: any) {
+      report['store_settings'] = { count: 0, error: e.message };
+    }
+
+    // 11. Strava Media Config
+    try {
+      const mediaConfig = await getStravaMediaConfig();
+      const { error } = await supabase.from('store_settings').upsert({
+        id: 'strava_media',
+        data: mediaConfig,
+        updated_at: mediaConfig.updatedAt || new Date().toISOString(),
+      }, { onConflict: 'id' });
+      report['strava_media'] = { count: 1, error: error?.message };
+    } catch (e: any) {
+      report['strava_media'] = { count: 0, error: e.message };
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Sinkronisasi data ke Supabase selesai!',
       report,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      }
     });
   } catch (error: any) {
     console.error('Error syncing to Supabase:', error);

@@ -16,10 +16,12 @@ export default function ShippingSettingsPage() {
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
+    let mounted = true;
     fetch('/api/settings')
       .then((r) => r.json())
       .then((d) => {
-        if (d.success && d.data) {
+        if (!mounted) return;
+        if (d && d.success && d.data) {
           const loaded = d.data as StoreSettings;
           setSettings({
             ...loaded,
@@ -27,13 +29,26 @@ export default function ShippingSettingsPage() {
               ? loaded.shippingCarriers
               : DEFAULT_SHIPPING_CARRIERS,
           });
+        } else {
+          // Fallback to defaults
+          setSettings({
+            shippingCarriers: DEFAULT_SHIPPING_CARRIERS,
+          } as StoreSettings);
         }
       })
       .catch((err) => {
         console.error('Failed to load shipping settings:', err);
-        showError('Gagal memuat pengaturan pengiriman.');
+        if (mounted) {
+          setSettings({
+            shippingCarriers: DEFAULT_SHIPPING_CARRIERS,
+          } as StoreSettings);
+          showError('Gagal memuat pengaturan pengiriman.');
+        }
       });
-  }, [showError]);
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const carriers = settings?.shippingCarriers || [];
 
@@ -242,27 +257,27 @@ export default function ShippingSettingsPage() {
             </div>
           ) : (
             <div className="divide-y divide-[#F0EBE3]">
-              {carriers.map((sc, idx) => (
+              {carriers.filter(Boolean).map((sc, idx) => (
                 <div key={idx} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <input
                       type="checkbox"
                       id={`carrier-${idx}`}
-                      checked={sc.active}
+                      checked={Boolean(sc?.active)}
                       onChange={() => handleToggleActive(idx)}
                       className="w-4 h-4 rounded text-[#5C7489] focus:ring-0 cursor-pointer"
                     />
                     <div className="flex-1 min-w-0">
                       <input
                         type="text"
-                        value={sc.name}
+                        value={sc?.name || ''}
                         onChange={(e) => handleNameChange(idx, e.target.value)}
                         className="w-full bg-transparent border-b border-transparent hover:border-[#DDD5C7] focus:border-[#5C7489] focus:bg-[#FAF8F5] px-1 py-0.5 rounded font-bold text-[#14191F] text-xs focus:outline-none"
                       />
                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full inline-block mt-1 ${
-                        sc.active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                        sc?.active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'
                       }`}>
-                        {sc.active ? 'Aktif' : 'Non-aktif'}
+                        {sc?.active ? 'Aktif' : 'Non-aktif'}
                       </span>
                     </div>
                   </div>
@@ -275,7 +290,7 @@ export default function ShippingSettingsPage() {
                         type="number"
                         min="0"
                         step="500"
-                        value={sc.fee}
+                        value={typeof sc?.fee === 'number' ? sc.fee : 0}
                         onChange={(e) => handleFeeChange(idx, Number(e.target.value))}
                         className="w-28 pl-7 pr-2.5 py-1.5 rounded-lg border border-[#DDD5C7] text-xs font-bold text-right bg-[#FAF8F5] focus:outline-none focus:border-[#5C7489]"
                       />

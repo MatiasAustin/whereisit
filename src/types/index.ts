@@ -339,6 +339,8 @@ export interface StravaCustomData {
   submittedAt?: string;
 }
 
+export type PaymentProvider = 'clicky' | 'mayar';
+
 export interface StravaPreOrder {
   id: string; // WSI-YYYYMMDD-XXXX
   orderNumber: string;
@@ -357,15 +359,24 @@ export interface StravaPreOrder {
   price: number;
   subtotal: number;
   shippingFee: number;
+  shippingRegion?: 'Jabodetabek' | 'Luar Jabodetabek';
   total: number;
   status: StravaOrderStatus;
   paymentMethod?: string;
+  paymentVerified?: boolean;
+  paymentVerifiedAt?: string | null;
+  clickyFee?: number | null;
   paymentDetails?: {
     invoiceId?: string;
     paymentUrl?: string;
     paidAt?: string;
     mayarTransactionId?: string;
     channel?: string;
+    clickyLink?: string;
+    shippingRegion?: string;
+    paymentVerified?: boolean;
+    paymentVerifiedAt?: string | null;
+    clickyFee?: number | null;
   };
   stravaData?: StravaCustomData;
   production?: {

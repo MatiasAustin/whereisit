@@ -30,6 +30,9 @@ export async function POST(request: Request) {
         (v) =>
           v.id === variationId ||
           v.name === variationId ||
+          (variationId === 'var-10x5' && v.id === 'var-10x5') ||
+          (variationId === 'var-tanpa-kartu' && v.id === 'var-10x5') ||
+          (variationId === 'Tanpa Kartu' && v.id === 'var-10x5') ||
           (variationId === 'var-standard' && v.id === 'var-10x5') ||
           (variationId === 'var-duo-plate' && v.id === 'var-flazz')
       ) || variations[0];

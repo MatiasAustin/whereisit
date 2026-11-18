@@ -251,27 +251,46 @@ async function autoSeedSupabase(supabase: any) {
   try {
     console.log('⚡ Auto-seeding initial database rows to Supabase...');
 
-    // 1. Products
-    const dbProducts = INITIAL_PRODUCTS.map(mapProductToDB);
-    await supabase.from('products').upsert(dbProducts, { onConflict: 'id' });
+    // 1. Products (only seed if table is completely empty)
+    const { count: prodCount } = await supabase.from('products').select('*', { count: 'exact', head: true });
+    if (!prodCount || prodCount === 0) {
+      const dbProducts = INITIAL_PRODUCTS.map(mapProductToDB);
+      await supabase.from('products').upsert(dbProducts, { onConflict: 'id' });
+    }
 
-    // 2. Settings
-    await supabase.from('store_settings').upsert({
-      id: 'default',
-      data: INITIAL_SETTINGS,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'id' });
+    // 2. Settings (only seed if 'default' row does not exist)
+    const { data: existingSettings } = await supabase.from('store_settings').select('id').eq('id', 'default').maybeSingle();
+    if (!existingSettings) {
+      await supabase.from('store_settings').insert([{
+        id: 'default',
+        data: INITIAL_SETTINGS,
+        updated_at: new Date().toISOString(),
+      }]);
+    }
 
-    // 3. Collections
-    await supabase.from('collections').upsert(INITIAL_COLLECTIONS.map(c => ({
-      id: c.id,
-      slug: c.slug,
-      name: c.name,
-      description: c.description,
-      image: c.image,
-      product_count: c.productCount,
-      status: c.status
-    })), { onConflict: 'id' });
+    // 2b. Strava Media (only seed if 'strava_media' row does not exist)
+    const { data: existingMedia } = await supabase.from('store_settings').select('id').eq('id', 'strava_media').maybeSingle();
+    if (!existingMedia) {
+      await supabase.from('store_settings').insert([{
+        id: 'strava_media',
+        data: getDefaultStravaMediaConfig(),
+        updated_at: new Date().toISOString(),
+      }]);
+    }
+
+    // 3. Collections (only seed if table is completely empty)
+    const { count: colCount } = await supabase.from('collections').select('*', { count: 'exact', head: true });
+    if (!colCount || colCount === 0) {
+      await supabase.from('collections').upsert(INITIAL_COLLECTIONS.map(c => ({
+        id: c.id,
+        slug: c.slug,
+        name: c.name,
+        description: c.description,
+        image: c.image,
+        product_count: c.productCount,
+        status: c.status
+      })), { onConflict: 'id' });
+    }
 
     // 4. Reviews
     await supabase.from('product_reviews').upsert(INITIAL_REVIEWS.map(r => ({
@@ -1335,22 +1354,57 @@ export async function getStoreSettings(): Promise<StoreSettings> {
 
 export async function updateStoreSettings(updates: Partial<StoreSettings>): Promise<StoreSettings> {
   const current = await getStoreSettings();
-  const merged: StoreSettings = { ...current, ...updates };
+  const merged: StoreSettings = {
+    ...current,
+    ...updates,
+    homepageContent: {
+      ...(current.homepageContent || DEFAULT_HOMEPAGE_CONTENT),
+      ...(updates.homepageContent || {}),
+    },
+  };
 
   const supabase = getSupabaseServerClient();
   if (supabase) {
     try {
-      await supabase.from('store_settings').upsert({
+      const { error } = await supabase.from('store_settings').upsert({
         id: 'default',
         data: merged,
         updated_at: new Date().toISOString(),
-      });
+      }, { onConflict: 'id' });
+      if (error) {
+        console.error('Supabase updateStoreSettings error:', error);
+      }
     } catch (err) {
       console.error('Failed to update settings in Supabase:', err);
     }
   }
 
   writeJsonFile(SETTINGS_FILE, merged);
+
+  // Cross-sync heroMainImage to strava-media if hero image was changed
+  if (updates.homepageContent?.heroMainImage) {
+    try {
+      const currentMedia = await getStravaMediaConfig();
+      if (currentMedia.heroImage !== updates.homepageContent.heroMainImage) {
+        const updatedMedia: StravaMediaConfig = {
+          ...currentMedia,
+          heroImage: updates.homepageContent.heroMainImage,
+          updatedAt: new Date().toISOString(),
+        };
+        writeJsonFile(STRAVA_MEDIA_FILE, updatedMedia);
+        if (supabase) {
+          await supabase.from('store_settings').upsert({
+            id: 'strava_media',
+            data: updatedMedia,
+            updated_at: updatedMedia.updatedAt,
+          }, { onConflict: 'id' });
+        }
+      }
+    } catch (syncErr) {
+      console.warn('Notice cross-syncing heroMainImage to strava-media:', syncErr);
+    }
+  }
+
   return merged;
 }
 
@@ -1499,9 +1553,13 @@ export async function getStravaOrders(): Promise<StravaPreOrder[]> {
             price: Number(o.price),
             subtotal: Number(o.subtotal),
             shippingFee: Number(o.shipping_fee || 0),
+            shippingRegion: o.shipping_region || o.payment_details?.shippingRegion || undefined,
             total: Number(o.total),
             status: o.status,
             paymentMethod: o.payment_method,
+            paymentVerified: Boolean(o.payment_verified || o.payment_details?.paymentVerified),
+            paymentVerifiedAt: o.payment_verified_at || o.payment_details?.paymentVerifiedAt || undefined,
+            clickyFee: o.clicky_fee ? Number(o.clicky_fee) : o.payment_details?.clickyFee ? Number(o.payment_details.clickyFee) : undefined,
             paymentDetails: o.payment_details,
             stravaData: o.strava_data,
             production: o.production,
@@ -1529,8 +1587,17 @@ export async function getStravaOrderById(id: string): Promise<StravaPreOrder | u
 
 export async function createStravaOrder(order: StravaPreOrder): Promise<StravaPreOrder> {
   const now = new Date().toISOString();
+  const enrichedPaymentDetails = {
+    ...(order.paymentDetails || {}),
+    shippingRegion: order.shippingRegion,
+    paymentVerified: order.paymentVerified || false,
+    paymentVerifiedAt: order.paymentVerifiedAt || null,
+    clickyFee: order.clickyFee || null,
+  };
+
   const newOrder: StravaPreOrder = {
     ...order,
+    paymentDetails: enrichedPaymentDetails,
     createdAt: order.createdAt || now,
     updatedAt: now,
   };
@@ -1551,7 +1618,7 @@ export async function createStravaOrder(order: StravaPreOrder): Promise<StravaPr
         total: newOrder.total,
         status: newOrder.status,
         payment_method: newOrder.paymentMethod,
-        payment_details: newOrder.paymentDetails,
+        payment_details: enrichedPaymentDetails,
         strava_data: newOrder.stravaData || null,
         production: newOrder.production || null,
         is_example: Boolean(newOrder.isExample),
@@ -1587,15 +1654,31 @@ export async function updateStravaOrderStatus(
 
   const current = list[index];
 
-  // GUARD: Cannot advance to 'Produksi' if data is incomplete!
-  if (
-    status === 'Produksi' &&
-    (!current.stravaData || !current.stravaData.stravaUrl || current.status === 'Dibayar — Data Belum Lengkap')
-  ) {
-    return {
-      success: false,
-      error: 'Tidak dapat memulai produksi: Data Strava belum diisi oleh pembeli atau belum dikonfirmasi desainnya.',
-    };
+  // GUARD: Produksi (status 5) TIDAK BOLEH mulai sampai SEMUA terpenuhi:
+  // 1. Pembayaran terverifikasi (Clicky verified atau Mayar sudah bayar)
+  // 2. Form sudah disubmit (stravaData + stravaUrl)
+  // 3. Desain dikonfirmasi admin (status 'Desain Dikonfirmasi' atau production.confirmedAt)
+  if (status === 'Produksi') {
+    const isPaid = current.paymentVerified || 
+      (current.paymentMethod !== 'Clicky' && current.status !== 'Menunggu Pembayaran');
+    if (!isPaid) {
+      return {
+        success: false,
+        error: 'Tidak dapat memulai produksi: Pembayaran belum diverifikasi admin. Silakan verifikasi pembayaran terlebih dahulu.',
+      };
+    }
+    if (!current.stravaData || !current.stravaData.stravaUrl || current.status === 'Dibayar — Data Belum Lengkap') {
+      return {
+        success: false,
+        error: 'Tidak dapat memulai produksi: Form data Strava belum disubmit oleh pembeli.',
+      };
+    }
+    if (current.status !== 'Desain Dikonfirmasi' && !current.production?.confirmedAt && !updates?.production?.confirmedAt) {
+      return {
+        success: false,
+        error: 'Tidak dapat memulai produksi: Desain 3D belum dikonfirmasi bersama pembeli.',
+      };
+    }
   }
 
   const now = new Date().toISOString();
@@ -1648,6 +1731,66 @@ export async function updateStravaOrderStatus(
   }
 
   return { success: true };
+}
+
+export async function verifyClickyOrderPayment(
+  id: string,
+  adminNotes?: string
+): Promise<{ success: boolean; order?: StravaPreOrder; error?: string }> {
+  const list = readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
+  const index = list.findIndex((o) => o.id === id || o.orderNumber === id);
+  if (index === -1) {
+    return { success: false, error: 'Pesanan tidak ditemukan' };
+  }
+
+  const current = list[index];
+  const now = new Date().toISOString();
+
+  // If customer has already submitted Strava data, advance to review desain; otherwise 'Dibayar — Data Belum Lengkap'
+  const nextStatus: StravaOrderStatus = current.stravaData?.stravaUrl
+    ? 'Data Diterima — Menunggu Konfirmasi Desain'
+    : 'Dibayar — Data Belum Lengkap';
+
+  const updated: StravaPreOrder = {
+    ...current,
+    status: current.status === 'Menunggu Pembayaran' ? nextStatus : current.status,
+    paymentVerified: true,
+    paymentVerifiedAt: now,
+    paymentDetails: {
+      ...(current.paymentDetails || {}),
+      paidAt: now,
+      channel: 'Clicky',
+      paymentVerified: true,
+      paymentVerifiedAt: now,
+    },
+    production: {
+      ...(current.production || {}),
+      adminNotes: adminNotes || current.production?.adminNotes,
+    },
+    updatedAt: now,
+  };
+
+  list[index] = updated;
+  writeJsonFile(STRAVA_ORDERS_FILE, list);
+
+  const supabase = getSupabaseServerClient();
+  if (supabase) {
+    try {
+      await supabase
+        .from('strava_orders')
+        .update({
+          status: updated.status,
+          payment_details: updated.paymentDetails,
+          production: updated.production,
+          updated_at: now,
+        })
+        .eq('id', current.id);
+    } catch (err) {
+      console.error('Failed to update payment verification in Supabase:', err);
+    }
+  }
+
+  return { success: true, order: updated };
 }
 
 export async function saveStravaCustomerData(
@@ -2017,13 +2160,42 @@ export async function updateStravaMediaConfig(
   const supabase = getSupabaseServerClient();
   if (supabase) {
     try {
-      await supabase.from('store_settings').upsert({
+      const { error } = await supabase.from('store_settings').upsert({
         id: 'strava_media',
         data: updated,
         updated_at: updated.updatedAt,
-      });
+      }, { onConflict: 'id' });
+      if (error) {
+        console.error('Supabase updateStravaMediaConfig error:', error);
+      }
     } catch (err) {
       console.error('Failed to persist strava_media to Supabase:', err);
+    }
+  }
+
+  // Cross-sync heroImage to store settings if heroImage was changed
+  if (updates.heroImage) {
+    try {
+      const currentSettings = await getStoreSettings();
+      if (currentSettings.homepageContent?.heroMainImage !== updates.heroImage) {
+        const mergedSettings: StoreSettings = {
+          ...currentSettings,
+          homepageContent: {
+            ...(currentSettings.homepageContent || DEFAULT_HOMEPAGE_CONTENT),
+            heroMainImage: updates.heroImage,
+          },
+        };
+        writeJsonFile(SETTINGS_FILE, mergedSettings);
+        if (supabase) {
+          await supabase.from('store_settings').upsert({
+            id: 'default',
+            data: mergedSettings,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'id' });
+        }
+      }
+    } catch (syncErr) {
+      console.warn('Notice cross-syncing heroImage to store settings:', syncErr);
     }
   }
 

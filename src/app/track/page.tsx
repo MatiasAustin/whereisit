@@ -28,7 +28,7 @@ const EXACT_STATUS_STEPS: { step: number; status: StravaOrderStatus; title: stri
     step: 1,
     status: 'Menunggu Pembayaran',
     title: 'Menunggu Pembayaran',
-    desc: 'Invoice dibuat, menunggu pelunasan via Mayar Gateway (QRIS, VA, E-Wallet, Kartu).',
+    desc: 'Pesanan dibuat, menunggu pelunasan dan verifikasi pembayaran.',
   },
   {
     step: 2,
@@ -240,23 +240,31 @@ function TrackContent() {
             </div>
           )}
 
-          {/* WARNING BANNER: UNPAID */}
-          {order.status === 'Menunggu Pembayaran' && (
-            <div className="p-5 rounded-3xl bg-blue-50 border border-blue-200 text-blue-900 space-y-3 shadow-sm">
+          {/* WARNING BANNER: UNPAID OR UNVERIFIED */}
+          {(order.status === 'Menunggu Pembayaran' || (order.paymentMethod === 'Clicky' && !order.paymentVerified)) && (
+            <div className="p-5 rounded-3xl bg-amber-50 border border-amber-200 text-amber-950 space-y-3 shadow-sm">
               <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-blue-700 flex-shrink-0" />
-                <h3 className="text-sm font-bold">Menunggu Pembayaran Invoice</h3>
+                <Clock className="w-5 h-5 text-amber-700 flex-shrink-0" />
+                <h3 className="text-sm font-bold">
+                  {order.paymentMethod === 'Clicky'
+                    ? 'Pembayaran sedang diverifikasi admin'
+                    : 'Menunggu Pembayaran Invoice'}
+                </h3>
               </div>
-              <p className="text-xs text-blue-900/90 leading-relaxed">
-                Pesanan kamu berstatus menunggu pembayaran. Selesaikan pembayaran sebelum batas waktu berakhir.
+              <p className="text-xs text-amber-900/90 leading-relaxed">
+                {order.paymentMethod === 'Clicky'
+                  ? 'Pesanan kamu telah tercatat. Jika kamu sudah menyelesaikan pembayaran di Clicky, pembayaran kamu sedang diverifikasi oleh admin studio secara manual. Setelah terverifikasi, status akan otomatis diperbarui dan kamu dapat mengisi form data rute Strava.'
+                  : 'Pesanan kamu berstatus menunggu pembayaran. Selesaikan pembayaran sebelum batas waktu berakhir.'}
               </p>
               {order.paymentDetails?.paymentUrl && (
-                <div className="pt-1">
+                <div className="pt-1 flex flex-wrap items-center gap-2">
                   <a
                     href={order.paymentDetails.paymentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#14191F] hover:bg-[#5C7489] text-white text-xs font-bold transition-colors"
                   >
-                    <span>Lanjutkan Pembayaran di Mayar</span>
+                    <span>{order.paymentMethod === 'Clicky' ? 'Buka Link Pembayaran Clicky' : 'Lanjutkan Pembayaran di Mayar'}</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>

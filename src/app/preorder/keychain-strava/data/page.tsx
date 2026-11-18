@@ -278,7 +278,7 @@ function StravaDataFormContent() {
                 className="w-full px-4 py-3 rounded-2xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-mono focus:outline-none focus:border-[#5C7489]"
               />
               <span className="text-[10px] text-[#7A8B99] mt-1 block">
-                Cek email invoice Mayar atau riwayat transaksi kamu untuk melihat Order ID.
+                Cek riwayat pesanan, WhatsApp, atau bukti invoice kamu untuk melihat Order ID.
               </span>
             </div>
 
@@ -384,7 +384,7 @@ function StravaDataFormContent() {
               <span className="text-[10px] text-[#7A8B99] uppercase font-bold tracking-wider">Status Pembayaran</span>
               <p className="font-bold text-emerald-700 flex items-center gap-1 sm:justify-end">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Terverifikasi Mayar</span>
+                <span>{order?.paymentMethod === 'Clicky' ? 'Terverifikasi Studio' : 'Terverifikasi'}</span>
               </p>
               <span className="text-[11px] text-[#556473]">Pemesan: {order?.customer.fullName}</span>
             </div>

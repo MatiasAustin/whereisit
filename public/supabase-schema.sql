@@ -222,9 +222,13 @@ CREATE TABLE IF NOT EXISTS public.strava_orders (
   price NUMERIC NOT NULL,
   subtotal NUMERIC NOT NULL,
   shipping_fee NUMERIC DEFAULT 0,
+  shipping_region TEXT,
   total NUMERIC NOT NULL,
   status TEXT NOT NULL,
   payment_method TEXT NOT NULL,
+  payment_verified BOOLEAN DEFAULT false,
+  payment_verified_at TIMESTAMPTZ,
+  clicky_fee NUMERIC DEFAULT 0,
   payment_details JSONB,
   strava_data JSONB,
   production JSONB,
@@ -267,6 +271,10 @@ ALTER TABLE public.journal_articles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.discounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscribers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.strava_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS shipping_region TEXT;
+ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS payment_verified BOOLEAN DEFAULT false;
+ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS payment_verified_at TIMESTAMPTZ;
+ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS clicky_fee NUMERIC DEFAULT 0;
 ALTER TABLE public.notify_list ENABLE ROW LEVEL SECURITY;
 
 -- 1. Allow service_role full control on all tables (used by backend API routes)
@@ -288,15 +296,18 @@ BEGIN
   END LOOP;
 END $$;
 
--- 2. Public read policies for storefront browsing
+-- 2. Public read policies for storefront browsing & dashboard updates
 DROP POLICY IF EXISTS "public_read_products" ON public.products;
-CREATE POLICY "public_read_products" ON public.products FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "public_all_products" ON public.products;
+CREATE POLICY "public_all_products" ON public.products FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "public_read_collections" ON public.collections;
-CREATE POLICY "public_read_collections" ON public.collections FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "public_all_collections" ON public.collections;
+CREATE POLICY "public_all_collections" ON public.collections FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "public_read_settings" ON public.store_settings;
-CREATE POLICY "public_read_settings" ON public.store_settings FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "public_all_settings" ON public.store_settings;
+CREATE POLICY "public_all_settings" ON public.store_settings FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "public_read_reviews" ON public.product_reviews;
 CREATE POLICY "public_read_reviews" ON public.product_reviews FOR SELECT TO anon, authenticated USING (true);

@@ -121,8 +121,8 @@ export default function OrdersPage() {
   const [manualCity, setManualCity] = useState('Jakarta');
   const [manualAddress, setManualAddress] = useState('');
   const [manualEmail, setManualEmail] = useState('');
-  const [manualVariationId, setManualVariationId] = useState('var-10x5');
-  const [manualVariationName, setManualVariationName] = useState('10x5 cm');
+  const [manualVariationId, setManualVariationId] = useState('var-57x94');
+  const [manualVariationName, setManualVariationName] = useState('5.7x9.4 cm');
   const [manualPrice, setManualPrice] = useState(119000);
   const [manualStatus, setManualStatus] = useState<StravaOrderStatus>('Data Diterima — Menunggu Konfirmasi Desain');
   const [manualPayment, setManualPayment] = useState('WhatsApp Manual Order');
@@ -236,17 +236,29 @@ export default function OrdersPage() {
     }
   };
 
-  // Update Strava Order Status (With guard check)
+  // Update Strava Order Status (With strict 3-condition guard check for Produksi)
   const handleUpdateStravaStatus = async (id: string, status: StravaOrderStatus, productionUpdates?: any) => {
     const targetOrder = stravaOrders.find((o) => o.id === id);
 
-    // GUARD: Cannot advance to 'Produksi' if data is incomplete!
-    if (
-      status === 'Produksi' &&
-      (!targetOrder?.stravaData || !targetOrder.stravaData.stravaUrl || targetOrder.status === 'Dibayar — Data Belum Lengkap')
-    ) {
-      showError('Tidak dapat memulai produksi: Data Strava belum diisi pembeli atau belum dikonfirmasi desainnya.');
-      return;
+    // GUARD: Produksi (status 5) TIDAK BOLEH mulai sampai SEMUA terpenuhi:
+    // 1. Pembayaran terverifikasi
+    // 2. Form sudah disubmit
+    // 3. Desain dikonfirmasi admin
+    if (status === 'Produksi') {
+      const isPaid = targetOrder?.paymentVerified || 
+        (targetOrder?.paymentMethod !== 'Clicky' && targetOrder?.status !== 'Menunggu Pembayaran');
+      if (!isPaid) {
+        showError('Tidak dapat memulai produksi: Pembayaran belum diverifikasi admin (silakan klik tombol "Verifikasi Pembayaran (Clicky)").');
+        return;
+      }
+      if (!targetOrder?.stravaData || !targetOrder.stravaData.stravaUrl || targetOrder.status === 'Dibayar — Data Belum Lengkap') {
+        showError('Tidak dapat memulai produksi: Form data Strava belum disubmit oleh pembeli.');
+        return;
+      }
+      if (targetOrder.status !== 'Desain Dikonfirmasi' && !targetOrder.production?.confirmedAt && !productionUpdates?.confirmedAt) {
+        showError('Tidak dapat memulai produksi: Desain rute 3D belum dikonfirmasi bersama pembeli via WhatsApp.');
+        return;
+      }
     }
 
     try {
@@ -268,6 +280,43 @@ export default function OrdersPage() {
       }
     } catch (err: any) {
       showError(err.message || 'Gagal memperbarui status pesanan Strava');
+    }
+  };
+
+  // Manual payment verification for Clicky orders
+  const handleVerifyClickyPayment = async (orderId: string) => {
+    try {
+      const res = await fetch('/api/strava-orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: orderId,
+          action: 'verify_clicky_payment',
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Gagal memverifikasi pembayaran Clicky');
+      }
+
+      showSuccess(`Pembayaran Clicky untuk pesanan #${orderId} berhasil diverifikasi!`);
+      await fetchStravaOrders();
+
+      if (selectedStravaOrder && selectedStravaOrder.id === orderId) {
+        setSelectedStravaOrder((prev) =>
+          prev
+            ? {
+                ...prev,
+                paymentVerified: true,
+                status: prev.stravaData?.stravaUrl
+                  ? 'Data Diterima — Menunggu Konfirmasi Desain'
+                  : 'Dibayar — Data Belum Lengkap',
+              }
+            : null
+        );
+      }
+    } catch (err: any) {
+      showError(err.message || 'Gagal verifikasi pembayaran Clicky');
     }
   };
 
@@ -696,7 +745,18 @@ export default function OrdersPage() {
 
                           <td className="px-6 py-4">
                             <p className="font-semibold text-[#14191F]">{o.variationName}</p>
-                            <span className="text-[10px] text-[#7A8B99]">{formatRupiah(o.total)}</span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[10px] text-[#7A8B99]">{formatRupiah(o.total)}</span>
+                              {o.paymentMethod === 'Clicky' && (
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                                  o.paymentVerified 
+                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                                    : 'bg-amber-100 text-amber-800 border border-amber-200'
+                                }`}>
+                                  {o.paymentVerified ? 'Clicky Terverifikasi' : 'Clicky Belum Verif'}
+                                </span>
+                              )}
+                            </div>
                           </td>
 
                           <td className="px-6 py-4">
@@ -730,6 +790,17 @@ export default function OrdersPage() {
 
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
+                              {o.paymentMethod === 'Clicky' && !o.paymentVerified && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleVerifyClickyPayment(o.id)}
+                                  className="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1 whitespace-nowrap"
+                                  title="Cocokkan pembayaran di dashboard Clicky lalu klik untuk memverifikasi"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <span>Verifikasi Pembayaran (Clicky)</span>
+                                </button>
+                              )}
                               <button
                                 onClick={() => openStravaDetail(o)}
                                 className="px-3 py-1.5 rounded-xl bg-[#14191F] text-white hover:bg-[#5C7489] text-xs font-semibold transition-colors shadow-xs"
@@ -963,6 +1034,38 @@ export default function OrdersPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* 1b. Payment Method & Clicky Verification Card */}
+              <div className="p-4 rounded-2xl bg-white border border-[#E8E2D7] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                <div>
+                  <span className="text-[10px] text-[#7A8B99] uppercase font-bold tracking-wider">
+                    Metode &amp; Status Pembayaran
+                  </span>
+                  <p className="text-xs font-bold text-[#14191F] mt-0.5">
+                    {selectedStravaOrder.paymentMethod || 'Clicky'} • {selectedStravaOrder.shippingRegion || 'Jabodetabek'} (Ongkir {formatRupiah(selectedStravaOrder.shippingFee || 0)})
+                  </p>
+                  <p className="text-[11px] text-[#556473] mt-0.5">
+                    Total Pesanan: <strong className="text-[#14191F]">{formatRupiah(selectedStravaOrder.total)}</strong>
+                    {selectedStravaOrder.clickyFee ? ` • Est. Fee Clicky: ${formatRupiah(selectedStravaOrder.clickyFee)}` : ''}
+                  </p>
+                </div>
+                {selectedStravaOrder.paymentMethod === 'Clicky' && !selectedStravaOrder.paymentVerified ? (
+                  <button
+                    type="button"
+                    onClick={() => handleVerifyClickyPayment(selectedStravaOrder.id)}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                    title="Cocokkan nama & total di dashboard Clicky lalu klik untuk verifikasi"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Verifikasi Pembayaran (Clicky)</span>
+                  </button>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Pembayaran Terverifikasi {selectedStravaOrder.paymentMethod === 'Clicky' ? '(Clicky)' : ''}</span>
+                  </span>
+                )}
               </div>
 
               {/* 2. Customer Info (Editable) */}
@@ -1709,9 +1812,9 @@ export default function OrdersPage() {
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   {[
-                    { id: 'var-10x5', name: '10x5 cm', price: 119000, desc: 'Standard 3D Print' },
-                    { id: 'var-emoney', name: '10x5 cm Emoney', price: 180000, desc: 'Termasuk E-Money' },
-                    { id: 'var-flazz', name: '10x5 cm Flazz', price: 220000, desc: 'Termasuk BCA Flazz' },
+                    { id: 'var-57x94', name: '5.7x9.4 cm', price: 119000, desc: 'Standard 3D Print' },
+                    { id: 'var-emoney', name: '5.7x9.4 cm Emoney', price: 180000, desc: 'Termasuk E-Money' },
+                    { id: 'var-flazz', name: '5.7x9.4 cm Flazz', price: 220000, desc: 'Termasuk BCA Flazz' },
                   ].map((v) => (
                     <div
                       key={v.id}

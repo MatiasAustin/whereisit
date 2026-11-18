@@ -17,7 +17,32 @@ export default function HomepageEditorPage() {
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
-    fetch('/api/settings')
+    // 1. Instant hydration from client storage to prevent image flicker on refresh
+    try {
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('whereisit_store_settings_override');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && typeof parsed === 'object') {
+            const mergedSettings: StoreSettings = {
+              ...parsed,
+              homepageContent: {
+                ...DEFAULT_HOMEPAGE_CONTENT,
+                ...(parsed.homepageContent || {}),
+              },
+            };
+            setSettings(mergedSettings);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Could not read cached store settings override:', e);
+    }
+
+    fetch(`/api/settings?_t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+    })
       .then((r) => r.json())
       .then((d) => {
         if (d.success && d.data) {
@@ -29,6 +54,11 @@ export default function HomepageEditorPage() {
             },
           };
           setSettings(mergedSettings);
+          try {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('whereisit_store_settings_override', JSON.stringify(mergedSettings));
+            }
+          } catch {}
         }
       })
       .catch((err) => {
@@ -54,6 +84,22 @@ export default function HomepageEditorPage() {
     if (!settings) return;
 
     setSaving(true);
+    // Instant optimistic save to local storage
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('whereisit_store_settings_override', JSON.stringify(settings));
+        // Cross-mirror hero image to strava media override if heroMainImage exists
+        if (settings.homepageContent?.heroMainImage) {
+          const stravaCached = localStorage.getItem('whereisit_strava_media_override');
+          if (stravaCached) {
+            const stravaParsed = JSON.parse(stravaCached);
+            stravaParsed.heroImage = settings.homepageContent.heroMainImage;
+            localStorage.setItem('whereisit_strava_media_override', JSON.stringify(stravaParsed));
+          }
+        }
+      }
+    } catch {}
+
     try {
       const res = await fetch('/api/settings', {
         method: 'PUT',
@@ -62,6 +108,14 @@ export default function HomepageEditorPage() {
       });
       const data = await res.json();
       if (data.success) {
+        if (data.data) {
+          setSettings(data.data);
+          try {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('whereisit_store_settings_override', JSON.stringify(data.data));
+            }
+          } catch {}
+        }
         showSuccess('Konten homepage & storefront berhasil diperbarui!');
       } else {
         showError(data.error || 'Gagal menyimpan perubahan.');

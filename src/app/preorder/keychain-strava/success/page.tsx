@@ -31,12 +31,14 @@ function SuccessPageContent() {
     if (!order) return;
     setRetryingPayment(true);
     try {
-      const res = await fetch('/api/checkout/mayar', {
+      const endpoint = order.paymentMethod === 'Clicky' ? '/api/checkout/clicky' : '/api/checkout/mayar';
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customer: order.customer,
           variationId: order.variationId,
+          shippingRegion: order.shippingRegion || 'Jabodetabek',
           existingOrderId: order.id,
         }),
       });
@@ -178,7 +180,7 @@ function SuccessPageContent() {
             </div>
 
             <p className="text-xs text-[#556473] max-w-md mx-auto leading-relaxed">
-              Jika kamu sudah menyelesaikan pembayaran di Mayar, klik tombol di bawah untuk menyegarkan status pesanan kamu.
+              Jika kamu sudah menyelesaikan pembayaran, klik tombol di bawah untuk menyegarkan status pesanan kamu.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">

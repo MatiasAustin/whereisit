@@ -38,7 +38,25 @@ export default function StravaKeychainLandingPage() {
   const [mediaConfig, setMediaConfig] = useState<StravaMediaConfig | null>(null);
 
   useEffect(() => {
-    fetch('/api/strava-orders/queue')
+    // 1. Instant hydration from client storage to prevent image flicker on refresh
+    try {
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('whereisit_strava_media_override');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && typeof parsed === 'object') {
+            setMediaConfig(parsed);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Could not read cached strava media override:', e);
+    }
+
+    fetch(`/api/strava-orders/queue?_t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+    })
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.data?.stats?.customNote) {
@@ -47,11 +65,19 @@ export default function StravaKeychainLandingPage() {
       })
       .catch(() => {});
 
-    fetch('/api/strava-media')
+    fetch(`/api/strava-media?_t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+    })
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.data) {
           setMediaConfig(data.data);
+          try {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('whereisit_strava_media_override', JSON.stringify(data.data));
+            }
+          } catch {}
         }
       })
       .catch(() => {});
@@ -124,7 +150,7 @@ export default function StravaKeychainLandingPage() {
                     {dynamicPriceRange}
                   </div>
                   <span className="text-[11px] text-[#3E5161] font-medium block mt-0.5">
-                    2 Varian Resmi (E-Money &amp; Flazz) • {STRAVA_PRODUCT_CONFIG.shippingPolicyText}
+                    3 Varian Resmi • {STRAVA_PRODUCT_CONFIG.shippingPolicyText}
                   </span>
                   <span className="text-[11px] text-[#556473] block">
                     Estimasi produksi: {adminLeadNote}
@@ -158,7 +184,7 @@ export default function StravaKeychainLandingPage() {
                 <div className="flex flex-wrap items-center gap-3 text-xs text-[#556473] pt-2">
                   <span className="flex items-center gap-1.5">
                     <ShieldCheck className="w-4 h-4 text-[#5C7489]" aria-hidden="true" />
-                    <span>Checkout langsung via Mayar</span>
+                    <span>Pre-Order Resmi Studio (Batch 2)</span>
                   </span>
                   <span>•</span>
                   <span>Bukan Ready Stock</span>
@@ -175,7 +201,7 @@ export default function StravaKeychainLandingPage() {
                       STRAVA X whereIsIt?
                     </span>
                     <span className="px-2.5 py-0.5 rounded text-[9px] font-bold bg-[#5C7489] text-white">
-                      Ukuran 10x5 cm
+                      Ukuran 5.7x9.4 cm
                     </span>
                   </div>
 
@@ -373,7 +399,7 @@ export default function StravaKeychainLandingPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch mt-8 max-w-4xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch mt-8 max-w-6xl mx-auto">
                 {STRAVA_PRODUCT_CONFIG.variations.map((v) => (
                   <StudioTiltCard key={v.id} className="h-full">
                     <div
@@ -571,7 +597,7 @@ export default function StravaKeychainLandingPage() {
                       Postingan Threads
                     </span>
                     <span className="text-xs font-bold text-[#3E5161]">
-                      <NumberTicker value={88.2} decimals={1} suffix="K" /> Views
+                      88.2K views
                     </span>
                   </div>
 
@@ -580,7 +606,7 @@ export default function StravaKeychainLandingPage() {
                       Postingan @jaynrrrrr (9 Nov 2026)
                     </h3>
                     <p className="text-xs text-[#44505C] leading-relaxed">
-                      Mendapat <strong><NumberTicker value={1977} /> likes</strong>, <strong><NumberTicker value={108} /> komentar</strong>, <strong><NumberTicker value={114} /> repost</strong>, dan <strong><NumberTicker value={542} /> share</strong>. Menampilkan bukti tap di reader gate MRT Jakarta (lampu hijau &amp; saldo muncul) serta preview 3D model &ldquo;BDO ULTRA&rdquo;.
+                      Mendapat <strong>~1.9K likes</strong>, <strong>108 komentar</strong>, <strong>114 repost</strong>, dan <strong>542 shares</strong>. Menampilkan bukti tap di reader gate MRT Jakarta (lampu hijau &amp; saldo muncul) serta preview 3D model &ldquo;BDO ULTRA&rdquo;.
                     </p>
                     <p className="text-[11px] text-[#556473]">
                       Kontak resmi studio: @whereisit.ofc

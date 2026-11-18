@@ -44,12 +44,35 @@ export default function AdminProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const fetchProducts = async () => {
+    // 1. Instant hydration from client storage to prevent flicker on refresh
+    try {
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('whereisit_products_override');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setProducts(parsed);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Could not read cached products override:', e);
+    }
+
     setLoading(true);
     try {
-      const res = await fetch('/api/products');
+      const res = await fetch(`/api/products?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+      });
       const data = await res.json();
-      if (data.success) {
+      if (data.success && Array.isArray(data.data)) {
         setProducts(data.data);
+        try {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('whereisit_products_override', JSON.stringify(data.data));
+          }
+        } catch {}
       }
     } catch (e) {
       console.error(e);

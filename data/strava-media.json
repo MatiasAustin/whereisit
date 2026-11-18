@@ -1,79 +1,13 @@
 {
   "heroImage": "/images/strava-keychain/keychain-04.jpg",
-  "gallery": [
-    {
-      "id": "img-4",
-      "type": "image",
-      "title": "Detail 3D Print Rute Lari & Data Strava (10x5 cm)",
-      "caption": "Gantungan kunci 3D print timbul di depan mesin cetak 3D dengan garis rute oranye, branding STRAVA X whereIsIt?, serta data jarak, pace, dan waktu.",
-      "src": "/images/strava-keychain/keychain-04.jpg",
-      "badge": "Foto Produk 1",
-      "aspectRatio": "1:1",
-      "isTodo": false
-    },
-    {
-      "id": "img-5",
-      "type": "image",
-      "title": "Everyday Carry: Diklip di Celana",
-      "caption": "Tampilan gantungan kunci saat dikaitkan di celana untuk aktivitas harian dan perjalanan komuter.",
-      "src": "/images/strava-keychain/keychain-05.jpg",
-      "badge": "Foto Produk 2",
-      "aspectRatio": "1:1",
-      "isTodo": false
-    },
-    {
-      "id": "img-6",
-      "type": "image",
-      "title": "Siap Tap di Stasiun MRT",
-      "caption": "Dua gantungan kunci rute Strava x WhereIsIt? di tangga stasiun MRT, siap digunakan sebagai kenang-kenangan race sekaligus kartu tap harian.",
-      "src": "/images/strava-keychain/keychain-06.jpg",
-      "badge": "Foto Produk 3",
-      "aspectRatio": "1:1",
-      "isTodo": false
-    },
-    {
-      "id": "vid-mrt-tap",
-      "type": "video",
-      "title": "Bukti Tap di Gerbang MRT Jakarta (Threads Viral)",
-      "caption": "POV tap gantungan kunci di reader fare gate MRT Jakarta: lampu indikator hijau menyala dan saldo langsung muncul (contoh Rp48.500).",
-      "src": "/videos/strava-keychain/threads-mrt-tap.mp4",
-      "highlightBadge": "Bukti Video Threads (88.2K Views)",
-      "videoFormat": "auto",
-      "aspectRatio": "auto",
-      "isTodo": true,
-      "todoLabel": "TODO: Slot video POV tap gate MRT Jakarta dari postingan Threads @jaynrrrrr"
-    },
-    {
-      "id": "vid-pants-clip",
-      "type": "video",
-      "title": "Everyday Carry di Kereta & Celana Lari",
-      "caption": "Dipakai beraktivitas sehari-hari dan di dalam kereta, ringan dan praktis dibawa.",
-      "src": "/videos/strava-keychain/threads-clip-pants.mp4",
-      "highlightBadge": "Everyday Carry",
-      "videoFormat": "auto",
-      "aspectRatio": "auto",
-      "isTodo": true,
-      "todoLabel": "TODO: Slot video pemakaian di kereta & klip celana dari Threads @jaynrrrrr"
-    },
-    {
-      "id": "vid-blender-cad",
-      "type": "video",
-      "title": "Modeling 3D Blender 3.6 (\"BDO ULTRA\")",
-      "caption": "Proses rekonstruksi kontur jalur lari menjadi model 3D topografi timbul sebelum dicetak.",
-      "src": "/videos/strava-keychain/threads-blender-cad.mp4",
-      "highlightBadge": "3D Modeling",
-      "videoFormat": "auto",
-      "aspectRatio": "auto",
-      "isTodo": true,
-      "todoLabel": "TODO: Slot video preview 3D Blender \"BDO ULTRA\" dari Threads @jaynrrrrr"
-    }
-  ],
-  "updatedAt": "2026-11-17T23:08:16.160Z",
+  "updatedAt": "2026-11-18T08:00:13.490Z",
   "variationImages": {
+    "var-10x5": "/images/strava-keychain/keychain-04.jpg",
     "var-emoney": "/images/strava-keychain/keychain-05.jpg",
     "var-flazz": "/images/strava-keychain/keychain-06.jpg"
   },
   "variationPrices": {
+    "var-10x5": 119000,
     "var-emoney": 180000,
     "var-flazz": 220000
   }

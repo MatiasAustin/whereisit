@@ -3,6 +3,7 @@ import {
   getStravaOrders,
   getStravaOrderById,
   updateStravaOrderStatus,
+  verifyClickyOrderPayment,
   getQueueSettings,
   computeEstimatedCompletion,
   createStravaOrder,
@@ -128,6 +129,19 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: false, error: 'Order ID wajib diisi' }, { status: 400 });
     }
 
+    // Action: Manual verification of Clicky payment by admin
+    if (body.action === 'verify_clicky_payment') {
+      const verifyRes = await verifyClickyOrderPayment(id, notes);
+      if (!verifyRes.success) {
+        return NextResponse.json({ success: false, error: verifyRes.error }, { status: 400 });
+      }
+      return NextResponse.json({
+        success: true,
+        message: 'Pembayaran Clicky berhasil diverifikasi!',
+        data: verifyRes.order,
+      });
+    }
+
     const existingOrder = await getStravaOrderById(id);
     if (!existingOrder) {
       return NextResponse.json({ success: false, error: 'Pesanan tidak ditemukan' }, { status: 404 });
@@ -186,8 +200,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       customer,
-      variationId = 'var-10x5',
-      variationName = '10x5 cm',
+      variationId = 'var-57x94',
+      variationName = '5.7x9.4 cm',
       price = 119000,
       subtotal = 119000,
       shippingFee = 0,

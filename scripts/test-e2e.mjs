@@ -37,7 +37,7 @@ async function runTests() {
   }
   console.log('✓ /strava-route-lamp and /smart-cube verified as Coming Soon with zero prices.');
 
-  // Test 2: Landing Page /preorder/keychain-strava (2 Variations: Emoney & Flazz, Unique Photos)
+  // Test 2: Landing Page /preorder/keychain-strava (3 Variations: 5.7x9.4 cm, Emoney & Flazz, Unique Photos)
   console.log('\n[2] Testing GET /preorder/keychain-strava ...');
   const resLanding = await fetch(`${BASE}/preorder/keychain-strava`);
   if (!resLanding.ok) throw new Error(`Landing page returned ${resLanding.status}`);
@@ -45,8 +45,8 @@ async function runTests() {
   if (!htmlLanding.includes('Keychain Custom Data Strava x Where Is It? 3D print Custom')) {
     throw new Error('Landing page missing exact product name');
   }
-  if (!htmlLanding.includes('10x5 cm Emoney') || !htmlLanding.includes('10x5 cm Flazz')) {
-    throw new Error('Landing page missing exact 2 variation names');
+  if (!htmlLanding.includes('5.7x9.4 cm') || !htmlLanding.includes('5.7x9.4 cm Emoney') || !htmlLanding.includes('5.7x9.4 cm Flazz')) {
+    throw new Error('Landing page missing exact 3 variation names (5.7x9.4 cm)');
   }
   if (!htmlLanding.includes('keychain-04.jpg') || !htmlLanding.includes('keychain-05.jpg') || !htmlLanding.includes('keychain-06.jpg')) {
     throw new Error('Landing page missing unique photos keychain-04/05/06');
@@ -54,7 +54,7 @@ async function runTests() {
   if (htmlLanding.includes('keychain-01.jpg') || htmlLanding.includes('keychain-02.jpg') || htmlLanding.includes('keychain-03.jpg')) {
     throw new Error('Landing page still references deleted duplicate photos 01/02/03');
   }
-  console.log('✓ Keychain landing page verified (exact 2 studio variations: Emoney & Flazz + unique photos).');
+  console.log('✓ Keychain landing page verified (exact 3 studio variations: 5.7x9.4 cm, Emoney & Flazz + unique photos).');
 
   // Test 3: Notify List Signup & Admin Grouping
   console.log('\n[3] Testing Coming Soon Notify List API ...');
@@ -106,10 +106,10 @@ async function runTests() {
 
   const resOrderInit = await fetch(`${BASE}/api/strava-orders?orderId=${orderId}&phone=081234567899`);
   const dataOrderInit = await resOrderInit.json();
-  if (dataOrderInit.data.variationName !== '10x5 cm Flazz' || dataOrderInit.data.total !== 220000 || dataOrderInit.data.status !== 'Menunggu Pembayaran') {
+  if (dataOrderInit.data.variationName !== '5.7x9.4 cm Flazz' || dataOrderInit.data.total !== 220000 || dataOrderInit.data.status !== 'Menunggu Pembayaran') {
     throw new Error(`Order check mismatch: ${JSON.stringify(dataOrderInit.data)}`);
   }
-  console.log('✓ Variant 3 saved server-side ("10x5 cm Flazz", Rp220.000, status "Menunggu Pembayaran").');
+  console.log('✓ Variant 3 saved server-side ("5.7x9.4 cm Flazz", Rp220.000, status "Menunggu Pembayaran").');
 
   // Test 5: Webhook Security & Negative Verification + Positive Payment + Idempotency
   console.log('\n[5] Testing Mayar Webhook Verification & Guard Rules ...');
@@ -163,6 +163,33 @@ async function runTests() {
   }
   console.log('✓ Webhook verified: Rejects bad tokens/unpaid/mismatched amounts, approves exact match once (idempotent).');
 
+  // Test 5b: Clicky Provider Checkout & Manual Verification
+  console.log('\n[5b] Testing Clicky Checkout & Admin Payment Verification ...');
+  const resClickyCheckout = await fetch(`${BASE}/api/checkout/clicky`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      customer: {
+        fullName: 'Budi Runner',
+        phone: '081288880001',
+        email: 'budi@example.test',
+        address: 'Jl. Sudirman No. 10',
+        city: 'Jakarta',
+      },
+      variationId: 'var-57x94',
+      shippingRegion: 'Jabodetabek',
+    }),
+  });
+  const dataClickyCheckout = await resClickyCheckout.json();
+  if (!dataClickyCheckout.success || !dataClickyCheckout.orderId || dataClickyCheckout.total !== 135000) {
+    throw new Error(`Clicky checkout failed: ${JSON.stringify(dataClickyCheckout)}`);
+  }
+  if (!dataClickyCheckout.paymentUrl.includes('keychain-custom-data-strava-x-where-is-it-jabodetabek-pre-order-batch-2')) {
+    throw new Error(`Clicky payment link mismatch: ${dataClickyCheckout.paymentUrl}`);
+  }
+  const clickyOrderId = dataClickyCheckout.orderId;
+  console.log(`✓ Clicky order created with subsidized flat shipping: #${clickyOrderId} (Total Rp135.000, 1 matching link).`);
+
   // Test 6: Admin Session & Production Guard Check
   console.log('\n[6] Testing Admin Production Guard & Post-Payment Data Form ...');
   const resLogin = await fetch(`${BASE}/api/admin/session`, {
@@ -171,6 +198,18 @@ async function runTests() {
     body: JSON.stringify({ passcode: 'whereisit2026' }),
   });
   const cookieHeader = resLogin.headers.get('set-cookie') || '';
+
+  // Verify Clicky Payment via Admin action
+  const resVerifyClicky = await fetch(`${BASE}/api/strava-orders`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
+    body: JSON.stringify({ id: clickyOrderId, action: 'verify_clicky_payment' }),
+  });
+  const dataVerifyClicky = await resVerifyClicky.json();
+  if (!dataVerifyClicky.success) {
+    throw new Error(`Clicky admin verification failed: ${JSON.stringify(dataVerifyClicky)}`);
+  }
+  console.log(`✓ Clicky payment manually verified by admin for order #${clickyOrderId}.`);
 
   const resGuard = await fetch(`${BASE}/api/strava-orders`, {
     method: 'PATCH',
@@ -314,8 +353,8 @@ async function runTests() {
         city: 'Bandung',
       },
       variationId: 'var-emoney',
-      variationName: '10x5 cm Emoney',
-      price: 150000,
+      variationName: '5.7x9.4 cm Emoney',
+      price: 180000,
       status: 'Produksi',
       paymentMethod: 'WhatsApp Manual Transfer',
     }),
@@ -349,7 +388,7 @@ async function runTests() {
   const ordersFile = path.join(process.cwd(), 'data', 'strava-orders.json');
   if (fs.existsSync(ordersFile)) {
     const orders = JSON.parse(fs.readFileSync(ordersFile, 'utf-8'));
-    const cleaned = orders.filter((o) => o.id !== orderId);
+    const cleaned = orders.filter((o) => o.id !== orderId && o.id !== clickyOrderId);
     fs.writeFileSync(ordersFile, JSON.stringify(cleaned, null, 2));
   }
   const notifyFile = path.join(process.cwd(), 'data', 'notify-list.json');
