@@ -6,7 +6,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     slug: 'keychain-strava',
     name: 'Keychain Custom Data Strava x Where Is It? 3D print Custom',
     category: 'Desk Objects',
-    price: 119000,
+    price: 180000,
     badge: 'popular',
     shortDescription:
       'Rute lari kamu, sekarang bisa dipegang. Gantungan kunci 3D print dari rute Strava kamu sendiri lengkap dengan peta rute, jarak, pace, dan waktu tempuh.',
@@ -16,7 +16,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     dimensions: '10x5 cm',
     weight: '45 g',
     layerResolution: '0.12mm Topografi 3D Timbul',
-    colorOptions: ['10x5 cm', '10x5 cm Emoney', '10x5 cm Flazz'],
+    colorOptions: ['10x5 cm Emoney', '10x5 cm Flazz'],
     images: [
       '/images/strava-keychain/keychain-04.jpg',
       '/images/strava-keychain/keychain-05.jpg',

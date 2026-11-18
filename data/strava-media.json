@@ -70,12 +70,10 @@
   ],
   "updatedAt": "2026-11-17T23:08:16.160Z",
   "variationImages": {
-    "var-10x5": "/images/strava-keychain/keychain-04.jpg",
     "var-emoney": "/images/strava-keychain/keychain-05.jpg",
     "var-flazz": "/images/strava-keychain/keychain-06.jpg"
   },
   "variationPrices": {
-    "var-10x5": 119000,
     "var-emoney": 180000,
     "var-flazz": 220000
   }

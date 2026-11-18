@@ -77,7 +77,7 @@ export default function StravaGallery({ items: externalItems }: StravaGalleryPro
               ) : (
                 <>
                   <ImageIcon className="w-3 h-3 text-[#8BA1B4]" aria-hidden="true" />
-                  <span>{activeItem.badge || 'Foto Resmi Shopee'}</span>
+                  <span>{activeItem.badge || 'Foto Resmi Studio'}</span>
                 </>
               )}
             </span>
@@ -174,27 +174,32 @@ export default function StravaGallery({ items: externalItems }: StravaGalleryPro
             <p className="text-[#D5E1E9] text-[11px] max-w-md">{activeItem.caption}</p>
           </div>
 
-          <a
-            href={
-              activeItem.type === 'video'
-                ? ytInfo?.isYouTube
+          {activeItem.type === 'video' ? (
+            <a
+              href={
+                ytInfo?.isYouTube
                   ? activeItem.src
                   : STRAVA_PRODUCT_CONFIG.sourceOfTruth.threadsUrl
-                : STRAVA_PRODUCT_CONFIG.sourceOfTruth.shopeeUrl
-            }
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#8BA1B4] hover:text-white transition-colors underline underline-offset-4 flex-shrink-0 min-h-[36px]"
-          >
-            <span>
-              {activeItem.type === 'video'
-                ? ytInfo?.isYouTube
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#8BA1B4] hover:text-white transition-colors underline underline-offset-4 flex-shrink-0 min-h-[36px]"
+            >
+              <span>
+                {ytInfo?.isYouTube
                   ? 'Tonton di YouTube'
-                  : 'Lihat di Threads @jaynrrrrr'
-                : 'Shopee WhereIsIt?'}
-            </span>
-            <ExternalLink className="w-3 h-3" aria-hidden="true" />
-          </a>
+                  : 'Lihat di Threads @jaynrrrrr'}
+              </span>
+              <ExternalLink className="w-3 h-3" aria-hidden="true" />
+            </a>
+          ) : (
+            <a
+              href="#variations"
+              className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#8BA1B4] hover:text-white transition-colors underline underline-offset-4 flex-shrink-0 min-h-[36px]"
+            >
+              <span>Lihat Detail Varian</span>
+            </a>
+          )}
         </div>
       </div>
 

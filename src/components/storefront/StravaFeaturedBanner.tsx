@@ -48,7 +48,7 @@ export default function StravaFeaturedBanner() {
                   </span>
                   <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-[#26333E] text-amber-300 border border-[#3E5161] flex items-center gap-1">
                     <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                    <span>Shopee {STRAVA_PRODUCT_CONFIG.sourceOfTruth.shopeeRating}</span>
+                    <span>Rating {STRAVA_PRODUCT_CONFIG.sourceOfTruth.studioRating} ★</span>
                   </span>
                 </div>
 

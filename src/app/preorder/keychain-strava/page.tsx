@@ -95,7 +95,7 @@ export default function StravaKeychainLandingPage() {
 
               <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-white text-[#44505C] border border-[#DDD5C7] flex items-center gap-1">
                 <Star className="w-3 h-3 fill-amber-400 text-amber-400" aria-hidden="true" />
-                <span>Rating Shopee {STRAVA_PRODUCT_CONFIG.sourceOfTruth.shopeeRating}</span>
+                <span>Rating Studio {STRAVA_PRODUCT_CONFIG.sourceOfTruth.studioRating} ★</span>
               </span>
             </div>
 
@@ -112,7 +112,7 @@ export default function StravaKeychainLandingPage() {
                 </div>
 
                 <p className="text-sm sm:text-base text-[#44505C] leading-relaxed max-w-xl">
-                  Gantungan kunci 3D print dari rute Strava kamu sendiri, lengkap dengan peta rute, jarak, pace, dan waktu tempuh. Cocok untuk kenang-kenangan race, PB pertama, atau bukti kamu pernah lari sejauh itu. Tersedia varian yang bisa difungsikan sebagai e-money mulai Rp150.000.
+                  Gantungan kunci 3D print dari rute Strava kamu sendiri, lengkap dengan peta rute, jarak, pace, dan waktu tempuh. Cocok untuk kenang-kenangan race, PB pertama, atau bukti kamu pernah lari sejauh itu. Tersedia varian yang bisa difungsikan sebagai e-money &amp; Flazz.
                 </p>
 
                 {/* Price Display */}
@@ -124,7 +124,7 @@ export default function StravaKeychainLandingPage() {
                     {dynamicPriceRange}
                   </div>
                   <span className="text-[11px] text-[#3E5161] font-medium block mt-0.5">
-                    3 variasi Shopee • {STRAVA_PRODUCT_CONFIG.shippingPolicyText}
+                    2 Varian Resmi (E-Money &amp; Flazz) • {STRAVA_PRODUCT_CONFIG.shippingPolicyText}
                   </span>
                   <span className="text-[11px] text-[#556473] block">
                     Estimasi produksi: {adminLeadNote}
@@ -187,7 +187,7 @@ export default function StravaKeychainLandingPage() {
                       width={1024}
                       height={1024}
                       fetchPriority="high"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover object-center"
                     />
                   </div>
 
@@ -214,21 +214,15 @@ export default function StravaKeychainLandingPage() {
                     Foto Asli Produk &amp; Video Bukti Threads
                   </h2>
                   <p className="text-xs sm:text-sm text-[#556473]">
-                    3 foto unik produk resmi Shopee studio dan slot bukti video dari postingan Threads @jaynrrrrr.
+                    Foto asli produk resmi studio dan slot bukti video dari postingan Threads @jaynrrrrr.
                   </p>
                 </div>
 
                 <div className="text-xs text-[#556473] flex items-center gap-2">
-                  <span>Listing Asli:</span>
-                  <a
-                    href={STRAVA_PRODUCT_CONFIG.sourceOfTruth.shopeeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold text-[#3E5161] hover:underline flex items-center gap-1"
-                  >
-                    <span>Shopee WhereIsIt?</span>
-                    <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                  </a>
+                  <span>Workshop:</span>
+                  <span className="font-bold text-[#3E5161]">
+                    Kab. Karawang &amp; Jakarta
+                  </span>
                 </div>
               </div>
 
@@ -363,13 +357,13 @@ export default function StravaKeychainLandingPage() {
           </div>
         </section>
 
-        {/* SECTION F: VARIATIONS (3 VARIATIONS EXACTLY MATCHING SHOPEE) */}
+        {/* SECTION F: VARIATIONS (2 VARIATIONS: EMONEY & FLAZZ) */}
         <section id="variations" className="py-14 sm:py-20 border-b border-[#ECE6DC]">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
             <BlurFade>
               <div className="text-center space-y-2">
                 <span className="text-xs uppercase tracking-widest text-[#5C7489] font-bold">
-                  Pilihan Variasi Resmi Shopee
+                  Pilihan Variasi Keychain
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-black text-[#14191F] tracking-tight">
                   Pilih Varian Keychain Kamu
@@ -379,7 +373,7 @@ export default function StravaKeychainLandingPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch mt-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch mt-8 max-w-4xl mx-auto">
                 {STRAVA_PRODUCT_CONFIG.variations.map((v) => (
                   <StudioTiltCard key={v.id} className="h-full">
                     <div
@@ -399,7 +393,7 @@ export default function StravaKeychainLandingPage() {
                               alt={`${STRAVA_PRODUCT_CONFIG.name} - ${v.name}`}
                               width={512}
                               height={512}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover object-center"
                             />
                           </div>
                         )}
@@ -562,10 +556,10 @@ export default function StravaKeychainLandingPage() {
                   Bukti Nyata
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-black text-[#14191F] tracking-tight">
-                  Rekam Jejak di Threads &amp; Shopee
+                  Rekam Jejak &amp; Ulasan Studio
                 </h2>
                 <p className="text-xs text-[#44505C]">
-                  Hanya menampilkan tautan dan angka nyata dari Threads dan toko Shopee WhereIsIt?.
+                  Hanya menampilkan tautan dan angka nyata dari Threads dan WhereIsIt Studio.
                 </p>
               </div>
 
@@ -589,7 +583,7 @@ export default function StravaKeychainLandingPage() {
                       Mendapat <strong><NumberTicker value={1977} /> likes</strong>, <strong><NumberTicker value={108} /> komentar</strong>, <strong><NumberTicker value={114} /> repost</strong>, dan <strong><NumberTicker value={542} /> share</strong>. Menampilkan bukti tap di reader gate MRT Jakarta (lampu hijau &amp; saldo muncul) serta preview 3D model &ldquo;BDO ULTRA&rdquo;.
                     </p>
                     <p className="text-[11px] text-[#556473]">
-                      Kontak resmi toko: @whereisit.ofc
+                      Kontak resmi studio: @whereisit.ofc
                     </p>
                   </div>
 
@@ -604,11 +598,11 @@ export default function StravaKeychainLandingPage() {
                   </a>
                 </div>
 
-                {/* Card 2: Shopee Store 5.0 Rating */}
+                {/* Card 2: Studio Quality & 5.0 Rating */}
                 <div className="p-6 rounded-3xl bg-white border border-[#E8E2D7] shadow-sm space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-900 border border-amber-200">
-                      Listing Shopee Resmi
+                      Standar Studio WhereIsIt
                     </span>
                     <div className="flex items-center gap-1 text-xs font-bold text-amber-800">
                       <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
@@ -618,25 +612,24 @@ export default function StravaKeychainLandingPage() {
 
                   <div className="space-y-1.5">
                     <h3 className="text-sm font-bold text-[#14191F]">
-                      WhereIsIt? (Kab. Karawang)
+                      WhereIsIt? Studio (Kab. Karawang &amp; Jakarta)
                     </h3>
                     <p className="text-xs text-[#44505C] leading-relaxed">
                       Produk: <strong>{STRAVA_PRODUCT_CONFIG.name}</strong>. Status: <strong>{STRAVA_PRODUCT_CONFIG.shippingPolicyText}</strong>.
                     </p>
                     <p className="text-[11px] text-[#556473]">
-                      Shop ID: {STRAVA_PRODUCT_CONFIG.sourceOfTruth.shopeeShopId} • Product ID: {STRAVA_PRODUCT_CONFIG.sourceOfTruth.shopeeProductId}
+                      Setiap gantungan kunci dibuat presisi menggunakan 3D print relief beresolusi tinggi, diintegrasikan dengan chip e-money/flazz aktif, serta lolos uji tap gate dan QC manual studio.
                     </p>
                   </div>
 
-                  <a
-                    href={STRAVA_PRODUCT_CONFIG.sourceOfTruth.shopeeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => handleOpenCheckout()}
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-[#3E5161] hover:underline pt-2"
                   >
-                    <span>Buka Halaman Produk di Shopee</span>
-                    <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                  </a>
+                    <span>Pilih Varian &amp; Pre-Order Sekarang</span>
+                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                  </button>
                 </div>
               </div>
             </BlurFade>

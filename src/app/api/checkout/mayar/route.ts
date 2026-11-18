@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Alamat pengiriman wajib diisi' }, { status: 400 });
     }
 
-    // Find variation (match by id, exact Shopee name, or legacy alias)
+    // Find variation (match by id, exact variation name, or legacy alias)
     const variations = await getStravaVariations();
     const variation =
       variations.find(

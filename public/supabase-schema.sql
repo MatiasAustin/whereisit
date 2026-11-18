@@ -384,7 +384,7 @@ INSERT INTO public.store_settings (id, data, updated_at) VALUES (
       "heroStats": [
         { "value": "100%", "label": "Custom Physical Data" },
         { "value": "0.12mm", "label": "Micro-Layer Precision" },
-        { "value": "5.0 ★", "label": "Shopee Studio Rating" }
+        { "value": "5.0 ★", "label": "Verified Studio Rating" }
       ],
       "featuredTag": "Highlight Produk",
       "featuredTitle": "Rute lari kamu, sekarang bisa dipegang.",

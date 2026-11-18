@@ -1633,7 +1633,7 @@ export default function OrdersPage() {
                   + Tambah Pesanan Pre-Order Manual
                 </h3>
                 <p className="text-xs text-[#7A8B99]">
-                  Input pesanan dari chat WhatsApp / Shopee untuk masuk antrian live studio.
+                  Input pesanan dari chat WhatsApp / direct channel untuk masuk antrian live studio.
                 </p>
               </div>
               <button
@@ -1760,7 +1760,7 @@ export default function OrdersPage() {
                       className="w-full px-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs font-semibold"
                     >
                       <option value="WhatsApp Manual Order">WhatsApp Manual Transfer</option>
-                      <option value="Shopee Order">Shopee Indonesia</option>
+                      <option value="Direct Studio Order">Direct Studio Order</option>
                       <option value="Mayar QRIS">Mayar QRIS (Sudah Lunas)</option>
                       <option value="Cash / Studio Walk-In">Studio Walk-In</option>
                     </select>

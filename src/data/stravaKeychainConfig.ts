@@ -5,12 +5,12 @@ export const STRAVA_PRODUCT_CONFIG = {
   shortName: 'Keychain Custom Data Strava x Where Is It? 3D print Custom',
   hook: 'Rute lari kamu, sekarang bisa dipegang.',
   badge: 'Pre-Order',
-  priceRange: 'Rp119.000 – Rp220.000',
+  priceRange: 'Rp180.000 – Rp220.000',
   defaultLeadDays: 7, // 5-7 hari kerja sejak desain dikonfirmasi
-  shopeeMaxDays: 10,
+  preorderMaxDays: 10,
   shippingPolicyText: 'Pre-order, dikirim dalam 10 hari',
 
-  // Official Shopee Description
+  // Official Studio Description
   descriptionId:
     'Gantungan Kunci Rute Lari Custom 3D Print — Strava x whereisit? rute lari kamu, sekarang bisa dipegang. gantungan kunci 3d print dari rute strava kamu sendiri — lengkap dengan peta rute, jarak, pace, dan waktu tempuh. cocok buat kenang-kenangan race, pb pertama, atau sekadar bukti kamu pernah lari sejauh itu.',
 
@@ -25,13 +25,7 @@ export const STRAVA_PRODUCT_CONFIG = {
 
   // Real Social Proof & Verified Store Metrics (No hardcoded stale dates or chat rates)
   sourceOfTruth: {
-    shopeeUrl: 'https://shopee.co.id/product/760174452/41886615712',
-    shopeeShopId: '760174452',
-    shopeeProductId: '41886615712',
-    shopeeRating: '5.0',
-    shopeeLocation: 'Kab. Karawang',
-    shopeeProductCount: 1,
-    shopeeShipsWithin: 'Pre-order, dikirim dalam 10 hari',
+    studioRating: '5.0',
     threadsUrl: 'https://www.threads.com/@jaynrrrrr/post/Dfg443YFJQX',
     threadsViews: '88.2K',
     threadsViewsNumber: 88200,
@@ -48,30 +42,14 @@ export const STRAVA_PRODUCT_CONFIG = {
     topRequestedRaces: 'Bormar (Borobudur Marathon), JRF (Jakarta Running Festival), FM (Full Marathon)',
   },
 
-  // 3 Confirmed Variations matching Shopee character-for-character (16 Nov 2026)
+  // 2 Confirmed Variations: Emoney & Flazz
   variations: [
-    {
-      id: 'var-10x5',
-      name: '10x5 cm',
-      price: 119000,
-      image: '/images/strava-keychain/keychain-04.jpg',
-      badge: 'Varian 1',
-      shortDesc: 'Gantungan kunci 3D print timbul rute lari personal ukuran 10x5 cm lengkap dengan peta rute, jarak, pace, dan waktu tempuh.',
-      features: [
-        '1x gantungan kunci 3D print rute lari custom (10x5 cm)',
-        'Rute 3D timbul (topografi) dengan garis rute oranye khas Strava',
-        'Branding resmi "STRAVA X whereIsIt?"',
-        'Peta rute + jarak + pace + waktu sesuai data Strava kamu',
-        'Termasuk ring gantungan kunci',
-      ],
-      includesEmoney: false,
-    },
     {
       id: 'var-emoney',
       name: '10x5 cm Emoney',
       price: 180000,
       image: '/images/strava-keychain/keychain-05.jpg',
-      badge: 'Varian 2 (E-Money)',
+      badge: 'Varian 1 (E-Money)',
       isPopular: true,
       shortDesc: 'Gantungan kunci 3D print rute Strava ukuran 10x5 cm termasuk fungsi e-money aktif.',
       features: [
@@ -90,11 +68,11 @@ export const STRAVA_PRODUCT_CONFIG = {
       name: '10x5 cm Flazz',
       price: 220000,
       image: '/images/strava-keychain/keychain-06.jpg',
-      badge: 'Varian 3',
+      badge: 'Varian 2 (Flazz)',
       shortDesc: 'Gantungan kunci 3D print rute Strava ukuran 10x5 cm varian Flazz.',
       features: [
         '1x gantungan kunci 3D print rute lari custom (10x5 cm)',
-        'Varian 10x5 cm Flazz sesuai pilihan katalog Shopee',
+        'Varian 10x5 cm Flazz resmi WhereIsIt Studio',
         'Rute 3D timbul (topografi) dengan garis rute oranye khas Strava',
         'Peta rute + jarak + pace + waktu sesuai data Strava kamu',
         'Termasuk ring gantungan kunci',
@@ -191,7 +169,7 @@ export const STRAVA_PRODUCT_CONFIG = {
     },
   ],
 
-  // What you get (Yang didapat pembeli sesuai Shopee)
+  // What you get (Yang didapat pembeli)
   whatYouGet: [
     {
       title: '1x Gantungan Kunci 3D Print Rute Lari Custom',
@@ -202,7 +180,7 @@ export const STRAVA_PRODUCT_CONFIG = {
       desc: 'Dicetak sesuai data aktivitas Strava kamu sendiri: peta rute, jarak tempuh, pace, dan durasi.',
     },
     {
-      title: 'Fungsi E-Money pada Varian Pendukung',
+      title: 'Fungsi E-Money / Flazz Aktif',
       desc: 'Tersedia pada varian 10x5 cm Emoney dan 10x5 cm Flazz. Jenis kartu e-money dikonfirmasi bersama admin saat review desain.',
     },
     {
@@ -216,7 +194,7 @@ export const STRAVA_PRODUCT_CONFIG = {
     {
       step: '01',
       title: 'Pre-Order & Bayar di Website via Mayar',
-      desc: 'Pilih varian (10x5 cm, 10x5 cm Emoney, atau 10x5 cm Flazz), isi data pengiriman minimal, dan selesaikan pembayaran langsung di website melalui Mayar.',
+      desc: 'Pilih varian (10x5 cm Emoney atau 10x5 cm Flazz), isi data pengiriman minimal, dan selesaikan pembayaran langsung di website melalui Mayar.',
       highlight: 'Checkout langsung di website tanpa harus DM dulu',
     },
     {
@@ -251,7 +229,7 @@ export const STRAVA_PRODUCT_CONFIG = {
     },
     {
       q: 'Kartu e-money apa saja yang didukung?',
-      a: 'Tersedia varian 10x5 cm Emoney (Rp150.000) dan 10x5 cm Flazz (Rp200.000). Jenis kartu e-money dikonfirmasi bersama admin saat review desain. Kami tidak mengklaim mendukung semua kartu tanpa konfirmasi terlebih dahulu.',
+      a: 'Tersedia varian 10x5 cm Emoney (Rp180.000) dan 10x5 cm Flazz (Rp220.000). Jenis kartu e-money dikonfirmasi bersama admin saat review desain. Kami tidak mengklaim mendukung semua kartu tanpa konfirmasi terlebih dahulu.',
     },
     {
       q: 'Bagaimana jika saya tidak menggunakan aplikasi Strava?',

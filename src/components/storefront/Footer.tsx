@@ -53,7 +53,7 @@ export default function Footer({ storeSettings }: FooterProps) {
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pt-2 text-xs text-[#8E9FAA]">
               <span>Lokasi Seller: {studioAddress}</span>
               <span className="hidden sm:inline">•</span>
-              <span>Rating Shopee 5.0</span>
+              <span>Rating Studio 5.0 ★</span>
             </div>
           </div>
 
@@ -183,16 +183,6 @@ export default function Footer({ storeSettings }: FooterProps) {
                   className="hover:text-white transition-colors"
                 >
                   Threads &amp; Instagram: @whereisit.ofc
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://shopee.co.id/product/760174452/41886615712"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-white transition-colors"
-                >
-                  Shopee: WhereIsIt? (Kab. Karawang)
                 </a>
               </li>
             </ul>

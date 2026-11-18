@@ -37,16 +37,16 @@ async function runTests() {
   }
   console.log('✓ /strava-route-lamp and /smart-cube verified as Coming Soon with zero prices.');
 
-  // Test 2: Landing Page /preorder/keychain-strava (Exact Shopee Names, 3 Unique Photos)
+  // Test 2: Landing Page /preorder/keychain-strava (2 Variations: Emoney & Flazz, Unique Photos)
   console.log('\n[2] Testing GET /preorder/keychain-strava ...');
   const resLanding = await fetch(`${BASE}/preorder/keychain-strava`);
   if (!resLanding.ok) throw new Error(`Landing page returned ${resLanding.status}`);
   const htmlLanding = await resLanding.text();
   if (!htmlLanding.includes('Keychain Custom Data Strava x Where Is It? 3D print Custom')) {
-    throw new Error('Landing page missing exact Shopee product name');
+    throw new Error('Landing page missing exact product name');
   }
-  if (!htmlLanding.includes('10x5 cm') || !htmlLanding.includes('10x5 cm Emoney') || !htmlLanding.includes('10x5 cm Flazz')) {
-    throw new Error('Landing page missing exact 3 Shopee variation names');
+  if (!htmlLanding.includes('10x5 cm Emoney') || !htmlLanding.includes('10x5 cm Flazz')) {
+    throw new Error('Landing page missing exact 2 variation names');
   }
   if (!htmlLanding.includes('keychain-04.jpg') || !htmlLanding.includes('keychain-05.jpg') || !htmlLanding.includes('keychain-06.jpg')) {
     throw new Error('Landing page missing unique photos keychain-04/05/06');
@@ -54,7 +54,7 @@ async function runTests() {
   if (htmlLanding.includes('keychain-01.jpg') || htmlLanding.includes('keychain-02.jpg') || htmlLanding.includes('keychain-03.jpg')) {
     throw new Error('Landing page still references deleted duplicate photos 01/02/03');
   }
-  console.log('✓ Keychain landing page verified (exact Shopee product/variations + 3 unique photos).');
+  console.log('✓ Keychain landing page verified (exact 2 studio variations: Emoney & Flazz + unique photos).');
 
   // Test 3: Notify List Signup & Admin Grouping
   console.log('\n[3] Testing Coming Soon Notify List API ...');

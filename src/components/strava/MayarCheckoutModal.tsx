@@ -19,7 +19,7 @@ export default function MayarCheckoutModal({
   variationPrices,
 }: MayarCheckoutModalProps) {
   const [selectedVarId, setSelectedVarId] = useState(
-    initialVariationId || STRAVA_PRODUCT_CONFIG.variations[1].id
+    initialVariationId || STRAVA_PRODUCT_CONFIG.variations[0]?.id || 'var-emoney'
   );
   const [mediaPrices, setMediaPrices] = useState<Record<string, number>>(variationPrices || {});
 
@@ -149,9 +149,9 @@ export default function MayarCheckoutModal({
           {/* 1. Pilih Variasi */}
           <div className="space-y-3">
             <span className="block text-xs font-bold uppercase tracking-wider text-[#44505C]">
-              1. Pilih Variasi Shopee Resmi
+              1. Pilih Variasi Keychain
             </span>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {STRAVA_PRODUCT_CONFIG.variations.map((v) => {
                 const isSelected = selectedVarId === v.id;
                 return (

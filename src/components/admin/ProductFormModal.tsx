@@ -83,7 +83,6 @@ export default function ProductFormModal({ product, isOpen, onClose, onSaved }: 
           .then((r) => r.json())
           .then((d) => {
             if (d.success && d.data?.variationPrices) {
-              setVarPrice10x5(d.data.variationPrices['var-10x5'] || 119000);
               setVarPriceEmoney(d.data.variationPrices['var-emoney'] || 180000);
               setVarPriceFlazz(d.data.variationPrices['var-flazz'] || 220000);
             }
@@ -230,7 +229,6 @@ export default function ProductFormModal({ product, isOpen, onClose, onSaved }: 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               variationPrices: {
-                'var-10x5': varPrice10x5,
                 'var-emoney': varPriceEmoney,
                 'var-flazz': varPriceFlazz,
               },
@@ -416,21 +414,21 @@ export default function ProductFormModal({ product, isOpen, onClose, onSaved }: 
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-xs font-black text-[#14191F]">
-                      Harga 3 Variasi Pre-Order Keychain Strava
+                      Harga 2 Variasi Pre-Order Keychain Strava
                     </span>
                     <p className="text-[11px] text-[#556473]">
                       Harga ini otomatis tampil di kartu variasi landing page dan form checkout Mayar.
                     </p>
                   </div>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#14191F] text-white">
-                    Shopee Lineup
+                    Studio Lineup
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="bg-white p-3 rounded-xl border border-[#DDD5C7]">
                     <span className="block text-[11px] font-bold text-[#14191F] mb-1">
-                      1. Standard (10x5 cm)
+                      1. Emoney (10x5 cm)
                     </span>
                     <div className="relative">
                       <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#7A8B99]">
@@ -438,10 +436,10 @@ export default function ProductFormModal({ product, isOpen, onClose, onSaved }: 
                       </span>
                       <input
                         type="number"
-                        value={varPrice10x5}
+                        value={varPriceEmoney}
                         onChange={(e) => {
                           const val = Number(e.target.value);
-                          setVarPrice10x5(val);
+                          setVarPriceEmoney(val);
                           setPrice(val);
                         }}
                         className="w-full pl-8 pr-2.5 py-1.5 rounded-lg bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-bold text-[#14191F]"
@@ -451,24 +449,7 @@ export default function ProductFormModal({ product, isOpen, onClose, onSaved }: 
 
                   <div className="bg-white p-3 rounded-xl border border-[#DDD5C7]">
                     <span className="block text-[11px] font-bold text-[#14191F] mb-1">
-                      2. Emoney (10x5 cm)
-                    </span>
-                    <div className="relative">
-                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#7A8B99]">
-                        Rp
-                      </span>
-                      <input
-                        type="number"
-                        value={varPriceEmoney}
-                        onChange={(e) => setVarPriceEmoney(Number(e.target.value))}
-                        className="w-full pl-8 pr-2.5 py-1.5 rounded-lg bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-bold text-[#14191F]"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-3 rounded-xl border border-[#DDD5C7]">
-                    <span className="block text-[11px] font-bold text-[#14191F] mb-1">
-                      3. Flazz (10x5 cm)
+                      2. Flazz (10x5 cm)
                     </span>
                     <div className="relative">
                       <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#7A8B99]">

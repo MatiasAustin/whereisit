@@ -12,7 +12,7 @@ const SHIPPING_CARRIERS = [
 ];
 
 const PAYMENT_METHODS = [
-  { id: 'qris', name: 'QRIS Instant (GoPay / ShopeePay / OVO / Dana)', icon: 'QRIS' },
+  { id: 'qris', name: 'QRIS Instant (Semua E-Wallet & Mobile Banking)', icon: 'QRIS' },
   { id: 'bca_va', name: 'BCA Virtual Account', icon: 'BCA' },
   { id: 'mandiri_va', name: 'Mandiri Virtual Account', icon: 'MANDIRI' },
   { id: 'credit_card', name: 'Credit / Debit Card (Visa, Mastercard)', icon: 'CARD' },

@@ -80,7 +80,7 @@ export default function KeychainMediaAdminPage() {
   };
 
   const handleResetDefault = async () => {
-    if (!confirm('Kembalikan galeri & foto varian ke konfigurasi standar Shopee?')) return;
+    if (!confirm('Kembalikan galeri & foto varian ke konfigurasi standar studio?')) return;
     setSaving(true);
     try {
       const res = await fetch('/api/strava-media', {
@@ -91,7 +91,7 @@ export default function KeychainMediaAdminPage() {
       const data = await res.json();
       if (data.success) {
         setConfig(data.data);
-        showSuccess('Konfigurasi media dikembalikan ke default Shopee.');
+        showSuccess('Konfigurasi media dikembalikan ke default studio.');
       }
     } catch {
       showError('Gagal mereset media.');
@@ -268,18 +268,18 @@ export default function KeychainMediaAdminPage() {
         </div>
       </div>
 
-      {/* SECTION 1: HERO IMAGE & 3 VARIATION THUMBNAILS (AUTO-COMPRESS) */}
+      {/* SECTION 1: HERO IMAGE & 2 VARIATION THUMBNAILS (AUTO-COMPRESS) */}
       <div className="bg-white rounded-3xl border border-[#ECE6DC] p-6 sm:p-8 shadow-sm space-y-6">
         <div className="border-b border-[#F0EBE3] pb-4">
           <h2 className="text-base font-black text-[#14191F]">
-            1. Foto Utama Hero &amp; 3 Foto Variasi Shopee (Auto-Compress WebP)
+            1. Foto Utama Hero &amp; 2 Foto Variasi Studio (Auto-Compress WebP)
           </h2>
           <p className="text-xs text-[#556473]">
             Setiap gambar yang diunggah otomatis diperkecil dan dikompres menjadi WebP agar halaman mobile 390px tetap ringan.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {/* Hero Showcase Image */}
           <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D7] space-y-2">
             <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-[#14191F] text-white">
