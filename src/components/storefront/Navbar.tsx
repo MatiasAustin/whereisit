@@ -65,6 +65,18 @@ export default function Navbar({ storeSettings }: NavbarProps) {
           >
             Studio &amp; Philosophy
           </Link>
+          <Link 
+            href="/faq" 
+            className="hover:text-[#14191F] transition-colors hover:underline underline-offset-8 decoration-[#5C7489]"
+          >
+            FAQ
+          </Link>
+          <Link 
+            href="/kontak" 
+            className="hover:text-[#14191F] transition-colors hover:underline underline-offset-8 decoration-[#5C7489]"
+          >
+            Kontak
+          </Link>
         </nav>
 
         {/* Right Action Icons */}
@@ -121,6 +133,20 @@ export default function Navbar({ storeSettings }: NavbarProps) {
               className="min-h-[44px] py-2 hover:text-[#5C7489] flex items-center"
             >
               Lacak Pesanan
+            </Link>
+            <Link
+              href="/faq"
+              onClick={() => setMobileMenuOpen(false)}
+              className="min-h-[44px] py-2 hover:text-[#5C7489] flex items-center"
+            >
+              FAQ &amp; Bantuan
+            </Link>
+            <Link
+              href="/kontak"
+              onClick={() => setMobileMenuOpen(false)}
+              className="min-h-[44px] py-2 hover:text-[#5C7489] flex items-center"
+            >
+              Kontak Kami
             </Link>
             <Link
               href="/#about"

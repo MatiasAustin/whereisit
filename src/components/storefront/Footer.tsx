@@ -37,7 +37,8 @@ export default function Footer({ storeSettings }: FooterProps) {
   };
 
   const waNumber = process.env.NEXT_PUBLIC_WA_ADMIN_NUMBER || '6285128066354';
-  const contactEmail = 'whereisit26@gmail.com';
+  const contactPhone = storeSettings?.contactPhone || `+${waNumber}`;
+  const contactEmail = storeSettings?.contactEmail || 'whereisit26@gmail.com';
   const studioAddress = storeSettings?.studioAddress || 'Kab. Karawang & Jakarta, Indonesia';
 
   return (
@@ -51,7 +52,7 @@ export default function Footer({ storeSettings }: FooterProps) {
               Transforms personal data, achievements, and everyday routines into meaningful physical products. Personal data. Physical products. Meaningful experiences.
             </p>
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pt-2 text-xs text-[#8E9FAA]">
-              <span>Lokasi Seller: {studioAddress}</span>
+              <span>Lokasi Usaha / Workshop: {studioAddress}</span>
               <span className="hidden sm:inline">•</span>
               <span>Rating Studio 5.0 ★</span>
             </div>
@@ -94,8 +95,8 @@ export default function Footer({ storeSettings }: FooterProps) {
           </div>
         </div>
 
-        {/* Sitemap (3 Real Functional Columns) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 py-12 text-xs text-[#8E9FAA] border-b border-[#24303C]">
+        {/* Sitemap (4 Real Functional Columns) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 py-12 text-xs text-[#8E9FAA] border-b border-[#24303C]">
           <div className="space-y-3">
             <h5 className="font-bold text-white uppercase tracking-wider text-[11px]">Produk &amp; Rilis</h5>
             <ul className="space-y-2.5">
@@ -124,7 +125,7 @@ export default function Footer({ storeSettings }: FooterProps) {
           </div>
 
           <div className="space-y-3">
-            <h5 className="font-bold text-white uppercase tracking-wider text-[11px]">Layanan &amp; Transparansi</h5>
+            <h5 className="font-bold text-white uppercase tracking-wider text-[11px]">Layanan &amp; Order</h5>
             <ul className="space-y-2.5">
               <li>
                 <Link href="/track" className="text-[#8BA1B4] hover:text-white transition-colors font-bold">
@@ -142,13 +143,34 @@ export default function Footer({ storeSettings }: FooterProps) {
                 </Link>
               </li>
               <li>
-                <Link href="/preorder/keychain-strava#faq" className="hover:text-white transition-colors">
-                  FAQ Pre-Order
+                <Link href="/#about" className="hover:text-white transition-colors">
+                  Studio &amp; Philosophy
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-3">
+            <h5 className="font-bold text-white uppercase tracking-wider text-[11px]">Bantuan &amp; Legalitas</h5>
+            <ul className="space-y-2.5">
+              <li>
+                <Link href="/faq" className="text-[#8BA1B4] hover:text-white transition-colors font-bold">
+                  FAQ &amp; Tanya Jawab
                 </Link>
               </li>
               <li>
-                <Link href="/#about" className="hover:text-white transition-colors">
-                  Studio &amp; Philosophy
+                <Link href="/refund-policy" className="hover:text-white transition-colors">
+                  Kebijakan Pengembalian (Refund)
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms-and-conditions" className="hover:text-white transition-colors">
+                  Syarat &amp; Ketentuan Layanan
+                </Link>
+              </li>
+              <li>
+                <Link href="/kontak" className="hover:text-white transition-colors">
+                  Halaman Kontak Resmi
                 </Link>
               </li>
             </ul>
@@ -158,19 +180,25 @@ export default function Footer({ storeSettings }: FooterProps) {
             <h5 className="font-bold text-white uppercase tracking-wider text-[11px]">Kontak Resmi Studio</h5>
             <ul className="space-y-2.5">
               <li>
+                <span className="block text-[#8E9FAA]">
+                  <strong className="text-white">Alamat Usaha:</strong><br />
+                  {studioAddress}
+                </span>
+              </li>
+              <li>
                 <a
                   href={getWhatsAppAdminLink()}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#8BA1B4] hover:text-white transition-colors font-semibold"
+                  className="text-[#8BA1B4] hover:text-white transition-colors font-semibold block"
                 >
-                  WhatsApp Admin: +{waNumber}
+                  WhatsApp: +{waNumber}
                 </a>
               </li>
               <li>
                 <a
                   href={`mailto:${contactEmail}`}
-                  className="hover:text-white transition-colors"
+                  className="hover:text-white transition-colors block"
                 >
                   Email: {contactEmail}
                 </a>
@@ -180,19 +208,24 @@ export default function Footer({ storeSettings }: FooterProps) {
                   href="https://www.threads.com/@whereisit.ofc"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-white transition-colors block"
                 >
-                  Threads &amp; Instagram: @whereisit.ofc
+                  Threads &amp; IG: @whereisit.ofc
                 </a>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom Copyright */}
+        {/* Bottom Bar: Copyright & Compliance Links */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-[#8E9FAA]">
-          <p>© {new Date().getFullYear()} WhereIsIt Studio. Kab. Karawang &amp; Jakarta.</p>
-          <p className="text-center sm:text-right">Personal data. Physical products. Meaningful experiences.</p>
+          <p>© {new Date().getFullYear()} WhereIsIt Studio. {studioAddress}. All rights reserved.</p>
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+            <Link href="/faq" className="hover:text-[#8BA1B4] transition-colors">FAQ</Link>
+            <Link href="/refund-policy" className="hover:text-[#8BA1B4] transition-colors">Refund Policy</Link>
+            <Link href="/terms-and-conditions" className="hover:text-[#8BA1B4] transition-colors">Terms &amp; Conditions</Link>
+            <Link href="/kontak" className="hover:text-[#8BA1B4] transition-colors">Kontak</Link>
+          </div>
         </div>
       </div>
     </footer>
