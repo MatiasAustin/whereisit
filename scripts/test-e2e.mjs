@@ -78,8 +78,8 @@ async function runTests() {
   }
   console.log('✓ Notify List verified ("Minat Lamp" and "Minat Cube" stored server-side).');
 
-  // Test 4: Checkout Variant 3 ("10x5 cm Flazz", Rp200.000) via Mayar Sandbox
-  console.log('\n[4] Testing Checkout for Variant 3 ("10x5 cm Flazz", Rp200.000) ...');
+  // Test 4: Checkout Variant 3 ("10x5 cm Flazz", Rp220.000) via Mayar Sandbox
+  console.log('\n[4] Testing Checkout for Variant 3 ("10x5 cm Flazz", Rp220.000) ...');
   const checkoutPayload = {
     customer: {
       fullName: 'Rian Runner',
@@ -106,24 +106,24 @@ async function runTests() {
 
   const resOrderInit = await fetch(`${BASE}/api/strava-orders?orderId=${orderId}&phone=081234567899`);
   const dataOrderInit = await resOrderInit.json();
-  if (dataOrderInit.data.variationName !== '10x5 cm Flazz' || dataOrderInit.data.total !== 200000 || dataOrderInit.data.status !== 'Menunggu Pembayaran') {
+  if (dataOrderInit.data.variationName !== '10x5 cm Flazz' || dataOrderInit.data.total !== 220000 || dataOrderInit.data.status !== 'Menunggu Pembayaran') {
     throw new Error(`Order check mismatch: ${JSON.stringify(dataOrderInit.data)}`);
   }
-  console.log('✓ Variant 3 saved server-side ("10x5 cm Flazz", Rp200.000, status "Menunggu Pembayaran").');
+  console.log('✓ Variant 3 saved server-side ("10x5 cm Flazz", Rp220.000, status "Menunggu Pembayaran").');
 
   // Test 5: Webhook Security & Negative Verification + Positive Payment + Idempotency
   console.log('\n[5] Testing Mayar Webhook Verification & Guard Rules ...');
   const resWrongToken = await fetch(`${BASE}/api/webhooks/mayar/invalid-token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ event: 'payment.received', data: { id: 'TX-BAD', status: 'paid', amount: 200000, extraData: { orderId } } }),
+    body: JSON.stringify({ event: 'payment.received', data: { id: 'TX-BAD', status: 'paid', amount: 220000, extraData: { orderId } } }),
   });
   if (resWrongToken.status !== 401) throw new Error('Webhook failed to reject invalid token!');
 
   const resUnpaidStatus = await fetch(`${BASE}/api/webhooks/mayar/sandbox-webhook-token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ event: 'payment.received', data: { id: 'TX-UNPAID', status: 'pending', amount: 200000, extraData: { orderId } } }),
+    body: JSON.stringify({ event: 'payment.received', data: { id: 'TX-UNPAID', status: 'pending', amount: 220000, extraData: { orderId } } }),
   });
   if (resUnpaidStatus.ok) throw new Error('Webhook allowed non-paid status!');
 
@@ -140,7 +140,7 @@ async function runTests() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       event: 'payment.received',
-      data: { id: `TX-SBX-${orderId}`, status: 'paid', amount: 200000, paymentMethod: 'QRIS', extraData: { orderId } },
+      data: { id: `TX-SBX-${orderId}`, status: 'paid', amount: 220000, paymentMethod: 'QRIS', extraData: { orderId } },
     }),
   });
   const dataValidWebhook = await resValidWebhook.json();
@@ -154,7 +154,7 @@ async function runTests() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       event: 'payment.received',
-      data: { id: `TX-SBX-${orderId}`, status: 'paid', amount: 200000, extraData: { orderId } },
+      data: { id: `TX-SBX-${orderId}`, status: 'paid', amount: 220000, extraData: { orderId } },
     }),
   });
   const dataIdemp = await resIdempotent.json();

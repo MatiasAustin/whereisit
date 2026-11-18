@@ -194,6 +194,10 @@ export interface HomepageContent {
   heroCtaSecondary: string;
   heroSpecLayer: string;
   heroSpecMaterial: string;
+  heroMainImage?: string;
+  heroMainLabel?: string;
+  heroMainPrice?: string;
+  heroMainLink?: string;
   heroShortcut1Title: string;
   heroShortcut1Image: string;
   heroShortcut2Title: string;
@@ -308,6 +312,7 @@ export interface StravaGalleryMediaItem {
 export interface StravaMediaConfig {
   heroImage: string;
   variationImages: Record<string, string>;
+  variationPrices?: Record<string, number>;
   gallery: StravaGalleryMediaItem[];
   updatedAt: string;
 }
@@ -368,9 +373,14 @@ export interface StravaPreOrder {
     estimatedDays?: number;
     estimatedCompletionDate?: string;
     resiNumber?: string;
+    trackingNumber?: string;
     courier?: string;
+    courierName?: string;
     internalAdminNotes?: string;
+    adminNotes?: string;
+    assignedMachine?: string;
     confirmedAt?: string;
+    startedAt?: string;
   };
   isExample?: boolean;
   createdAt: string;
@@ -391,6 +401,18 @@ export interface PublicQueueItem {
 export interface QueueSettings {
   defaultLeadDays: number;
   customLeadNote: string;
+  queueTitle?: string;
+  queueSubtitle?: string;
+  card1Title?: string;
+  card1Subtitle?: string;
+  card2Title?: string;
+  card2Subtitle?: string;
+  card3Title?: string;
+  card3Subtitle?: string;
+  card4Title?: string;
+  card4Subtitle?: string;
+  card4Value?: string;
+  stageLabels?: Record<string, string>;
   updatedAt: string;
 }
 

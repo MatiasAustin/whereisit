@@ -66,6 +66,14 @@ export default function StravaKeychainLandingPage() {
     setOpenFaqIndex(openFaqIndex === index ? null : index);
   };
 
+  const dynamicVariations = STRAVA_PRODUCT_CONFIG.variations.map((v) => ({
+    ...v,
+    price: mediaConfig?.variationPrices?.[v.id] ?? v.price,
+  }));
+  const minDynamicPrice = Math.min(...dynamicVariations.map((v) => v.price));
+  const maxDynamicPrice = Math.max(...dynamicVariations.map((v) => v.price));
+  const dynamicPriceRange = `${formatRupiah(minDynamicPrice)} – ${formatRupiah(maxDynamicPrice)}`;
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F6F1] text-[#14191F] pb-20 sm:pb-0">
       <Navbar />
@@ -113,7 +121,7 @@ export default function StravaKeychainLandingPage() {
                     Rentang Harga Pre-Order
                   </span>
                   <div className="text-2xl sm:text-3xl font-black text-[#14191F] tracking-tight mt-0.5">
-                    {STRAVA_PRODUCT_CONFIG.priceRange}
+                    {dynamicPriceRange}
                   </div>
                   <span className="text-[11px] text-[#3E5161] font-medium block mt-0.5">
                     3 variasi Shopee • {STRAVA_PRODUCT_CONFIG.shippingPolicyText}
@@ -418,7 +426,7 @@ export default function StravaKeychainLandingPage() {
                             Harga Pre-Order
                           </span>
                           <div className="text-2xl font-black text-[#14191F]">
-                            {formatRupiah(v.price)}
+                            {formatRupiah(mediaConfig?.variationPrices?.[v.id] ?? v.price)}
                           </div>
                         </div>
 
@@ -451,7 +459,7 @@ export default function StravaKeychainLandingPage() {
                               : 'bg-white hover:bg-[#14191F] text-[#14191F] hover:text-white border border-[#DDD5C7]'
                           }`}
                         >
-                          <span>Pilih {v.name} ({formatRupiah(v.price)})</span>
+                          <span>Pilih {v.name} ({formatRupiah(mediaConfig?.variationPrices?.[v.id] ?? v.price)})</span>
                           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                         </button>
                       </div>
@@ -708,6 +716,7 @@ export default function StravaKeychainLandingPage() {
         isOpen={checkoutOpen}
         onClose={() => setCheckoutOpen(false)}
         initialVariationId={selectedVariationId}
+        variationPrices={mediaConfig?.variationPrices}
       />
 
       <Footer />

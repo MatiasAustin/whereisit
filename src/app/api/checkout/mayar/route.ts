@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { generateOrderId, createMayarInvoice } from '@/lib/mayar';
 import { STRAVA_PRODUCT_CONFIG } from '@/data/stravaKeychainConfig';
-import { createStravaOrder, getStravaOrderById } from '@/lib/storage';
+import { createStravaOrder, getStravaOrderById, getStravaVariations } from '@/lib/storage';
 import { StravaPreOrder } from '@/types';
 
 export async function POST(request: Request) {
@@ -24,14 +24,15 @@ export async function POST(request: Request) {
     }
 
     // Find variation (match by id, exact Shopee name, or legacy alias)
+    const variations = await getStravaVariations();
     const variation =
-      STRAVA_PRODUCT_CONFIG.variations.find(
+      variations.find(
         (v) =>
           v.id === variationId ||
           v.name === variationId ||
           (variationId === 'var-standard' && v.id === 'var-10x5') ||
           (variationId === 'var-duo-plate' && v.id === 'var-flazz')
-      ) || STRAVA_PRODUCT_CONFIG.variations[0];
+      ) || variations[0];
 
     // If retrying an existing order, reuse the orderId rather than duplicating
     let orderId = existingOrderId;

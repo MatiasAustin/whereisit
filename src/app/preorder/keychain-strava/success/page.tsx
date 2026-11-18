@@ -25,7 +25,6 @@ function SuccessPageContent() {
   const [order, setOrder] = useState<StravaPreOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [simulating, setSimulating] = useState(false);
   const [retryingPayment, setRetryingPayment] = useState(false);
 
   const handleRetrySameOrder = async () => {
@@ -75,26 +74,6 @@ function SuccessPageContent() {
   useEffect(() => {
     fetchOrderStatus();
   }, [orderId]);
-
-  // Sandbox simulation helper
-  const handleSimulatePayment = async () => {
-    setSimulating(true);
-    try {
-      const res = await fetch('/api/strava-orders/simulate-pay', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        await fetchOrderStatus();
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setSimulating(false);
-    }
-  };
 
   if (!orderId) {
     return (
@@ -231,26 +210,6 @@ function SuccessPageContent() {
                   <span>{retryingPayment ? 'Membuat ulang...' : 'Ulangi Pembayaran (Order ID Sama)'}</span>
                 </button>
               )}
-            </div>
-
-            {/* Sandbox Local Test Simulator (Only shown if payment url is sandbox or no real key) */}
-            <div className="pt-6 border-t border-[#F0EBE3]">
-              <div className="p-4 rounded-2xl bg-[#EDF3F7] border border-[#C5D5E2] text-xs text-[#3E5161] space-y-2 text-left">
-                <span className="font-bold uppercase tracking-wider text-[10px] text-[#5C7489] block">
-                  Alat Uji Coba Sandbox (Developer Verification)
-                </span>
-                <p className="text-[11px] leading-relaxed">
-                  Belum menyambungkan token Mayar production? Anda dapat mensimulasikan webhook pembayaran Mayar secara instan untuk menguji alur formulir data & pelacakan pesanan.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleSimulatePayment}
-                  disabled={simulating}
-                  className="px-4 py-2 rounded-xl bg-[#5C7489] hover:bg-[#3E5161] text-white text-xs font-semibold transition-colors disabled:opacity-50"
-                >
-                  {simulating ? 'Mensimulasikan...' : 'Simulasikan Pembayaran Berhasil (Sandbox)'}
-                </button>
-              </div>
             </div>
           </div>
         )}

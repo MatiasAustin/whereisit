@@ -21,7 +21,13 @@ export default function Hero({ onGoToLineup, storeSettings }: HeroProps) {
   const headlineTitle = content?.heroHeadlineTitle || 'whereisit';
   const specLayer = content?.heroSpecLayer || '0.12mm Topografi 3D Timbul';
   const specMaterial = content?.heroSpecMaterial || '3D Print Custom Objects';
+  const heroMainImage = content?.heroMainImage || '/images/strava-keychain/keychain-04.jpg';
+  const heroMainLabel = content?.heroMainLabel || STRAVA_PRODUCT_CONFIG.name;
+  const heroMainPrice = content?.heroMainPrice || 'Rp119.000';
+  const heroMainLink = content?.heroMainLink || '/preorder/keychain-strava';
+  const shortcut1Title = content?.heroShortcut1Title || '3 Varian Pre-Order';
   const shortcut1Image = content?.heroShortcut1Image || '/images/strava-keychain/keychain-05.jpg';
+  const shortcut2Title = content?.heroShortcut2Title || 'Produk Segera Hadir';
   const shortcut2Image = content?.heroShortcut2Image || '/images/strava-keychain/keychain-06.jpg';
 
   return (
@@ -86,15 +92,15 @@ export default function Hero({ onGoToLineup, storeSettings }: HeroProps) {
             <div className="absolute w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-[#5C7489]/10 blur-3xl -z-10 pointer-events-none"></div>
 
             <Link
-              href="/preorder/keychain-strava"
+              href={heroMainLink}
               className="relative w-full max-w-md sm:max-w-lg aspect-square group block"
-              aria-label={`Lihat ${STRAVA_PRODUCT_CONFIG.name}`}
+              aria-label={`Lihat ${heroMainLabel}`}
             >
               <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 hover:scale-[1.02] bg-[#14191F]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/images/strava-keychain/keychain-04.jpg"
-                  alt={STRAVA_PRODUCT_CONFIG.name}
+                  src={heroMainImage}
+                  alt={heroMainLabel}
                   width={1024}
                   height={1024}
                   fetchPriority="high"
@@ -104,9 +110,9 @@ export default function Hero({ onGoToLineup, storeSettings }: HeroProps) {
                 <div className="absolute bottom-4 left-4 right-4 bg-[#14191F]/90 backdrop-blur-md text-white text-xs px-4 py-2.5 rounded-2xl font-medium flex items-center justify-between gap-2 border border-white/10 shadow-lg">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="w-2 h-2 rounded-full bg-[#5C7489] flex-shrink-0"></span>
-                    <span className="font-semibold truncate">{STRAVA_PRODUCT_CONFIG.name}</span>
+                    <span className="font-semibold truncate">{heroMainLabel}</span>
                   </div>
-                  <span className="text-[#8BA1B4] font-mono flex-shrink-0">Rp119.000</span>
+                  <span className="text-[#8BA1B4] font-mono flex-shrink-0">{heroMainPrice}</span>
                 </div>
               </div>
             </Link>
@@ -122,7 +128,7 @@ export default function Hero({ onGoToLineup, storeSettings }: HeroProps) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={shortcut1Image}
-                  alt="Keychain Strava 10x5 cm Emoney dipakai di celana"
+                  alt={shortcut1Title}
                   width={1024}
                   height={1024}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -130,7 +136,7 @@ export default function Hero({ onGoToLineup, storeSettings }: HeroProps) {
               </div>
               <div className="flex items-center justify-between px-1.5 pb-1">
                 <span className="text-xs sm:text-sm font-semibold text-white tracking-wide">
-                  3 Varian Pre-Order
+                  {shortcut1Title}
                 </span>
                 <span className="text-white group-hover:translate-x-1 transition-transform">
                   →
@@ -147,7 +153,7 @@ export default function Hero({ onGoToLineup, storeSettings }: HeroProps) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={shortcut2Image}
-                  alt="Keychain Strava di stasiun MRT Jakarta"
+                  alt={shortcut2Title}
                   width={1023}
                   height={1023}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -155,7 +161,7 @@ export default function Hero({ onGoToLineup, storeSettings }: HeroProps) {
               </div>
               <div className="flex items-center justify-between px-1.5 pb-1">
                 <span className="text-xs sm:text-sm font-semibold text-white tracking-wide">
-                  Produk Segera Hadir
+                  {shortcut2Title}
                 </span>
                 <span className="text-white group-hover:translate-x-1 transition-transform">
                   →

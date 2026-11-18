@@ -109,11 +109,31 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { id, status, productionUpdates, notes } = body;
+    const { 
+      id, 
+      status, 
+      customer,
+      variationName,
+      variationId,
+      price,
+      subtotal,
+      shippingFee,
+      total,
+      stravaData,
+      productionUpdates, 
+      notes 
+    } = body;
 
-    if (!id || !status) {
-      return NextResponse.json({ success: false, error: 'Order ID dan status wajib diisi' }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Order ID wajib diisi' }, { status: 400 });
     }
+
+    const existingOrder = await getStravaOrderById(id);
+    if (!existingOrder) {
+      return NextResponse.json({ success: false, error: 'Pesanan tidak ditemukan' }, { status: 404 });
+    }
+
+    const targetStatus = (status || existingOrder.status) as StravaOrderStatus;
 
     const validStatuses: StravaOrderStatus[] = [
       'Menunggu Pembayaran',
@@ -127,11 +147,19 @@ export async function PATCH(request: Request) {
       'Selesai',
     ];
 
-    if (!validStatuses.includes(status)) {
+    if (!validStatuses.includes(targetStatus)) {
       return NextResponse.json({ success: false, error: 'Status pesanan tidak valid' }, { status: 400 });
     }
 
-    const result = await updateStravaOrderStatus(id, status, {
+    const result = await updateStravaOrderStatus(id, targetStatus, {
+      ...(customer ? { customer } : {}),
+      ...(variationName ? { variationName } : {}),
+      ...(variationId ? { variationId } : {}),
+      ...(price !== undefined ? { price: Number(price) } : {}),
+      ...(subtotal !== undefined ? { subtotal: Number(subtotal) } : {}),
+      ...(shippingFee !== undefined ? { shippingFee: Number(shippingFee) } : {}),
+      ...(total !== undefined ? { total: Number(total) } : {}),
+      ...(stravaData ? { stravaData } : {}),
       production: productionUpdates,
     });
 
@@ -246,7 +274,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({
         success: true,
         removedCount,
-        message: `${removedCount} pesanan contoh uji coba berhasil dibersihkan dari antrian!`,
+        message: `${removedCount} pesanan contoh berhasil dibersihkan dari antrian!`,
       });
     }
 

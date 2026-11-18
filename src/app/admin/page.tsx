@@ -100,9 +100,9 @@ export default function AdminOverviewPage() {
           </div>
           <div>
             <h3 className="text-2xl font-black text-[#14191F]">{formatRupiah(data.totalSales)}</h3>
-            <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-semibold mt-1">
-              <TrendingUp className="w-3.5 h-3.5" />
-              <span>+18.4% vs last month</span>
+            <div className="flex items-center gap-1 text-[11px] text-[#5C7489] font-semibold mt-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>{data.totalOrders > 0 ? `${data.totalOrders} Transaksi Terverifikasi` : 'Live Studio Sync'}</span>
             </div>
           </div>
         </div>
@@ -117,7 +117,7 @@ export default function AdminOverviewPage() {
           <div>
             <h3 className="text-2xl font-black text-[#14191F]">{data.totalOrders} Orders</h3>
             <div className="flex items-center gap-1 text-[11px] text-[#5C7489] font-medium mt-1">
-              <span>Checkout Foundation Active</span>
+              <span>{data.totalOrders === 0 ? 'Siap menerima pesanan baru' : 'Pesanan aktif studio'}</span>
             </div>
           </div>
         </div>
@@ -170,20 +170,26 @@ export default function AdminOverviewPage() {
           </div>
 
           <div className="mt-4 space-y-2.5">
-            {data.recentDesignInquiries.map((inq: any) => (
-              <div key={inq.id} className="p-3 rounded-2xl bg-[#FAF8F5] border border-[#ECE6DC] flex items-center justify-between text-xs">
-                <div>
-                  <p className="font-bold text-[#14191F]">{inq.clientName}</p>
-                  <p className="text-[11px] text-[#7A8B99] line-clamp-1">{inq.projectType} • {inq.description}</p>
-                </div>
-                <Link
-                  href="/admin/custom/design"
-                  className="px-3 py-1 rounded-full bg-[#5C7489] text-white text-[11px] font-semibold hover:bg-[#4E6377] shrink-0"
-                >
-                  Review Brief
-                </Link>
+            {data.recentDesignInquiries.length === 0 ? (
+              <div className="py-6 px-4 rounded-2xl bg-[#FAF8F5] border border-[#ECE6DC] text-center text-xs text-[#7A8B99]">
+                Tidak ada konsultasi desain pending saat ini.
               </div>
-            ))}
+            ) : (
+              data.recentDesignInquiries.map((inq: any) => (
+                <div key={inq.id} className="p-3 rounded-2xl bg-[#FAF8F5] border border-[#ECE6DC] flex items-center justify-between text-xs">
+                  <div>
+                    <p className="font-bold text-[#14191F]">{inq.clientName}</p>
+                    <p className="text-[11px] text-[#7A8B99] line-clamp-1">{inq.projectType} • {inq.description}</p>
+                  </div>
+                  <Link
+                    href="/admin/custom/design"
+                    className="px-3 py-1 rounded-full bg-[#5C7489] text-white text-[11px] font-semibold hover:bg-[#4E6377] shrink-0"
+                  >
+                    Review Brief
+                  </Link>
+                </div>
+              ))
+            )}
           </div>
 
           <Link
@@ -213,25 +219,31 @@ export default function AdminOverviewPage() {
           </div>
 
           <div className="mt-4 space-y-2.5">
-            {data.lowStockItems.map((prod: any) => (
-              <div key={prod.id} className="p-3 rounded-2xl bg-[#FAF8F5] border border-[#ECE6DC] flex items-center justify-between text-xs">
-                <div className="flex items-center gap-3">
-                  <div className="relative w-9 h-9 rounded-xl overflow-hidden bg-[#ECE6DC] shrink-0">
-                    <Image src={prod.images[0]} alt={prod.name} fill className="object-cover" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-[#14191F] line-clamp-1">{prod.name}</p>
-                    <p className="text-[11px] text-amber-600 font-semibold">{prod.stock} units left in stock</p>
-                  </div>
-                </div>
-                <Link
-                  href="/admin/products/inventory"
-                  className="px-3 py-1 rounded-full bg-[#14191F] text-white text-[11px] font-semibold hover:bg-[#5C7489] shrink-0"
-                >
-                  Adjust Stock
-                </Link>
+            {data.lowStockItems.length === 0 ? (
+              <div className="py-6 px-4 rounded-2xl bg-[#FAF8F5] border border-[#ECE6DC] text-center text-xs text-[#7A8B99]">
+                Semua stok produk dalam batas aman.
               </div>
-            ))}
+            ) : (
+              data.lowStockItems.map((prod: any) => (
+                <div key={prod.id} className="p-3 rounded-2xl bg-[#FAF8F5] border border-[#ECE6DC] flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-9 h-9 rounded-xl overflow-hidden bg-[#ECE6DC] shrink-0">
+                      <Image src={prod.images[0]} alt={prod.name} fill className="object-cover" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-[#14191F] line-clamp-1">{prod.name}</p>
+                      <p className="text-[11px] text-amber-600 font-semibold">{prod.stock} units left in stock</p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/admin/products/inventory"
+                    className="px-3 py-1 rounded-full bg-[#14191F] text-white text-[11px] font-semibold hover:bg-[#5C7489] shrink-0"
+                  >
+                    Adjust Stock
+                  </Link>
+                </div>
+              ))
+            )}
           </div>
 
           <Link
@@ -275,39 +287,49 @@ export default function AdminOverviewPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0EBE3]">
-              {data.recentOrders.map((order: any) => (
-                <tr key={order.id} className="hover:bg-[#FAF8F5] transition-colors">
-                  <td className="px-6 py-4 font-black text-[#14191F]">
-                    <Link href="/admin/orders" className="hover:text-[#5C7489]">
-                      #{order.orderNumber}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="font-bold text-[#14191F]">{order.customer.fullName}</p>
-                    <p className="text-[11px] text-[#7A8B99]">{order.customer.city}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="font-medium text-[#44505C]">{order.items.length} items</p>
-                    <p className="text-[10px] text-[#7A8B99] line-clamp-1">{order.items[0]?.productName}</p>
-                  </td>
-                  <td className="px-6 py-4 font-medium text-[#44505C]">
-                    {order.shippingCarrier}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                      {order.paymentStatus}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#EDF3F7] text-[#5C7489]">
-                      {order.orderStatus}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right font-black text-[#14191F]">
-                    {formatRupiah(order.total)}
+              {data.recentOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-[#7A8B99]">
+                    <Inbox className="w-6 h-6 mx-auto mb-2 text-[#DDD5C7]" />
+                    <p className="font-semibold text-xs text-[#14191F]">Belum ada pesanan terbaru</p>
+                    <p className="text-[11px] text-[#7A8B99] mt-0.5">Pesanan masuk dari storefront dan pre-order Strava akan tampil di sini.</p>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                data.recentOrders.map((order: any) => (
+                  <tr key={order.id} className="hover:bg-[#FAF8F5] transition-colors">
+                    <td className="px-6 py-4 font-black text-[#14191F]">
+                      <Link href="/admin/orders" className="hover:text-[#5C7489]">
+                        #{order.orderNumber}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-bold text-[#14191F]">{order.customer.fullName}</p>
+                      <p className="text-[11px] text-[#7A8B99]">{order.customer.city}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-medium text-[#44505C]">{order.items.length} items</p>
+                      <p className="text-[10px] text-[#7A8B99] line-clamp-1">{order.items[0]?.productName}</p>
+                    </td>
+                    <td className="px-6 py-4 font-medium text-[#44505C]">
+                      {order.shippingCarrier}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        {order.paymentStatus}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#EDF3F7] text-[#5C7489]">
+                        {order.orderStatus}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right font-black text-[#14191F]">
+                      {formatRupiah(order.total)}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

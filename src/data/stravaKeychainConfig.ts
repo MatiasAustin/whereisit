@@ -5,7 +5,7 @@ export const STRAVA_PRODUCT_CONFIG = {
   shortName: 'Keychain Custom Data Strava x Where Is It? 3D print Custom',
   hook: 'Rute lari kamu, sekarang bisa dipegang.',
   badge: 'Pre-Order',
-  priceRange: 'Rp119.000 – Rp200.000',
+  priceRange: 'Rp119.000 – Rp220.000',
   defaultLeadDays: 7, // 5-7 hari kerja sejak desain dikonfirmasi
   shopeeMaxDays: 10,
   shippingPolicyText: 'Pre-order, dikirim dalam 10 hari',
@@ -69,7 +69,7 @@ export const STRAVA_PRODUCT_CONFIG = {
     {
       id: 'var-emoney',
       name: '10x5 cm Emoney',
-      price: 150000,
+      price: 180000,
       image: '/images/strava-keychain/keychain-05.jpg',
       badge: 'Varian 2 (E-Money)',
       isPopular: true,
@@ -88,7 +88,7 @@ export const STRAVA_PRODUCT_CONFIG = {
     {
       id: 'var-flazz',
       name: '10x5 cm Flazz',
-      price: 200000,
+      price: 220000,
       image: '/images/strava-keychain/keychain-06.jpg',
       badge: 'Varian 3',
       shortDesc: 'Gantungan kunci 3D print rute Strava ukuran 10x5 cm varian Flazz.',

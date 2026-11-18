@@ -31,6 +31,7 @@ export async function PUT(request: Request) {
     const saved = await updateStravaMediaConfig({
       heroImage: body.heroImage,
       variationImages: body.variationImages,
+      variationPrices: body.variationPrices,
       gallery: body.gallery,
     });
 

@@ -3,8 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Logo from '@/components/brand/Logo';
-import { SlidersHorizontal, LogOut, CheckCircle } from 'lucide-react';
-import { useAuth } from '@/lib/authContext';
+import { CheckCircle } from 'lucide-react';
 import { StoreSettings } from '@/types';
 import { getWhatsAppAdminLink } from '@/data/stravaKeychainConfig';
 
@@ -13,7 +12,6 @@ interface FooterProps {
 }
 
 export default function Footer({ storeSettings }: FooterProps) {
-  const { isAdmin, logout } = useAuth();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
@@ -197,26 +195,6 @@ export default function Footer({ storeSettings }: FooterProps) {
                   Shopee: WhereIsIt? (Kab. Karawang)
                 </a>
               </li>
-
-              {isAdmin && (
-                <li className="pt-2 border-t border-[#24303C] flex items-center justify-between">
-                  <Link
-                    href="/admin"
-                    className="inline-flex items-center gap-1.5 text-[#8BA1B4] hover:text-white transition-colors font-medium"
-                  >
-                    <SlidersHorizontal className="w-3.5 h-3.5" />
-                    <span>Open Admin Dashboard</span>
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => logout()}
-                    className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 font-medium"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span>Logout</span>
-                  </button>
-                </li>
-              )}
             </ul>
           </div>
         </div>

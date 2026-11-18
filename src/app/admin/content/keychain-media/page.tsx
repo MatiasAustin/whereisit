@@ -296,12 +296,12 @@ export default function KeychainMediaAdminPage() {
 
           {/* 3 Variation Thumbnails */}
           {STRAVA_PRODUCT_CONFIG.variations.map((v) => (
-            <div key={v.id} className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D7] space-y-2">
+            <div key={v.id} className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D7] space-y-3">
               <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-[#EDF3F7] text-[#3E5161]">
                 {v.badge || v.name}
               </span>
               <ImageUploadWithCompress
-                label={`Varian: ${v.name}`}
+                label={`Foto Varian: ${v.name}`}
                 value={config.variationImages[v.id] ?? v.image ?? ''}
                 onChange={(url) =>
                   setConfig({
@@ -312,6 +312,31 @@ export default function KeychainMediaAdminPage() {
                 aspectRatio="square"
                 compressionOptions={{ maxWidth: 1000, maxHeight: 1000, quality: 0.82, preserveAlpha: false }}
               />
+
+              <div className="pt-2 border-t border-[#ECE6DC]">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#44505C] mb-1">
+                  Harga Varian (IDR)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#7A8B99]">
+                    Rp
+                  </span>
+                  <input
+                    type="number"
+                    value={config.variationPrices?.[v.id] ?? v.price}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        variationPrices: {
+                          ...(config.variationPrices || {}),
+                          [v.id]: Number(e.target.value),
+                        },
+                      })
+                    }
+                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs font-bold text-[#14191F] focus:outline-none focus:border-[#5C7489]"
+                  />
+                </div>
+              </div>
             </div>
           ))}
         </div>

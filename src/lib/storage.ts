@@ -20,7 +20,8 @@ import {
   PublicQueueItem,
   QueueSettings,
   NotifyListEntry,
-  StravaMediaConfig
+  StravaMediaConfig,
+  StravaVariation
 } from '@/types';
 import { STRAVA_PRODUCT_CONFIG } from '@/data/stravaKeychainConfig';
 import { INITIAL_PRODUCTS } from './initialData';
@@ -31,7 +32,10 @@ import {
   INITIAL_COLLECTIONS, 
   INITIAL_SETTINGS, 
   INITIAL_JOURNAL,
-  DEFAULT_HOMEPAGE_CONTENT 
+  DEFAULT_HOMEPAGE_CONTENT,
+  DEFAULT_QUEUE_SETTINGS,
+  DEFAULT_STAGE_LABELS,
+  DEFAULT_SHIPPING_CARRIERS
 } from './studioDefaults';
 import { getSupabaseServerClient } from './supabaseServer';
 
@@ -382,24 +386,18 @@ export async function getProducts(): Promise<Product[]> {
         }
 
         const validData = data.filter((r: any) => !LEGACY_PLACEHOLDER_IDS.includes(r.id));
-        if (validData.length > 0) {
-          return validData.map(mapProductFromDB);
-        } else {
-          // Empty table or only had legacy -> auto-seed real products
-          await autoSeedSupabase(supabase);
-          return INITIAL_PRODUCTS;
-        }
+        return validData.map(mapProductFromDB);
       }
     } catch (err) {
       console.warn('Supabase query failed for products, falling back to local file storage:', err);
     }
   }
-  const local = readJsonFile<Product[]>(PRODUCTS_FILE, INITIAL_PRODUCTS);
+  const local = readJsonFile<Product[]>(PRODUCTS_FILE, []);
   const filteredLocal = local.filter((p) => !LEGACY_PLACEHOLDER_IDS.includes(p.id));
   if (filteredLocal.length !== local.length) {
-    saveProducts(filteredLocal.length > 0 ? filteredLocal : INITIAL_PRODUCTS);
+    saveProducts(filteredLocal);
   }
-  return filteredLocal.length > 0 ? filteredLocal : INITIAL_PRODUCTS;
+  return filteredLocal;
 }
 
 export function saveProducts(products: Product[]): void {
@@ -439,7 +437,7 @@ export async function createProduct(productData: Omit<Product, 'id' | 'createdAt
   }
 
   // Backup sync to local file
-  const localList = readJsonFile<Product[]>(PRODUCTS_FILE, INITIAL_PRODUCTS);
+  const localList = readJsonFile<Product[]>(PRODUCTS_FILE, []);
   localList.unshift(newProduct);
   saveProducts(localList);
 
@@ -467,7 +465,7 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
   }
 
   // Backup sync to local file
-  const localList = readJsonFile<Product[]>(PRODUCTS_FILE, INITIAL_PRODUCTS);
+  const localList = readJsonFile<Product[]>(PRODUCTS_FILE, []);
   const localIdx = localList.findIndex((p) => p.id === id);
   if (localIdx !== -1) {
     localList[localIdx] = updated;
@@ -489,7 +487,7 @@ export async function deleteProduct(id: string): Promise<boolean> {
     }
   }
 
-  const localList = readJsonFile<Product[]>(PRODUCTS_FILE, INITIAL_PRODUCTS);
+  const localList = readJsonFile<Product[]>(PRODUCTS_FILE, []);
   const filtered = localList.filter((p) => p.id !== id);
   const deletedFromLocal = filtered.length !== localList.length;
   if (deletedFromLocal) {
@@ -1297,7 +1295,14 @@ export async function getStoreSettings(): Promise<StoreSettings> {
       if (!error && data && data.data) {
         const s = data.data as StoreSettings;
         return {
+          ...INITIAL_SETTINGS,
           ...s,
+          shippingCarriers: Array.isArray(s.shippingCarriers) && s.shippingCarriers.length > 0
+            ? s.shippingCarriers
+            : DEFAULT_SHIPPING_CARRIERS,
+          paymentMethods: Array.isArray(s.paymentMethods) && s.paymentMethods.length > 0
+            ? s.paymentMethods
+            : INITIAL_SETTINGS.paymentMethods,
           homepageContent: {
             ...DEFAULT_HOMEPAGE_CONTENT,
             ...(s.homepageContent || {})
@@ -1313,7 +1318,14 @@ export async function getStoreSettings(): Promise<StoreSettings> {
   }
   const local = readJsonFile<StoreSettings>(SETTINGS_FILE, INITIAL_SETTINGS);
   return {
+    ...INITIAL_SETTINGS,
     ...local,
+    shippingCarriers: Array.isArray(local.shippingCarriers) && local.shippingCarriers.length > 0
+      ? local.shippingCarriers
+      : DEFAULT_SHIPPING_CARRIERS,
+    paymentMethods: Array.isArray(local.paymentMethods) && local.paymentMethods.length > 0
+      ? local.paymentMethods
+      : INITIAL_SETTINGS.paymentMethods,
     homepageContent: {
       ...DEFAULT_HOMEPAGE_CONTENT,
       ...(local.homepageContent || {})
@@ -1474,34 +1486,37 @@ export async function getStravaOrders(): Promise<StravaPreOrder[]> {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        return data.map((o: any) => ({
-          id: o.id,
-          orderNumber: o.order_number,
-          productType: 'keychain-strava',
-          variationId: o.variation_id,
-          variationName: o.variation_name,
-          customer: o.customer,
-          price: Number(o.price),
-          subtotal: Number(o.subtotal),
-          shippingFee: Number(o.shipping_fee || 0),
-          total: Number(o.total),
-          status: o.status,
-          paymentMethod: o.payment_method,
-          paymentDetails: o.payment_details,
-          stravaData: o.strava_data,
-          production: o.production,
-          isExample: Boolean(o.is_example),
-          createdAt: o.created_at,
-          updatedAt: o.updated_at,
-        }));
+      if (!error && data) {
+        return data
+          .filter((o: any) => !o.is_example && !String(o.id).includes('EXAMPLE') && !String(o.order_number || '').includes('EXAMPLE'))
+          .map((o: any) => ({
+            id: o.id,
+            orderNumber: o.order_number,
+            productType: 'keychain-strava',
+            variationId: o.variation_id,
+            variationName: o.variation_name,
+            customer: o.customer,
+            price: Number(o.price),
+            subtotal: Number(o.subtotal),
+            shippingFee: Number(o.shipping_fee || 0),
+            total: Number(o.total),
+            status: o.status,
+            paymentMethod: o.payment_method,
+            paymentDetails: o.payment_details,
+            stravaData: o.strava_data,
+            production: o.production,
+            isExample: Boolean(o.is_example),
+            createdAt: o.created_at,
+            updatedAt: o.updated_at,
+          }));
       }
     } catch (err) {
       console.warn('Supabase strava_orders fetch failed, using json:', err);
     }
   }
 
-  return readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
+  const localList = readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
+  return localList.filter((o) => !o.isExample && !String(o.id).includes('EXAMPLE') && !String(o.orderNumber || '').includes('EXAMPLE'));
 }
 
 export async function getStravaOrderById(id: string): Promise<StravaPreOrder | undefined> {
@@ -1588,6 +1603,16 @@ export async function updateStravaOrderStatus(
     ...current,
     ...updates,
     status,
+    customer: {
+      ...current.customer,
+      ...(updates?.customer || {}),
+    },
+    stravaData: updates?.stravaData
+      ? {
+          ...(current.stravaData || {}),
+          ...updates.stravaData,
+        }
+      : current.stravaData,
     production: {
       ...current.production,
       ...(updates?.production || {}),
@@ -1605,6 +1630,14 @@ export async function updateStravaOrderStatus(
         .from('strava_orders')
         .update({
           status: updated.status,
+          customer: updated.customer,
+          variation_name: updated.variationName,
+          variation_id: updated.variationId,
+          price: updated.price,
+          subtotal: updated.subtotal,
+          shipping_fee: updated.shippingFee,
+          total: updated.total,
+          strava_data: updated.stravaData,
           production: updated.production,
           updated_at: now,
         })
@@ -1691,26 +1724,30 @@ export async function clearExampleStravaOrders(): Promise<number> {
   const supabase = getSupabaseServerClient();
   if (supabase) {
     try {
-      await supabase.from('strava_orders').delete().eq('is_example', true);
+      await supabase.from('strava_orders').delete().or('is_example.eq.true,id.ilike.%EXAMPLE%,order_number.ilike.%EXAMPLE%');
     } catch (err) {
       console.error('Failed to delete example strava orders in Supabase:', err);
     }
   }
 
   const list = readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
-  const realOrders = list.filter((o) => !o.isExample && !o.id.includes('EXAMPLE'));
+  const realOrders = list.filter((o) => !o.isExample && !o.id.includes('EXAMPLE') && !o.orderNumber?.includes('EXAMPLE'));
   const removedCount = list.length - realOrders.length;
   writeJsonFile(STRAVA_ORDERS_FILE, realOrders);
   return removedCount;
 }
 
 export async function getQueueSettings(): Promise<QueueSettings> {
-  const fallback: QueueSettings = {
-    defaultLeadDays: 7,
-    customLeadNote: 'Pre-order, dikirim dalam 10 hari (estimasi produksi 5-7 hari kerja sejak konfirmasi desain)',
-    updatedAt: new Date().toISOString(),
+  const fallback = DEFAULT_QUEUE_SETTINGS;
+  const stored = readJsonFile<QueueSettings>(QUEUE_SETTINGS_FILE, fallback);
+  return {
+    ...fallback,
+    ...(stored || {}),
+    stageLabels: {
+      ...DEFAULT_STAGE_LABELS,
+      ...(stored?.stageLabels || {}),
+    },
   };
-  return readJsonFile<QueueSettings>(QUEUE_SETTINGS_FILE, fallback);
 }
 
 export async function updateQueueSettings(settings: Partial<QueueSettings>): Promise<boolean> {
@@ -1718,6 +1755,10 @@ export async function updateQueueSettings(settings: Partial<QueueSettings>): Pro
   const updated: QueueSettings = {
     ...current,
     ...settings,
+    stageLabels: {
+      ...(current.stageLabels || DEFAULT_STAGE_LABELS),
+      ...(settings.stageLabels || {}),
+    },
     updatedAt: new Date().toISOString(),
   };
   writeJsonFile(QUEUE_SETTINGS_FILE, updated);
@@ -1756,6 +1797,7 @@ export async function getPublicProductionQueue(): Promise<{
     avgLeadDays: number;
     defaultEstimatedDate: string;
     customNote: string;
+    settings: QueueSettings;
   };
 }> {
   const orders = await getStravaOrders();
@@ -1821,6 +1863,7 @@ export async function getPublicProductionQueue(): Promise<{
       avgLeadDays: settings.defaultLeadDays,
       defaultEstimatedDate: `${settings.defaultLeadDays} hari kerja (${estFormatted})`,
       customNote: settings.customLeadNote,
+      settings,
     },
   };
 }
@@ -1887,13 +1930,16 @@ export async function addNotifyListEntry(
 
 export function getDefaultStravaMediaConfig(): StravaMediaConfig {
   const variationImages: Record<string, string> = {};
+  const variationPrices: Record<string, number> = {};
   for (const v of STRAVA_PRODUCT_CONFIG.variations) {
     if (v.image) variationImages[v.id] = v.image;
+    variationPrices[v.id] = v.price;
   }
 
   return {
     heroImage: '/images/strava-keychain/keychain-04.jpg',
     variationImages,
+    variationPrices,
     gallery: STRAVA_PRODUCT_CONFIG.gallery.map((g) => ({
       id: g.id,
       type: g.type,
@@ -1925,11 +1971,27 @@ export async function getStravaMediaConfig(): Promise<StravaMediaConfig> {
         return {
           ...fallback,
           ...(data.data as Partial<StravaMediaConfig>),
+          variationPrices: {
+            ...fallback.variationPrices,
+            ...((data.data as any)?.variationPrices || {}),
+          },
         };
       }
     } catch {}
   }
   return readJsonFile<StravaMediaConfig>(STRAVA_MEDIA_FILE, fallback);
+}
+
+export async function getStravaVariations(): Promise<StravaVariation[]> {
+  const config = await getStravaMediaConfig();
+  return STRAVA_PRODUCT_CONFIG.variations.map((v) => ({
+    ...v,
+    price:
+      config.variationPrices?.[v.id] !== undefined && Number(config.variationPrices[v.id]) > 0
+        ? Number(config.variationPrices[v.id])
+        : v.price,
+    image: config.variationImages?.[v.id] || v.image,
+  }));
 }
 
 export async function updateStravaMediaConfig(
@@ -1939,6 +2001,14 @@ export async function updateStravaMediaConfig(
   const updated: StravaMediaConfig = {
     ...current,
     ...updates,
+    variationImages: {
+      ...(current.variationImages || {}),
+      ...(updates.variationImages || {}),
+    },
+    variationPrices: {
+      ...(current.variationPrices || {}),
+      ...(updates.variationPrices || {}),
+    },
     updatedAt: new Date().toISOString(),
   };
 

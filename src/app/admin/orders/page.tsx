@@ -58,17 +58,60 @@ export default function OrdersPage() {
   const [stravaFilter, setStravaFilter] = useState<string>('ALL');
   const [selectedStravaOrder, setSelectedStravaOrder] = useState<StravaPreOrder | null>(null);
 
-  // Lead Time Settings State
+  // Queue Settings & Custom Status State
   const [leadDays, setLeadDays] = useState(7);
   const [leadNote, setLeadNote] = useState('');
+  const [queueTitle, setQueueTitle] = useState('Antrian Produksi Saat Ini');
+  const [queueSubtitle, setQueueSubtitle] = useState(
+    'Transparansi proses cetak di workshop Kab. Karawang. Diperbarui setiap perubahan status oleh admin.'
+  );
+  const [card1Title, setCard1Title] = useState('Total PO Antrian');
+  const [card1Subtitle, setCard1Subtitle] = useState('pesanan aktif');
+  const [card2Title, setCard2Title] = useState('Sedang Dicetak');
+  const [card2Subtitle, setCard2Subtitle] = useState('di mesin print saat ini');
+  const [card3Title, setCard3Title] = useState('Estimasi Produksi');
+  const [card3Subtitle, setCard3Subtitle] = useState('sejak desain dikonfirmasi');
+  const [card4Title, setCard4Title] = useState('Pengiriman PO');
+  const [card4Subtitle, setCard4Subtitle] = useState('ketentuan pre-order');
+  const [card4Value, setCard4Value] = useState('Dikirim dalam 10 hari');
+  const [stageLabels, setStageLabels] = useState<Record<string, string>>({
+    'Menunggu Pembayaran': 'Menunggu Pembayaran',
+    'Dibayar — Data Belum Lengkap': 'Data Belum Lengkap',
+    'Data Diterima — Menunggu Konfirmasi Desain': 'Review Desain 3D',
+    'Desain Dikonfirmasi': 'Siap Cetak',
+    'Produksi': 'Sedang Dicetak',
+    'QC / Finishing': 'QC & Finishing',
+    'Packing': 'Packing',
+    'Dikirim': 'Dalam Pengiriman',
+    'Selesai': 'Selesai',
+  });
+  const [settingsActiveTab, setSettingsActiveTab] = useState<'LEAD' | 'CARDS' | 'STAGES'>('LEAD');
   const [savingSettings, setSavingSettings] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
-  // Detail Modal Edit fields
+  // Detail Modal Edit fields (Comprehensive, nothing hardcoded)
+  const [editStatus, setEditStatus] = useState<StravaOrderStatus>('Data Diterima — Menunggu Konfirmasi Desain');
+  const [editCustomerName, setEditCustomerName] = useState('');
+  const [editCustomerPhone, setEditCustomerPhone] = useState('');
+  const [editCustomerEmail, setEditCustomerEmail] = useState('');
+  const [editCustomerAddress, setEditCustomerAddress] = useState('');
+  const [editCustomerCity, setEditCustomerCity] = useState('');
+  const [editVariationName, setEditVariationName] = useState('');
+  const [editPrice, setEditPrice] = useState(119000);
+  const [editTotal, setEditTotal] = useState(119000);
+  const [editEventName, setEditEventName] = useState('');
+  const [editEventDate, setEditEventDate] = useState('');
+  const [editDistance, setEditDistance] = useState('');
+  const [editPace, setEditPace] = useState('');
+  const [editDuration, setEditDuration] = useState('');
+  const [editEngravedText, setEditEngravedText] = useState('');
+  const [editStravaUrl, setEditStravaUrl] = useState('');
+  const [editBuyerNotes, setEditBuyerNotes] = useState('');
   const [editCourier, setEditCourier] = useState('');
   const [editResi, setEditResi] = useState('');
   const [editEstDate, setEditEstDate] = useState('');
   const [editAdminNotes, setEditAdminNotes] = useState('');
+  const [editAssignedMachine, setEditAssignedMachine] = useState('');
   const [savingDetail, setSavingDetail] = useState(false);
 
   // Manual Pre-Order Modal State
@@ -111,8 +154,9 @@ export default function OrdersPage() {
     try {
       const res = await fetch('/api/strava-orders');
       const data = await res.json();
-      if (data.success) {
-        setStravaOrders(data.data);
+      if (data.success && Array.isArray(data.data)) {
+        const filtered = data.data.filter((o: any) => !o.isExample && !String(o.id).includes('EXAMPLE'));
+        setStravaOrders(filtered);
       }
     } catch (e) {
       console.error(e);
@@ -127,8 +171,24 @@ export default function OrdersPage() {
       const res = await fetch('/api/strava-orders/queue');
       const data = await res.json();
       if (data.success && data.data?.stats) {
-        setLeadDays(data.data.stats.avgLeadDays || 7);
-        setLeadNote(data.data.stats.customNote || '');
+        const s = data.data.stats;
+        const q = s.settings || {};
+        setLeadDays(q.defaultLeadDays ?? s.avgLeadDays ?? 7);
+        setLeadNote(q.customLeadNote ?? s.customNote ?? '');
+        if (q.queueTitle) setQueueTitle(q.queueTitle);
+        if (q.queueSubtitle) setQueueSubtitle(q.queueSubtitle);
+        if (q.card1Title) setCard1Title(q.card1Title);
+        if (q.card1Subtitle) setCard1Subtitle(q.card1Subtitle);
+        if (q.card2Title) setCard2Title(q.card2Title);
+        if (q.card2Subtitle) setCard2Subtitle(q.card2Subtitle);
+        if (q.card3Title) setCard3Title(q.card3Title);
+        if (q.card3Subtitle) setCard3Subtitle(q.card3Subtitle);
+        if (q.card4Title) setCard4Title(q.card4Title);
+        if (q.card4Subtitle) setCard4Subtitle(q.card4Subtitle);
+        if (q.card4Value) setCard4Value(q.card4Value);
+        if (q.stageLabels) {
+          setStageLabels((prev) => ({ ...prev, ...q.stageLabels }));
+        }
       }
     } catch (e) {
       console.error(e);
@@ -211,7 +271,7 @@ export default function OrdersPage() {
     }
   };
 
-  // Save detail updates from Strava detail modal
+  // Save all detail updates from Strava detail modal (nothing hardcoded)
   const handleSaveStravaDetail = async () => {
     if (!selectedStravaOrder) return;
     setSavingDetail(true);
@@ -222,12 +282,41 @@ export default function OrdersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: selectedStravaOrder.id,
-          status: selectedStravaOrder.status,
+          status: editStatus,
+          customer: {
+            ...selectedStravaOrder.customer,
+            fullName: editCustomerName.trim(),
+            phone: editCustomerPhone.trim(),
+            email: editCustomerEmail.trim(),
+            address: editCustomerAddress.trim(),
+            city: editCustomerCity.trim(),
+          },
+          variationName: editVariationName.trim(),
+          price: Number(editPrice),
+          total: Number(editTotal),
+          stravaData: selectedStravaOrder.stravaData
+            ? {
+                ...selectedStravaOrder.stravaData,
+                eventName: editEventName.trim(),
+                eventDate: editEventDate.trim(),
+                distance: editDistance.trim(),
+                pace: editPace.trim(),
+                duration: editDuration.trim(),
+                engravedText: editEngravedText.trim(),
+                stravaUrl: editStravaUrl.trim(),
+                adminNotes: editBuyerNotes.trim(),
+              }
+            : undefined,
           productionUpdates: {
+            ...selectedStravaOrder.production,
+            courierName: editCourier.trim(),
             courier: editCourier.trim(),
+            trackingNumber: editResi.trim(),
             resiNumber: editResi.trim(),
             estimatedCompletionDate: editEstDate.trim(),
+            adminNotes: editAdminNotes.trim(),
             internalAdminNotes: editAdminNotes.trim(),
+            assignedMachine: editAssignedMachine.trim(),
           },
         }),
       });
@@ -237,23 +326,41 @@ export default function OrdersPage() {
         throw new Error(data.error || 'Gagal menyimpan detail');
       }
 
-      showSuccess('Detail produksi & resi berhasil disimpan!');
+      showSuccess('Semua detail pesanan & status berhasil diperbarui!');
       await fetchStravaOrders();
       setSelectedStravaOrder(null);
     } catch (err: any) {
-      showError(err.message || 'Gagal menyimpan');
+      showError(err.message || 'Gagal menyimpan detail pesanan');
     } finally {
       setSavingDetail(false);
     }
   };
 
-  // Open Strava Detail Modal
+  // Open Strava Detail Modal with all editable fields initialized
   const openStravaDetail = (order: StravaPreOrder) => {
     setSelectedStravaOrder(order);
-    setEditCourier(order.production?.courier || 'JNE');
-    setEditResi(order.production?.resiNumber || '');
+    setEditStatus(order.status);
+    setEditCustomerName(order.customer?.fullName || '');
+    setEditCustomerPhone(order.customer?.phone || '');
+    setEditCustomerEmail(order.customer?.email || '');
+    setEditCustomerAddress(order.customer?.address || '');
+    setEditCustomerCity(order.customer?.city || '');
+    setEditVariationName(order.variationName || '');
+    setEditPrice(order.price || 119000);
+    setEditTotal(order.total || 119000);
+    setEditEventName(order.stravaData?.eventName || '');
+    setEditEventDate(order.stravaData?.eventDate || '');
+    setEditDistance(order.stravaData?.distance || '');
+    setEditPace(order.stravaData?.pace || '');
+    setEditDuration(order.stravaData?.duration || '');
+    setEditEngravedText(order.stravaData?.engravedText || '');
+    setEditStravaUrl(order.stravaData?.stravaUrl || '');
+    setEditBuyerNotes(order.stravaData?.adminNotes || '');
+    setEditCourier(order.production?.courierName || order.production?.courier || 'JNE');
+    setEditResi(order.production?.trackingNumber || order.production?.resiNumber || '');
     setEditEstDate(order.production?.estimatedCompletionDate || '');
-    setEditAdminNotes(order.production?.internalAdminNotes || '');
+    setEditAdminNotes(order.production?.adminNotes || order.production?.internalAdminNotes || '');
+    setEditAssignedMachine(order.production?.assignedMachine || '');
   };
 
   // Delete Strava Order from Queue
@@ -277,22 +384,6 @@ export default function OrdersPage() {
     }
   };
 
-  // Clear Example/Mock Orders
-  const handleClearExampleOrders = async () => {
-    if (!confirm('Hapus semua pesanan contoh uji coba dari antrian produksi?')) return;
-    try {
-      const res = await fetch('/api/strava-orders?action=clear-examples', { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        showSuccess(data.message || 'Pesanan contoh uji coba berhasil dibersihkan!');
-        await fetchStravaOrders();
-      } else {
-        showError(data.error || 'Gagal membersihkan pesanan contoh.');
-      }
-    } catch {
-      showError('Gagal membersihkan pesanan contoh.');
-    }
-  };
 
   // Create Manual Pre-Order
   const handleCreateManualOrder = async (e: React.FormEvent) => {
@@ -366,11 +457,23 @@ export default function OrdersPage() {
         body: JSON.stringify({
           defaultLeadDays: Number(leadDays),
           customLeadNote: leadNote,
+          queueTitle,
+          queueSubtitle,
+          card1Title,
+          card1Subtitle,
+          card2Title,
+          card2Subtitle,
+          card3Title,
+          card3Subtitle,
+          card4Title,
+          card4Subtitle,
+          card4Value,
+          stageLabels,
         }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'Failed');
-      showSuccess('Pengaturan antrian & estimasi hari berhasil diperbarui!');
+      showSuccess('Pengaturan antrian, kartu & status publik berhasil diperbarui!');
       setShowSettingsModal(false);
     } catch (err: any) {
       showError('Gagal menyimpan pengaturan antrian');
@@ -494,17 +597,6 @@ export default function OrdersPage() {
                 <span>+ Tambah Order Manual</span>
               </button>
 
-              {stravaOrders.some((o) => o.isExample || o.id.includes('EXAMPLE')) && (
-                <button
-                  onClick={handleClearExampleOrders}
-                  className="px-3.5 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold hover:bg-amber-100 transition-colors flex items-center gap-1.5"
-                  title="Hapus pesanan contoh uji coba agar antrian hanya berisi pesanan riil"
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-amber-700" />
-                  <span>Bersihkan Contoh Uji Coba ({stravaOrders.filter((o) => o.isExample || o.id.includes('EXAMPLE')).length})</span>
-                </button>
-              )}
-
               <a
                 href="/admin/content/keychain-media"
                 className="px-4 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-semibold text-[#14191F] hover:bg-[#F2EDE4] transition-colors flex items-center gap-1.5"
@@ -517,7 +609,7 @@ export default function OrdersPage() {
                 className="px-4 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-semibold text-[#14191F] hover:bg-[#F2EDE4] transition-colors flex items-center gap-1.5"
               >
                 <Settings className="w-3.5 h-3.5" />
-                <span>Lead Time</span>
+                <span>Pengaturan Antrian &amp; Status</span>
               </button>
             </div>
           </div>
@@ -591,11 +683,6 @@ export default function OrdersPage() {
                         <tr key={o.id} className="hover:bg-[#FAF8F5] transition-colors">
                           <td className="px-6 py-4 font-mono font-bold text-[#14191F]">
                             #{o.id}
-                            {o.isExample && (
-                              <span className="block mt-0.5 px-1.5 py-0.5 rounded text-[8px] bg-amber-100 text-amber-800 font-sans font-bold w-max">
-                                Contoh Uji Coba
-                              </span>
-                            )}
                           </td>
 
                           <td className="px-6 py-4 text-[#7A8B99]">
@@ -855,27 +942,129 @@ export default function OrdersPage() {
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
               
-              {/* Customer Info Card */}
-              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D7] grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* 1. Status & Tahap Produksi Selector */}
+              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D7] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <span className="text-[10px] text-[#7A8B99] uppercase font-bold">Data Pemesan</span>
-                  <p className="font-bold text-[#14191F] text-sm mt-0.5">{selectedStravaOrder.customer.fullName}</p>
-                  <p className="text-[#556473]">{selectedStravaOrder.customer.phone}</p>
-                  <p className="text-[#7A8B99]">{selectedStravaOrder.customer.email}</p>
+                  <span className="text-[10px] text-[#7A8B99] uppercase font-bold tracking-wider">
+                    Tahap Produksi Saat Ini
+                  </span>
+                  <p className="text-xs text-[#556473]">
+                    Pilih tahapan pesanan saat ini untuk diperbarui di antrian publik &amp; portal lacak.
+                  </p>
                 </div>
-                <div>
-                  <span className="text-[10px] text-[#7A8B99] uppercase font-bold">Alamat Pengiriman</span>
-                  <p className="text-[#14191F] font-medium mt-0.5">{selectedStravaOrder.customer.address}</p>
-                  <p className="text-[#556473]">{selectedStravaOrder.customer.city}</p>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value as StravaOrderStatus)}
+                  className="px-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs font-bold text-[#14191F] focus:outline-none focus:border-[#5C7489]"
+                >
+                  {STRAVA_STATUS_LIST.map((st) => (
+                    <option key={st} value={st}>
+                      {st} {stageLabels[st] ? `(${stageLabels[st]})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 2. Customer Info (Editable) */}
+              <div className="p-5 rounded-2xl border border-[#ECE6DC] space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-[#ECE6DC]">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#14191F] flex items-center gap-1.5">
+                    <ShoppingBag className="w-3.5 h-3.5 text-[#5C7489]" />
+                    <span>Data Pemesan &amp; Alamat Pengiriman</span>
+                  </h3>
+                  <span className="text-[10px] text-[#7A8B99]">Dapat diedit jika pembeli meminta perbaikan</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#556473] mb-1">Nama Lengkap</label>
+                    <input
+                      type="text"
+                      value={editCustomerName}
+                      onChange={(e) => setEditCustomerName(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#556473] mb-1">No. WhatsApp / Telepon</label>
+                    <input
+                      type="text"
+                      value={editCustomerPhone}
+                      onChange={(e) => setEditCustomerPhone(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#556473] mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={editCustomerEmail}
+                      onChange={(e) => setEditCustomerEmail(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#556473] mb-1">Kota</label>
+                    <input
+                      type="text"
+                      value={editCustomerCity}
+                      onChange={(e) => setEditCustomerCity(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-[11px] font-semibold text-[#556473] mb-1">Alamat Lengkap Pengiriman</label>
+                    <textarea
+                      rows={2}
+                      value={editCustomerAddress}
+                      onChange={(e) => setEditCustomerAddress(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Strava Submitted Data Card */}
+              {/* 3. Product & Price (Editable) */}
+              <div className="p-5 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D7] space-y-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#14191F]">
+                  Variasi Produk &amp; Biaya
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#556473] mb-1">Nama Variasi</label>
+                    <input
+                      type="text"
+                      value={editVariationName}
+                      onChange={(e) => setEditVariationName(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#556473] mb-1">Total Biaya (Rp)</label>
+                    <input
+                      type="number"
+                      value={editTotal}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setEditTotal(val);
+                        setEditPrice(val);
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs font-mono font-bold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Strava Submitted Data Card (Editable) */}
               <div className="p-5 rounded-2xl border border-[#ECE6DC] space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between pb-2 border-b border-[#ECE6DC]">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-[#14191F] flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-[#5C7489]" />
-                    <span>Data Rute & Gambar Strava</span>
+                    <span>Data Rute Strava &amp; Personalisasi Plat</span>
                   </h3>
                   {selectedStravaOrder.stravaData?.submittedAt && (
                     <span className="text-[10px] text-[#7A8B99]">
@@ -884,123 +1073,166 @@ export default function OrdersPage() {
                   )}
                 </div>
 
-                {selectedStravaOrder.stravaData ? (
-                  <div className="space-y-4">
-                    {/* Strava Link */}
-                    <div className="flex items-center gap-2 p-3 rounded-xl bg-[#EDF3F7] text-[#3E5161]">
-                      <span className="font-bold">Link Strava:</span>
-                      <a
-                        href={selectedStravaOrder.stravaData.stravaUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline hover:text-[#14191F] font-mono break-all flex items-center gap-1"
-                      >
-                        <span>{selectedStravaOrder.stravaData.stravaUrl}</span>
-                        <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                      </a>
+                <div className="space-y-4">
+                  {/* Strava Link */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[11px] font-semibold text-[#556473]">Link URL Strava</label>
+                      {editStravaUrl && (
+                        <a
+                          href={editStravaUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] text-[#5C7489] hover:underline flex items-center gap-0.5"
+                        >
+                          <span>Buka Tautan ↗</span>
+                        </a>
+                      )}
                     </div>
+                    <input
+                      type="url"
+                      value={editStravaUrl}
+                      onChange={(e) => setEditStravaUrl(e.target.value)}
+                      placeholder="https://strava.app.link/..."
+                      className="w-full px-3 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-mono"
+                    />
+                  </div>
 
-                    {/* Run Stats */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <div className="p-2.5 rounded-xl bg-[#FAF8F5] border border-[#E8E2D7]">
-                        <span className="text-[10px] text-[#7A8B99] block">Event</span>
-                        <span className="font-bold text-[#14191F]">{selectedStravaOrder.stravaData.eventName}</span>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-[#FAF8F5] border border-[#E8E2D7]">
-                        <span className="text-[10px] text-[#7A8B99] block">Tanggal</span>
-                        <span className="font-semibold text-[#14191F]">{selectedStravaOrder.stravaData.eventDate}</span>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-[#FAF8F5] border border-[#E8E2D7]">
-                        <span className="text-[10px] text-[#7A8B99] block">Jarak & Pace</span>
-                        <span className="font-semibold text-[#14191F]">{selectedStravaOrder.stravaData.distance} • {selectedStravaOrder.stravaData.pace}</span>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-[#FAF8F5] border border-[#E8E2D7]">
-                        <span className="text-[10px] text-[#7A8B99] block">Durasi</span>
-                        <span className="font-semibold text-[#14191F]">{selectedStravaOrder.stravaData.duration}</span>
+                  {/* Run Stats */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-semibold text-[#7A8B99] mb-1">Nama Event</label>
+                      <input
+                        type="text"
+                        value={editEventName}
+                        onChange={(e) => setEditEventName(e.target.value)}
+                        placeholder="e.g. BDO ULTRA 2026"
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold text-[#7A8B99] mb-1">Tanggal Event</label>
+                      <input
+                        type="text"
+                        value={editEventDate}
+                        onChange={(e) => setEditEventDate(e.target.value)}
+                        placeholder="e.g. 10 Nov 2026"
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold text-[#7A8B99] mb-1">Jarak (Distance)</label>
+                      <input
+                        type="text"
+                        value={editDistance}
+                        onChange={(e) => setEditDistance(e.target.value)}
+                        placeholder="e.g. 21.1 km"
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold text-[#7A8B99] mb-1">Pace / Durasi</label>
+                      <input
+                        type="text"
+                        value={editPace}
+                        onChange={(e) => setEditPace(e.target.value)}
+                        placeholder="e.g. 5:24 /km"
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#556473] mb-1">Durasi Total (Waktu Tempuh)</label>
+                      <input
+                        type="text"
+                        value={editDuration}
+                        onChange={(e) => setEditDuration(e.target.value)}
+                        placeholder="e.g. 1h 45m"
+                        className="w-full px-3 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#556473] mb-1">Teks Grafir Plat Personalisasi</label>
+                      <input
+                        type="text"
+                        value={editEngravedText}
+                        onChange={(e) => setEditEngravedText(e.target.value)}
+                        placeholder="e.g. BUDI SANTOSO • SUB 2"
+                        className="w-full px-3 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#556473] mb-1">Catatan Tambahan dari Pembeli</label>
+                    <textarea
+                      rows={2}
+                      value={editBuyerNotes}
+                      onChange={(e) => setEditBuyerNotes(e.target.value)}
+                      placeholder="Catatan permintaan pembeli..."
+                      className="w-full px-3 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs"
+                    />
+                  </div>
+
+                  {/* Screenshot Previews */}
+                  {selectedStravaOrder.stravaData?.images && selectedStravaOrder.stravaData.images.length > 0 && (
+                    <div className="space-y-1.5 pt-2">
+                      <span className="text-[10px] text-[#7A8B99] uppercase font-bold block">
+                        Tangkapan Layar Rute Strava ({selectedStravaOrder.stravaData.images.length} foto)
+                      </span>
+                      <div className="grid grid-cols-3 gap-3">
+                        {selectedStravaOrder.stravaData.images.map((img, i) => (
+                          <a
+                            key={i}
+                            href={img}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="relative aspect-square rounded-2xl overflow-hidden border border-[#DDD5C7] group"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={img} alt={`Strava upload ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                            <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[8px] bg-black/60 text-white font-mono">
+                              Zoom ↗
+                            </span>
+                          </a>
+                        ))}
                       </div>
                     </div>
-
-                    {selectedStravaOrder.stravaData.engravedText && (
-                      <div className="p-2.5 rounded-xl bg-[#FAF8F5] border border-[#E8E2D7]">
-                        <span className="text-[10px] text-[#7A8B99] block">Teks Personalisasi Plat</span>
-                        <span className="font-bold text-[#14191F]">{selectedStravaOrder.stravaData.engravedText}</span>
-                      </div>
-                    )}
-
-                    {selectedStravaOrder.stravaData.adminNotes && (
-                      <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900">
-                        <span className="text-[10px] font-bold uppercase block text-amber-800">Catatan dari Pembeli:</span>
-                        <p className="mt-0.5">{selectedStravaOrder.stravaData.adminNotes}</p>
-                      </div>
-                    )}
-
-                    {/* Screenshot Previews */}
-                    {selectedStravaOrder.stravaData.images && selectedStravaOrder.stravaData.images.length > 0 && (
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] text-[#7A8B99] uppercase font-bold block">
-                          Tangkapan Layar Rute Strava ({selectedStravaOrder.stravaData.images.length} foto)
-                        </span>
-                        <div className="grid grid-cols-3 gap-3">
-                          {selectedStravaOrder.stravaData.images.map((img, i) => (
-                            <a
-                              key={i}
-                              href={img}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="relative aspect-square rounded-2xl overflow-hidden border border-[#DDD5C7] group"
-                            >
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={img} alt={`Strava upload ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                              <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[8px] bg-black/60 text-white font-mono">
-                                Zoom ↗
-                              </span>
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="p-4 rounded-xl bg-amber-50 text-amber-800 border border-amber-200">
-                    <p className="font-semibold">Pembeli belum mengisi formulir data Strava.</p>
-                    <p className="text-[11px] mt-1 text-amber-700">
-                      Hubungi pembeli via WhatsApp untuk mengingatkan agar rute dapat diproses.
-                    </p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
-              {/* Status & Courier Controls */}
+              {/* 5. Production, Machine & Shipping Controls */}
               <div className="p-5 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D7] space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-[#14191F]">
-                  Manajemen Produksi & Pengiriman
+                  Manajemen Produksi, Mesin Cetak &amp; Pengiriman
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[11px] font-semibold text-[#556473] mb-1">
-                      Tahap Produksi Saat Ini
+                      Estimasi Target Selesai (Publik)
                     </label>
-                    <select
-                      value={selectedStravaOrder.status}
-                      onChange={(e) => handleUpdateStravaStatus(selectedStravaOrder.id, e.target.value as StravaOrderStatus)}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs font-semibold"
-                    >
-                      {STRAVA_STATUS_LIST.map((st) => (
-                        <option key={st} value={st}>{st}</option>
-                      ))}
-                    </select>
+                    <input
+                      type="text"
+                      placeholder="e.g. 24 Nov 2026 / 5 hari kerja"
+                      value={editEstDate}
+                      onChange={(e) => setEditEstDate(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs"
+                    />
                   </div>
 
                   <div>
                     <label className="block text-[11px] font-semibold text-[#556473] mb-1">
-                      Estimasi Target Selesai
+                      Mesin Cetak yang Ditugaskan (Opsional)
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. 20 Nov 2026 / 5 hari kerja"
-                      value={editEstDate}
-                      onChange={(e) => setEditEstDate(e.target.value)}
+                      placeholder="e.g. Prusa MK4 #1 / Bambu P1S"
+                      value={editAssignedMachine}
+                      onChange={(e) => setEditAssignedMachine(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs"
                     />
                   </div>
@@ -1011,7 +1243,7 @@ export default function OrdersPage() {
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. JNE Regular / SiCepat"
+                      placeholder="e.g. JNE Regular / SiCepat / J&T"
                       value={editCourier}
                       onChange={(e) => setEditCourier(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs"
@@ -1020,14 +1252,14 @@ export default function OrdersPage() {
 
                   <div>
                     <label className="block text-[11px] font-semibold text-[#556473] mb-1">
-                      Nomor Resi
+                      Nomor Resi Pengiriman
                     </label>
                     <input
                       type="text"
                       placeholder="e.g. JNE1234567890"
                       value={editResi}
                       onChange={(e) => setEditResi(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs font-mono"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs font-mono font-bold"
                     />
                   </div>
 
@@ -1061,7 +1293,7 @@ export default function OrdersPage() {
                   <a
                     href={getWhatsAppAdminLink(
                       selectedStravaOrder.id,
-                      `Halo ${selectedStravaOrder.customer.fullName}, kami dari WhereIsIt ingin mengonfirmasi preview desain rute Strava kamu.`
+                      `Halo ${editCustomerName || selectedStravaOrder.customer.fullName}, kami dari WhereIsIt ingin mengonfirmasi detail pesanan keychain Strava kamu.`
                     )}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -1073,12 +1305,20 @@ export default function OrdersPage() {
 
                   <button
                     type="button"
+                    onClick={() => setSelectedStravaOrder(null)}
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#DDD5C7] text-xs font-semibold text-[#556473] hover:bg-[#FAF8F5]"
+                  >
+                    Batal
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={handleSaveStravaDetail}
                     disabled={savingDetail}
                     className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#14191F] hover:bg-[#5C7489] text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-50"
                   >
                     <Save className="w-3.5 h-3.5" />
-                    <span>{savingDetail ? 'Menyimpan...' : 'Simpan Detail'}</span>
+                    <span>{savingDetail ? 'Menyimpan...' : 'Simpan Semua Perubahan'}</span>
                   </button>
                 </div>
               </div>
@@ -1088,59 +1328,292 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* ---------------- SETTINGS MODAL: LEAD TIME ---------------- */}
+      {/* ---------------- SETTINGS MODAL: QUEUE & STATUS CUSTOMIZATION ---------------- */}
       {showSettingsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="relative w-full max-w-md bg-white rounded-3xl p-6 border border-[#E8E2D7] shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-white rounded-3xl p-6 sm:p-8 border border-[#E8E2D7] shadow-2xl space-y-5 my-6 max-h-[92vh] flex flex-col">
             <div className="flex items-center justify-between pb-3 border-b border-[#ECE6DC]">
-              <h3 className="text-sm font-bold text-[#14191F]">Ubah Pengaturan Lead Time Antrian</h3>
-              <button onClick={() => setShowSettingsModal(false)} className="text-[#7A8B99] hover:text-[#14191F]">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-[#5C7489] tracking-wider">
+                  Pengaturan Live Studio Queue
+                </span>
+                <h3 className="text-base font-black text-[#14191F]">
+                  Kustomisasi Antrian Publik, Kartu &amp; Label Status
+                </h3>
+              </div>
+              <button onClick={() => setShowSettingsModal(false)} className="text-[#7A8B99] hover:text-[#14191F] p-2">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block font-semibold text-[#556473] mb-1">
-                  Default Hari Kerja (Estimasi Siap)
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={leadDays}
-                  onChange={(e) => setLeadDays(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-bold"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-[#556473] mb-1">
-                  Catatan Studio untuk Publik
-                </label>
-                <textarea
-                  rows={2}
-                  value={leadNote}
-                  onChange={(e) => setLeadNote(e.target.value)}
-                  placeholder="e.g. 5–7 hari kerja sejak konfirmasi desain (maks. 10 hari PO Shopee)"
-                  className="w-full px-3 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs"
-                />
-              </div>
+            {/* Sub-tabs */}
+            <div className="flex items-center gap-1.5 p-1 bg-[#FAF8F5] rounded-xl border border-[#ECE6DC]">
+              {[
+                { id: 'LEAD', label: '1. Lead Time & Header' },
+                { id: 'CARDS', label: '2. 4 Kartu Ringkasan (KPI)' },
+                { id: 'STAGES', label: '3. Label 9 Status Antrian' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setSettingsActiveTab(tab.id as any)}
+                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                    settingsActiveTab === tab.id
+                      ? 'bg-white text-[#14191F] shadow-xs'
+                      : 'text-[#556473] hover:text-[#14191F]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            {/* Modal Scrollable Body */}
+            <div className="overflow-y-auto space-y-4 flex-1 text-xs pr-1">
+              {settingsActiveTab === 'LEAD' && (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#ECE6DC] space-y-3">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#14191F]">
+                      Estimasi Hari &amp; Catatan Studio
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-semibold text-[#556473] mb-1">
+                          Default Hari Kerja (Estimasi Siap)
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={30}
+                          value={leadDays}
+                          onChange={(e) => setLeadDays(Number(e.target.value))}
+                          className="w-full px-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs font-bold font-mono"
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block font-semibold text-[#556473] mb-1">
+                          Catatan Studio untuk Publik (Banner Kuning/Beige)
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={leadNote}
+                          onChange={(e) => setLeadNote(e.target.value)}
+                          placeholder="e.g. Pre-order, dikirim dalam 10 hari (estimasi produksi 5-7 hari kerja sejak konfirmasi desain)"
+                          className="w-full px-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#ECE6DC] space-y-3">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#14191F]">
+                      Header Teks Antrian Publik
+                    </span>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block font-semibold text-[#556473] mb-1">
+                          Judul Antrian
+                        </label>
+                        <input
+                          type="text"
+                          value={queueTitle}
+                          onChange={(e) => setQueueTitle(e.target.value)}
+                          placeholder="Antrian Produksi Saat Ini"
+                          className="w-full px-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-[#556473] mb-1">
+                          Deskripsi / Subtitle Antrian
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={queueSubtitle}
+                          onChange={(e) => setQueueSubtitle(e.target.value)}
+                          placeholder="Transparansi proses cetak di workshop Kab. Karawang. Diperbarui setiap perubahan status oleh admin."
+                          className="w-full px-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {settingsActiveTab === 'CARDS' && (
+                <div className="space-y-3">
+                  <p className="text-[11px] text-[#7A8B99]">
+                    Kustomisasi judul dan subtext 4 kartu ringkasan di bagian atas antrian publik.
+                  </p>
+
+                  {/* Card 1 */}
+                  <div className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#ECE6DC] grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold text-[#556473] mb-1">Kartu 1: Judul</label>
+                      <input
+                        type="text"
+                        value={card1Title}
+                        onChange={(e) => setCard1Title(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-xl bg-white border border-[#DDD5C7] text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold text-[#556473] mb-1">Kartu 1: Subtext</label>
+                      <input
+                        type="text"
+                        value={card1Subtitle}
+                        onChange={(e) => setCard1Subtitle(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-xl bg-white border border-[#DDD5C7] text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Card 2 */}
+                  <div className="p-3.5 rounded-2xl bg-[#EDF3F7] border border-[#C5D5E2] grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold text-[#3E5161] mb-1">Kartu 2 (Sedang Cetak): Judul</label>
+                      <input
+                        type="text"
+                        value={card2Title}
+                        onChange={(e) => setCard2Title(e.target.value)}
+                        placeholder="Sedang Dicetak"
+                        className="w-full px-3 py-1.5 rounded-xl bg-white border border-[#DDD5C7] text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold text-[#3E5161] mb-1">Kartu 2: Subtext</label>
+                      <input
+                        type="text"
+                        value={card2Subtitle}
+                        onChange={(e) => setCard2Subtitle(e.target.value)}
+                        placeholder="di mesin print saat ini"
+                        className="w-full px-3 py-1.5 rounded-xl bg-white border border-[#DDD5C7] text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Card 3 */}
+                  <div className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#ECE6DC] grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold text-[#556473] mb-1">Kartu 3: Judul</label>
+                      <input
+                        type="text"
+                        value={card3Title}
+                        onChange={(e) => setCard3Title(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-xl bg-white border border-[#DDD5C7] text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold text-[#556473] mb-1">Kartu 3: Subtext</label>
+                      <input
+                        type="text"
+                        value={card3Subtitle}
+                        onChange={(e) => setCard3Subtitle(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-xl bg-white border border-[#DDD5C7] text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Card 4 */}
+                  <div className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#ECE6DC] grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block font-semibold text-[#556473] mb-1">Kartu 4: Judul</label>
+                      <input
+                        type="text"
+                        value={card4Title}
+                        onChange={(e) => setCard4Title(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-xl bg-white border border-[#DDD5C7] text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold text-[#556473] mb-1">Kartu 4: Nilai Teks</label>
+                      <input
+                        type="text"
+                        value={card4Value}
+                        onChange={(e) => setCard4Value(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-xl bg-white border border-[#DDD5C7] text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold text-[#556473] mb-1">Kartu 4: Subtext</label>
+                      <input
+                        type="text"
+                        value={card4Subtitle}
+                        onChange={(e) => setCard4Subtitle(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-xl bg-white border border-[#DDD5C7] text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {settingsActiveTab === 'STAGES' && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] text-[#7A8B99]">
+                      Sesuaikan teks badge status yang ditampilkan kepada publik di antrian &amp; halaman lacak:
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setStageLabels({
+                          'Menunggu Pembayaran': 'Menunggu Pembayaran',
+                          'Dibayar — Data Belum Lengkap': 'Data Belum Lengkap',
+                          'Data Diterima — Menunggu Konfirmasi Desain': 'Review Desain 3D',
+                          'Desain Dikonfirmasi': 'Siap Cetak',
+                          'Produksi': 'Sedang Dicetak',
+                          'QC / Finishing': 'QC & Finishing',
+                          'Packing': 'Packing',
+                          'Dikirim': 'Dalam Pengiriman',
+                          'Selesai': 'Selesai',
+                        })
+                      }
+                      className="text-[10px] font-bold text-[#5C7489] hover:underline"
+                    >
+                      Reset Default
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {STRAVA_STATUS_LIST.map((st) => (
+                      <div key={st} className="p-3 rounded-2xl bg-[#FAF8F5] border border-[#ECE6DC] space-y-1">
+                        <span className="text-[10px] font-bold text-[#7A8B99] block truncate" title={st}>
+                          {st}
+                        </span>
+                        <input
+                          type="text"
+                          value={stageLabels[st] ?? st}
+                          onChange={(e) =>
+                            setStageLabels((prev) => ({
+                              ...prev,
+                              [st]: e.target.value,
+                            }))
+                          }
+                          className="w-full px-3 py-1.5 rounded-xl bg-white border border-[#DDD5C7] text-xs font-semibold focus:outline-none focus:border-[#5C7489]"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#ECE6DC]">
               <button
+                type="button"
                 onClick={() => setShowSettingsModal(false)}
-                className="px-4 py-2 rounded-xl border border-[#DDD5C7] text-xs text-[#556473]"
+                className="px-4 py-2.5 rounded-xl border border-[#DDD5C7] text-xs font-semibold text-[#556473] hover:bg-[#FAF8F5]"
               >
                 Batal
               </button>
               <button
+                type="button"
                 onClick={handleSaveQueueSettings}
                 disabled={savingSettings}
-                className="px-5 py-2 rounded-xl bg-[#14191F] text-white text-xs font-bold hover:bg-[#5C7489]"
+                className="px-6 py-2.5 rounded-xl bg-[#14191F] hover:bg-[#5C7489] text-white text-xs font-bold transition-colors shadow-xs disabled:opacity-50 flex items-center gap-1.5"
               >
-                {savingSettings ? 'Menyimpan...' : 'Terapkan ke Antrian Publik'}
+                <Save className="w-3.5 h-3.5" />
+                <span>{savingSettings ? 'Menyimpan...' : 'Terapkan ke Antrian Publik'}</span>
               </button>
             </div>
           </div>
@@ -1237,8 +1710,8 @@ export default function OrdersPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   {[
                     { id: 'var-10x5', name: '10x5 cm', price: 119000, desc: 'Standard 3D Print' },
-                    { id: 'var-emoney', name: '10x5 cm Emoney', price: 150000, desc: 'Termasuk E-Money' },
-                    { id: 'var-flazz', name: '10x5 cm Flazz', price: 200000, desc: 'Termasuk BCA Flazz' },
+                    { id: 'var-emoney', name: '10x5 cm Emoney', price: 180000, desc: 'Termasuk E-Money' },
+                    { id: 'var-flazz', name: '10x5 cm Flazz', price: 220000, desc: 'Termasuk BCA Flazz' },
                   ].map((v) => (
                     <div
                       key={v.id}

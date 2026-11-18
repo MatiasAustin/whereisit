@@ -1,13 +1,34 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Flame, Star } from 'lucide-react';
 import { STRAVA_PRODUCT_CONFIG } from '@/data/stravaKeychainConfig';
 import { BlurFade, MagneticCta, NumberTicker } from '@/components/motion/MotionPrimitives';
 import { formatRupiah } from '@/lib/utils';
+import { StravaMediaConfig } from '@/types';
 
 export default function StravaFeaturedBanner() {
+  const [mediaConfig, setMediaConfig] = useState<StravaMediaConfig | null>(null);
+
+  useEffect(() => {
+    fetch('/api/strava-media')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.data) {
+          setMediaConfig(d.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const dynamicVariations = STRAVA_PRODUCT_CONFIG.variations.map((v) => ({
+    ...v,
+    price: mediaConfig?.variationPrices?.[v.id] ?? v.price,
+  }));
+  const minDynamicPrice = Math.min(...dynamicVariations.map((v) => v.price));
+  const maxDynamicPrice = Math.max(...dynamicVariations.map((v) => v.price));
+  const dynamicPriceRange = `${formatRupiah(minDynamicPrice)} – ${formatRupiah(maxDynamicPrice)}`;
   return (
     <section className="py-6 sm:py-8 bg-[#F8F6F1]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -50,13 +71,13 @@ export default function StravaFeaturedBanner() {
                       key={v.id}
                       className="px-3 py-1.5 rounded-xl bg-black/30 border border-white/10 text-[11px] font-semibold text-[#D5E1E9]"
                     >
-                      {v.name} ({formatRupiah(v.price)})
+                      {v.name} ({formatRupiah(mediaConfig?.variationPrices?.[v.id] ?? v.price)})
                     </span>
                   ))}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4 text-xs text-[#8E9FAA] pt-1">
-                  <span>{STRAVA_PRODUCT_CONFIG.priceRange}</span>
+                  <span>{dynamicPriceRange}</span>
                   <span>•</span>
                   <span>{STRAVA_PRODUCT_CONFIG.shippingPolicyText}</span>
                 </div>

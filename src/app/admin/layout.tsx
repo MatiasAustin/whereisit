@@ -71,7 +71,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   required
                   value={passcode}
                   onChange={(e) => setPasscode(e.target.value)}
-                  placeholder="Enter passcode (e.g. whereisit2026)"
+                  placeholder="Enter passcode"
                   className="w-full pl-10 pr-4 py-3 rounded-2xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs focus:outline-none focus:border-[#5C7489]"
                 />
               </div>
@@ -87,12 +87,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </form>
 
           <div className="pt-4 border-t border-[#ECE6DC] flex flex-col items-center gap-2 text-center">
-            <span className="text-[11px] text-[#7A8B99]">
-              Default passcode: <code className="bg-[#F2EDE4] px-1.5 py-0.5 rounded text-[#14191F] font-mono">whereisit2026</code>
-            </span>
             <Link
               href="/"
-              className="text-xs font-semibold text-[#5C7489] hover:underline flex items-center gap-1 mt-1"
+              className="text-xs font-semibold text-[#5C7489] hover:underline flex items-center gap-1"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Return to Public Website</span>

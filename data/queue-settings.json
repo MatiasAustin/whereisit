@@ -1,5 +1,27 @@
 {
   "defaultLeadDays": 7,
   "customLeadNote": "Pre-order, dikirim dalam 10 hari (estimasi produksi 5-7 hari kerja sejak konfirmasi desain)",
-  "updatedAt": "2026-11-16T12:00:00.000Z"
+  "queueTitle": "Antrian Produksi Saat Ini",
+  "queueSubtitle": "Transparansi proses cetak di workshop Kab. Karawang. Diperbarui setiap perubahan status oleh admin.",
+  "card1Title": "Total PO Antrian",
+  "card1Subtitle": "pesanan aktif",
+  "card2Title": "Sedang Dicetak",
+  "card2Subtitle": "di mesin print saat ini",
+  "card3Title": "Estimasi Produksi",
+  "card3Subtitle": "sejak desain dikonfirmasi",
+  "card4Title": "Pengiriman PO",
+  "card4Subtitle": "ketentuan pre-order",
+  "card4Value": "Dikirim dalam 10 hari",
+  "stageLabels": {
+    "Menunggu Pembayaran": "Menunggu Pembayaran",
+    "Dibayar — Data Belum Lengkap": "Data Belum Lengkap",
+    "Data Diterima — Menunggu Konfirmasi Desain": "Review Desain 3D",
+    "Desain Dikonfirmasi": "Siap Cetak",
+    "Produksi": "Sedang Dicetak",
+    "QC / Finishing": "QC & Finishing",
+    "Packing": "Packing",
+    "Dikirim": "Dalam Pengiriman",
+    "Selesai": "Selesai"
+  },
+  "updatedAt": "2026-11-17T20:25:00.000Z"
 }

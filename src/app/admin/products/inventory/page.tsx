@@ -266,7 +266,7 @@ export default function InventoryPage() {
 
         <div className="p-4 rounded-2xl bg-white border border-[#ECE6DC] shadow-xs">
           <div className="flex items-center justify-between text-[#7A8B99] mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Sedang Dicetak 3D</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider">Sedang Dicetak</span>
             <Printer className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="text-2xl font-black text-emerald-700">{queueStats.totalPrinting} unit</div>

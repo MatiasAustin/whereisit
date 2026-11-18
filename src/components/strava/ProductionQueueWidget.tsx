@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { PublicQueueItem, StravaOrderStatus } from '@/types';
+import { PublicQueueItem, StravaOrderStatus, QueueSettings } from '@/types';
 import { Clock, Cpu, CheckCircle2, RefreshCw, Layers } from 'lucide-react';
 import { NumberTicker } from '@/components/motion/MotionPrimitives';
 
@@ -12,6 +12,7 @@ interface QueueStats {
   avgLeadDays: number;
   defaultEstimatedDate: string;
   customNote: string;
+  settings?: QueueSettings;
 }
 
 interface ProductionQueueWidgetProps {
@@ -45,7 +46,7 @@ const STATUS_BADGES: Record<StravaOrderStatus, { label: string; bg: string; text
     border: 'border-indigo-200',
   },
   'Produksi': {
-    label: 'Sedang Dicetak 3D',
+    label: 'Sedang Dicetak',
     bg: 'bg-emerald-50',
     text: 'text-emerald-800',
     border: 'border-emerald-300',
@@ -105,6 +106,21 @@ export default function ProductionQueueWidget({ currentOrderId, showFullList = t
     fetchQueue();
   }, []);
 
+  const qSettings = stats?.settings;
+  const qTitle = qSettings?.queueTitle || 'Antrian Produksi Saat Ini';
+  const qSubtitle =
+    qSettings?.queueSubtitle ||
+    'Transparansi proses cetak di workshop Kab. Karawang. Diperbarui setiap perubahan status oleh admin.';
+  const c1Title = qSettings?.card1Title || 'Total PO Antrian';
+  const c1Sub = qSettings?.card1Subtitle || 'pesanan aktif';
+  const c2Title = qSettings?.card2Title || 'Sedang Dicetak';
+  const c2Sub = qSettings?.card2Subtitle || 'di mesin print saat ini';
+  const c3Title = qSettings?.card3Title || 'Estimasi Produksi';
+  const c3Sub = qSettings?.card3Subtitle || 'sejak desain dikonfirmasi';
+  const c4Title = qSettings?.card4Title || 'Pengiriman PO';
+  const c4Sub = qSettings?.card4Subtitle || 'ketentuan pre-order';
+  const c4Val = qSettings?.card4Value || 'Dikirim dalam 10 hari';
+
   return (
     <div className="w-full bg-white rounded-3xl border border-[#ECE6DC] shadow-sm p-6 sm:p-8 space-y-6">
       {/* Header */}
@@ -115,10 +131,10 @@ export default function ProductionQueueWidget({ currentOrderId, showFullList = t
             <span className="text-xs uppercase tracking-widest text-[#5C7489] font-bold">Live Studio Queue</span>
           </div>
           <h3 className="text-xl sm:text-2xl font-black text-[#14191F] tracking-tight">
-            Antrian Produksi Saat Ini
+            {qTitle}
           </h3>
           <p className="text-xs text-[#556473]">
-            Transparansi proses cetak 3D di workshop Kab. Karawang. Diperbarui setiap perubahan status oleh admin.
+            {qSubtitle}
           </p>
         </div>
 
@@ -144,46 +160,46 @@ export default function ProductionQueueWidget({ currentOrderId, showFullList = t
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D7]">
           <div className="flex items-center justify-between text-[#556473] mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Total PO Antrian</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider">{c1Title}</span>
             <Layers className="w-4 h-4 text-[#5C7489]" aria-hidden="true" />
           </div>
           <div className="text-2xl font-black text-[#14191F]">
             {loading && !stats ? '...' : <NumberTicker value={stats?.inQueue ?? 0} />}
           </div>
-          <span className="text-[10px] text-[#556473]">pesanan aktif</span>
+          <span className="text-[10px] text-[#556473]">{c1Sub}</span>
         </div>
 
         <div className="p-4 rounded-2xl bg-[#EDF3F7] border border-[#C5D5E2]">
           <div className="flex items-center justify-between text-[#3E5161] mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Sedang Dicetak 3D</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider">{c2Title}</span>
             <Cpu className="w-4 h-4 text-[#5C7489]" aria-hidden="true" />
           </div>
           <div className="text-2xl font-black text-[#3E5161]">
             {loading && !stats ? '...' : <NumberTicker value={stats?.inProduction ?? 0} />}
           </div>
-          <span className="text-[10px] text-[#3E5161]">di mesin print saat ini</span>
+          <span className="text-[10px] text-[#3E5161]">{c2Sub}</span>
         </div>
 
         <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D7]">
           <div className="flex items-center justify-between text-[#556473] mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Estimasi Produksi</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider">{c3Title}</span>
             <Clock className="w-4 h-4 text-[#5C7489]" aria-hidden="true" />
           </div>
           <div className="text-sm font-bold text-[#14191F] truncate">
             {stats?.defaultEstimatedDate ?? '5-7 hari kerja'}
           </div>
-          <span className="text-[10px] text-[#556473]">sejak desain dikonfirmasi</span>
+          <span className="text-[10px] text-[#556473]">{c3Sub}</span>
         </div>
 
         <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D7]">
           <div className="flex items-center justify-between text-[#556473] mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Pengiriman PO</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider">{c4Title}</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-600" aria-hidden="true" />
           </div>
           <div className="text-sm font-bold text-[#14191F]">
-            Dikirim dalam 10 hari
+            {c4Val}
           </div>
-          <span className="text-[10px] text-[#556473]">ketentuan pre-order</span>
+          <span className="text-[10px] text-[#556473]">{c4Sub}</span>
         </div>
       </div>
 
@@ -256,11 +272,6 @@ export default function ProductionQueueWidget({ currentOrderId, showFullList = t
 
                         <td className="px-4 py-3.5 font-mono text-[#14191F]">
                           {item.id}
-                          {item.isExample && (
-                            <span className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] bg-amber-100 text-amber-900 font-sans font-bold">
-                              Contoh Uji Coba
-                            </span>
-                          )}
                         </td>
 
                         <td className="px-4 py-3.5 text-[#14191F]">{item.maskedName}</td>
@@ -271,7 +282,7 @@ export default function ProductionQueueWidget({ currentOrderId, showFullList = t
                           <span
                             className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold border ${badge.bg} ${badge.text} ${badge.border}`}
                           >
-                            {badge.label}
+                            {qSettings?.stageLabels?.[item.status] || badge.label}
                           </span>
                         </td>
 

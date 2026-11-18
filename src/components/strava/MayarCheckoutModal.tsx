@@ -9,16 +9,34 @@ interface MayarCheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialVariationId?: string;
+  variationPrices?: Record<string, number>;
 }
 
 export default function MayarCheckoutModal({
   isOpen,
   onClose,
   initialVariationId,
+  variationPrices,
 }: MayarCheckoutModalProps) {
   const [selectedVarId, setSelectedVarId] = useState(
     initialVariationId || STRAVA_PRODUCT_CONFIG.variations[1].id
   );
+  const [mediaPrices, setMediaPrices] = useState<Record<string, number>>(variationPrices || {});
+
+  useEffect(() => {
+    if (variationPrices && Object.keys(variationPrices).length > 0) {
+      setMediaPrices(variationPrices);
+    } else {
+      fetch('/api/strava-media')
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.success && d.data?.variationPrices) {
+            setMediaPrices(d.data.variationPrices);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [variationPrices, isOpen]);
 
   useEffect(() => {
     if (initialVariationId) {
@@ -53,6 +71,7 @@ export default function MayarCheckoutModal({
   const currentVariation =
     STRAVA_PRODUCT_CONFIG.variations.find((v) => v.id === selectedVarId) ||
     STRAVA_PRODUCT_CONFIG.variations[0];
+  const currentPrice = mediaPrices[currentVariation.id] ?? currentVariation.price;
 
   const handleSubmitCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,7 +182,7 @@ export default function MayarCheckoutModal({
 
                     <div className="mt-3 pt-2 border-t border-[#E8E2D7]/60 w-full">
                       <span className="text-sm font-black text-[#14191F]">
-                        {formatRupiah(v.price)}
+                        {formatRupiah(mediaPrices[v.id] ?? v.price)}
                       </span>
                     </div>
                   </button>
@@ -292,7 +311,7 @@ export default function MayarCheckoutModal({
                 <span>Menghubungkan ke Gateway Mayar...</span>
               ) : (
                 <>
-                  <span>Lanjut Pembayaran ({formatRupiah(currentVariation.price)})</span>
+                  <span>Lanjut Pembayaran ({formatRupiah(currentPrice)})</span>
                   <ArrowRight className="w-4 h-4" aria-hidden="true" />
                 </>
               )}

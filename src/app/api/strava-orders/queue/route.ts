@@ -22,11 +22,38 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { defaultLeadDays, customLeadNote } = body;
+    const { 
+      defaultLeadDays, 
+      customLeadNote,
+      queueTitle,
+      queueSubtitle,
+      card1Title,
+      card1Subtitle,
+      card2Title,
+      card2Subtitle,
+      card3Title,
+      card3Subtitle,
+      card4Title,
+      card4Subtitle,
+      card4Value,
+      stageLabels,
+    } = body;
 
     await updateQueueSettings({
-      defaultLeadDays: defaultLeadDays ? Number(defaultLeadDays) : undefined,
-      customLeadNote: customLeadNote?.trim() || undefined,
+      ...(defaultLeadDays !== undefined ? { defaultLeadDays: Number(defaultLeadDays) } : {}),
+      ...(customLeadNote !== undefined ? { customLeadNote: customLeadNote.trim() } : {}),
+      ...(queueTitle !== undefined ? { queueTitle: queueTitle.trim() } : {}),
+      ...(queueSubtitle !== undefined ? { queueSubtitle: queueSubtitle.trim() } : {}),
+      ...(card1Title !== undefined ? { card1Title: card1Title.trim() } : {}),
+      ...(card1Subtitle !== undefined ? { card1Subtitle: card1Subtitle.trim() } : {}),
+      ...(card2Title !== undefined ? { card2Title: card2Title.trim() } : {}),
+      ...(card2Subtitle !== undefined ? { card2Subtitle: card2Subtitle.trim() } : {}),
+      ...(card3Title !== undefined ? { card3Title: card3Title.trim() } : {}),
+      ...(card3Subtitle !== undefined ? { card3Subtitle: card3Subtitle.trim() } : {}),
+      ...(card4Title !== undefined ? { card4Title: card4Title.trim() } : {}),
+      ...(card4Subtitle !== undefined ? { card4Subtitle: card4Subtitle.trim() } : {}),
+      ...(card4Value !== undefined ? { card4Value: card4Value.trim() } : {}),
+      ...(stageLabels ? { stageLabels } : {}),
     });
 
     const updated = await getPublicProductionQueue();

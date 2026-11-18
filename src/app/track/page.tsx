@@ -273,11 +273,6 @@ function TrackContent() {
                 </span>
                 <h2 className="text-xl sm:text-2xl font-black text-[#14191F] font-mono">
                   #{order.id}
-                  {order.isExample && (
-                    <span className="ml-2 px-2 py-0.5 rounded text-[10px] bg-amber-100 text-amber-800 font-sans font-bold">
-                      Contoh Uji Coba
-                    </span>
-                  )}
                 </h2>
                 <p className="text-xs text-[#5C7489] font-semibold mt-0.5">
                   {order.variationName}

@@ -14,13 +14,23 @@ export default function PaymentsSettingsPage() {
     fetch('/api/settings')
       .then((r) => r.json())
       .then((d) => {
-        if (d.success) setSettings(d.data);
+        if (d.success && d.data) {
+          const loaded = d.data as StoreSettings;
+          setSettings({
+            ...loaded,
+            paymentMethods: Array.isArray(loaded.paymentMethods) ? loaded.paymentMethods : [],
+          });
+        }
+      })
+      .catch(() => {
+        showError('Gagal memuat metode pembayaran.');
       });
-  }, []);
+  }, [showError]);
 
   const handleToggleActive = (index: number) => {
     if (!settings) return;
-    const pm = [...settings.paymentMethods];
+    const pm = [...(settings.paymentMethods || [])];
+    if (!pm[index]) return;
     pm[index].active = !pm[index].active;
     setSettings({ ...settings, paymentMethods: pm });
   };
@@ -72,7 +82,7 @@ export default function PaymentsSettingsPage() {
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#14191F]">Supported Channels</h4>
 
           <div className="divide-y divide-[#F0EBE3]">
-            {settings.paymentMethods.map((pm, idx) => (
+            {(settings.paymentMethods || []).map((pm, idx) => (
               <div key={idx} className="py-3.5 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-3">
                   <input

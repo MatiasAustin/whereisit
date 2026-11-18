@@ -5,8 +5,6 @@ import Navbar from '@/components/storefront/Navbar';
 import Hero from '@/components/storefront/Hero';
 import StravaFeaturedBanner from '@/components/storefront/StravaFeaturedBanner';
 import ComingSoonLineupSection from '@/components/storefront/ComingSoonLineupSection';
-import AboutSection from '@/components/storefront/AboutSection';
-import StudioCraft from '@/components/storefront/StudioCraft';
 import Footer from '@/components/storefront/Footer';
 import { StoreSettings } from '@/types';
 import { INITIAL_SETTINGS } from '@/lib/studioDefaults';
@@ -45,12 +43,6 @@ export default function HomePage() {
 
         {/* Coming Soon Highlights (Lamp & Smart Cube) + 6-Item Segera Hadir Lineup */}
         <ComingSoonLineupSection />
-
-        {/* 01/ Brand Philosophy & Context */}
-        <AboutSection content={settings.homepageContent} />
-
-        {/* Studio Craft & Technical Excellence */}
-        <StudioCraft content={settings.homepageContent} />
       </main>
 
       <Footer storeSettings={settings} />
