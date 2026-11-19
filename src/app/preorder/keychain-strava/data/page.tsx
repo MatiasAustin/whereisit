@@ -128,6 +128,63 @@ function StravaDataFormContent() {
     }
   }, [isAuth, order, stravaUrl, images, eventName, eventDate, distance, pace, duration, engravedText, adminNotes, isSubmitted]);
 
+  // Helper to optimize and compress screenshots client-side before upload
+  const compressScreenshot = async (file: File): Promise<File> => {
+    if (typeof window === 'undefined') return file;
+    // If small enough (< 300KB) and already WebP/JPEG, upload directly
+    if (file.size < 300 * 1024 && file.type !== 'image/png') return file;
+
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_DIM = 1600;
+          let { width, height } = img;
+
+          if (width > height && width > MAX_DIM) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          } else if (height > MAX_DIM) {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(file);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              if (!blob || blob.size >= file.size) {
+                resolve(file);
+              } else {
+                const compressedFile = new File(
+                  [blob],
+                  file.name.replace(/\.[^.]+$/, '.webp'),
+                  { type: 'image/webp' }
+                );
+                resolve(compressedFile);
+              }
+            },
+            'image/webp',
+            0.82
+          );
+        };
+        img.onerror = () => resolve(file);
+      };
+      reader.onerror = () => resolve(file);
+    });
+  };
+
   // Handle image upload (1 to 3 images)
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -143,9 +200,10 @@ function StravaDataFormContent() {
 
     try {
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+        const rawFile = files[i];
+        const fileToUpload = await compressScreenshot(rawFile);
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('file', fileToUpload);
 
         const res = await fetch('/api/upload', {
           method: 'POST',

@@ -302,15 +302,17 @@ export default function OrdersPage() {
       showSuccess(`Pembayaran Clicky untuk pesanan #${orderId} berhasil diverifikasi!`);
       await fetchStravaOrders();
 
-      if (selectedStravaOrder && selectedStravaOrder.id === orderId) {
+      if (selectedStravaOrder && (selectedStravaOrder.id === orderId || selectedStravaOrder.orderNumber === orderId)) {
+        const nextStatus = data.data?.status || (selectedStravaOrder.stravaData?.stravaUrl
+          ? 'Data Diterima — Menunggu Konfirmasi Desain'
+          : 'Dibayar — Data Belum Lengkap');
+        setEditStatus(nextStatus);
         setSelectedStravaOrder((prev) =>
           prev
             ? {
                 ...prev,
                 paymentVerified: true,
-                status: prev.stravaData?.stravaUrl
-                  ? 'Data Diterima — Menunggu Konfirmasi Desain'
-                  : 'Dibayar — Data Belum Lengkap',
+                status: nextStatus,
               }
             : null
         );

@@ -1578,11 +1578,14 @@ export async function getStravaOrders(): Promise<StravaPreOrder[]> {
 }
 
 export async function getStravaOrderById(id: string): Promise<StravaPreOrder | undefined> {
+  if (!id) return undefined;
   const orders = await getStravaOrders();
-  const search = id.trim().toLowerCase();
-  return orders.find(
-    (o) => o.id.toLowerCase() === search || o.orderNumber.toLowerCase() === search
-  );
+  const clean = id.trim().replace(/^#/, '').toLowerCase();
+  return orders.find((o) => {
+    const oId = (o.id || '').trim().replace(/^#/, '').toLowerCase();
+    const oNum = (o.orderNumber || '').trim().replace(/^#/, '').toLowerCase();
+    return oId === clean || oNum === clean;
+  });
 }
 
 export async function createStravaOrder(order: StravaPreOrder): Promise<StravaPreOrder> {
@@ -1646,13 +1649,10 @@ export async function updateStravaOrderStatus(
   status: StravaOrderStatus,
   updates?: Partial<StravaPreOrder>
 ): Promise<{ success: boolean; error?: string }> {
-  const list = readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
-  const index = list.findIndex((o) => o.id === id || o.orderNumber === id);
-  if (index === -1) {
+  const current = await getStravaOrderById(id);
+  if (!current) {
     return { success: false, error: 'Pesanan tidak ditemukan' };
   }
-
-  const current = list[index];
 
   // GUARD: Produksi (status 5) TIDAK BOLEH mulai sampai SEMUA terpenuhi:
   // 1. Pembayaran terverifikasi (Clicky verified atau Mayar sudah bayar)
@@ -1703,7 +1703,13 @@ export async function updateStravaOrderStatus(
     updatedAt: now,
   };
 
-  list[index] = updated;
+  const list = readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
+  const index = list.findIndex((o) => o.id === current.id || o.orderNumber === current.id);
+  if (index >= 0) {
+    list[index] = updated;
+  } else {
+    list.unshift(updated);
+  }
   writeJsonFile(STRAVA_ORDERS_FILE, list);
 
   const supabase = getSupabaseServerClient();
@@ -1720,11 +1726,14 @@ export async function updateStravaOrderStatus(
           subtotal: updated.subtotal,
           shipping_fee: updated.shippingFee,
           total: updated.total,
+          payment_verified: updated.paymentVerified,
+          payment_verified_at: updated.paymentVerifiedAt,
+          payment_details: updated.paymentDetails,
           strava_data: updated.stravaData,
           production: updated.production,
           updated_at: now,
         })
-        .eq('id', current.id);
+        .or(`id.eq.${current.id},order_number.eq.${current.id}`);
     } catch (err) {
       console.error('Failed to update strava order in Supabase:', err);
     }
@@ -1737,13 +1746,11 @@ export async function verifyClickyOrderPayment(
   id: string,
   adminNotes?: string
 ): Promise<{ success: boolean; order?: StravaPreOrder; error?: string }> {
-  const list = readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
-  const index = list.findIndex((o) => o.id === id || o.orderNumber === id);
-  if (index === -1) {
+  const current = await getStravaOrderById(id);
+  if (!current) {
     return { success: false, error: 'Pesanan tidak ditemukan' };
   }
 
-  const current = list[index];
   const now = new Date().toISOString();
 
   // If customer has already submitted Strava data, advance to review desain; otherwise 'Dibayar — Data Belum Lengkap'
@@ -1770,7 +1777,13 @@ export async function verifyClickyOrderPayment(
     updatedAt: now,
   };
 
-  list[index] = updated;
+  const list = readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
+  const index = list.findIndex((o) => o.id === current.id || o.orderNumber === current.id);
+  if (index >= 0) {
+    list[index] = updated;
+  } else {
+    list.unshift(updated);
+  }
   writeJsonFile(STRAVA_ORDERS_FILE, list);
 
   const supabase = getSupabaseServerClient();
@@ -1780,11 +1793,13 @@ export async function verifyClickyOrderPayment(
         .from('strava_orders')
         .update({
           status: updated.status,
+          payment_verified: true,
+          payment_verified_at: now,
           payment_details: updated.paymentDetails,
           production: updated.production,
           updated_at: now,
         })
-        .eq('id', current.id);
+        .or(`id.eq.${current.id},order_number.eq.${current.id}`);
     } catch (err) {
       console.error('Failed to update payment verification in Supabase:', err);
     }
@@ -1797,14 +1812,12 @@ export async function saveStravaCustomerData(
   orderId: string,
   data: StravaCustomData
 ): Promise<{ success: boolean; error?: string }> {
-  const list = readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
-  const index = list.findIndex((o) => o.id === orderId || o.orderNumber === orderId);
-  if (index === -1) {
+  const current = await getStravaOrderById(orderId);
+  if (!current) {
     return { success: false, error: 'Order ID tidak ditemukan' };
   }
 
   const now = new Date().toISOString();
-  const current = list[index];
 
   const updated: StravaPreOrder = {
     ...current,
@@ -1817,7 +1830,13 @@ export async function saveStravaCustomerData(
     updatedAt: now,
   };
 
-  list[index] = updated;
+  const list = readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
+  const index = list.findIndex((o) => o.id === current.id || o.orderNumber === current.id);
+  if (index >= 0) {
+    list[index] = updated;
+  } else {
+    list.unshift(updated);
+  }
   writeJsonFile(STRAVA_ORDERS_FILE, list);
 
   const supabase = getSupabaseServerClient();
@@ -1830,7 +1849,7 @@ export async function saveStravaCustomerData(
           status: updated.status,
           updated_at: now,
         })
-        .eq('id', current.id);
+        .or(`id.eq.${current.id},order_number.eq.${current.id}`);
     } catch (err) {
       console.error('Failed to save strava data to Supabase:', err);
     }

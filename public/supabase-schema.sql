@@ -272,9 +272,14 @@ ALTER TABLE public.discounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscribers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.strava_orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS shipping_region TEXT;
+ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS shipping_fee NUMERIC DEFAULT 0;
 ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS payment_verified BOOLEAN DEFAULT false;
 ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS payment_verified_at TIMESTAMPTZ;
 ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS clicky_fee NUMERIC DEFAULT 0;
+ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS strava_data JSONB;
+ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS production JSONB;
+ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS payment_details JSONB;
+ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS is_example BOOLEAN DEFAULT false;
 ALTER TABLE public.notify_list ENABLE ROW LEVEL SECURITY;
 
 -- 1. Allow service_role full control on all tables (used by backend API routes)
@@ -334,6 +339,53 @@ DROP POLICY IF EXISTS "public_insert_custom_character" ON public.custom_characte
 CREATE POLICY "public_insert_custom_character" ON public.custom_character_inquiries FOR INSERT TO anon, authenticated WITH CHECK (true);
 
 -- ==============================================================================
+-- 5. SUPABASE STORAGE BUCKET & POLICIES (strava-uploads FOR BUYER SCREENSHOTS)
+-- ==============================================================================
+-- Create the public bucket 'strava-uploads' for buyer Strava screenshot uploads (10MB max per file)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'strava-uploads',
+  'strava-uploads',
+  true,
+  10485760, -- 10MB limit per screenshot
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = true,
+  file_size_limit = 10485760,
+  allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+-- Allow public read access so uploaded screenshots can be viewed in order tracking & admin
+DROP POLICY IF EXISTS "Public can view strava-uploads" ON storage.objects;
+CREATE POLICY "Public can view strava-uploads"
+  ON storage.objects FOR SELECT
+  TO anon, authenticated
+  USING (bucket_id = 'strava-uploads');
+
+-- Allow buyers (anon & authenticated) and service_role to upload screenshots
+DROP POLICY IF EXISTS "Anyone can upload strava-uploads" ON storage.objects;
+CREATE POLICY "Anyone can upload strava-uploads"
+  ON storage.objects FOR INSERT
+  TO anon, authenticated, service_role
+  WITH CHECK (bucket_id = 'strava-uploads');
+
+-- Allow updates/upserts on strava-uploads
+DROP POLICY IF EXISTS "Anyone can update strava-uploads" ON storage.objects;
+CREATE POLICY "Anyone can update strava-uploads"
+  ON storage.objects FOR UPDATE
+  TO anon, authenticated, service_role
+  USING (bucket_id = 'strava-uploads')
+  WITH CHECK (bucket_id = 'strava-uploads');
+
+-- Allow service_role full administrative access
+DROP POLICY IF EXISTS "Service role full control strava-uploads" ON storage.objects;
+CREATE POLICY "Service role full control strava-uploads"
+  ON storage.objects FOR ALL
+  TO service_role
+  USING (bucket_id = 'strava-uploads')
+  WITH CHECK (bucket_id = 'strava-uploads');
+
+-- ==============================================================================
 -- INITIAL SEED DATA (CORE PRODUCTION PRODUCTS & STUDIO DEFAULTS)
 -- ==============================================================================
 
@@ -356,10 +408,10 @@ INSERT INTO public.products (
   'Abadikan rute lari, race marathon, atau PB terbaik kamu menjadi gantungan kunci 3D print custom. Menggunakan filament PLA+ premium dengan resolusi mikro 0.12mm yang kokoh, tajam, dan tahan cuaca. Rute 3D timbul sesuai jalur GPS Strava kamu lengkap dengan data jarak, pace, durasi, dan nama event.',
   'Rute lari kamu, sekarang bisa dipegang. 3D-printed keychain made from your own Strava route map + stats.',
   'Premium PLA+ Matte Bio-Polymer',
-  '10 x 5 x 0.8 cm',
+  '5.7 x 9.4 x 0.8 cm',
   '45 g',
   '0.12mm ultra-fine layer height',
-  '["10x5 cm", "10x5 cm Emoney", "10x5 cm Flazz"]'::jsonb,
+  '["5.7x9.4 cm", "5.7x9.4 cm Emoney", "5.7x9.4 cm Flazz"]'::jsonb,
   '["/images/strava-keychain/keychain-04.jpg", "/images/strava-keychain/keychain-05.jpg", "/images/strava-keychain/keychain-06.jpg"]'::jsonb,
   true,
   999,
