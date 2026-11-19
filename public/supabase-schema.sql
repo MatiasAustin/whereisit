@@ -114,12 +114,16 @@ CREATE TABLE IF NOT EXISTS public.draft_orders (
 -- 7. ABANDONED CHECKOUTS TABLE
 CREATE TABLE IF NOT EXISTS public.abandoned_checkouts (
   id TEXT PRIMARY KEY,
-  customer_name TEXT NOT NULL,
-  email TEXT NOT NULL,
+  checkout_number TEXT,
+  customer_email TEXT,
+  customer_phone TEXT,
+  customer_name TEXT,
+  email TEXT,
   phone TEXT,
-  items JSONB NOT NULL,
-  total NUMERIC NOT NULL DEFAULT 0,
-  recovery_status TEXT DEFAULT 'NOT_SENT',
+  items JSONB NOT NULL DEFAULT '[]'::jsonb,
+  subtotal NUMERIC NOT NULL DEFAULT 0,
+  total NUMERIC DEFAULT 0,
+  recovery_status TEXT DEFAULT 'NOT_RECOVERED',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -129,9 +133,12 @@ CREATE TABLE IF NOT EXISTS public.custom_design_inquiries (
   client_name TEXT NOT NULL,
   email TEXT NOT NULL,
   phone TEXT NOT NULL,
-  project_name TEXT NOT NULL,
+  project_type TEXT,
+  project_name TEXT,
   description TEXT NOT NULL,
+  dimension_constraints TEXT,
   estimated_budget TEXT,
+  desired_timeline TEXT,
   intended_use TEXT,
   reference_files JSONB DEFAULT '[]'::jsonb,
   status TEXT DEFAULT 'NEW',
@@ -280,6 +287,24 @@ ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS strava_data JSONB;
 ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS production JSONB;
 ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS payment_details JSONB;
 ALTER TABLE public.strava_orders ADD COLUMN IF NOT EXISTS is_example BOOLEAN DEFAULT false;
+
+-- Auto-align legacy columns for abandoned_checkouts & custom_design_inquiries
+ALTER TABLE public.abandoned_checkouts ADD COLUMN IF NOT EXISTS checkout_number TEXT;
+ALTER TABLE public.abandoned_checkouts ADD COLUMN IF NOT EXISTS customer_email TEXT;
+ALTER TABLE public.abandoned_checkouts ADD COLUMN IF NOT EXISTS customer_phone TEXT;
+ALTER TABLE public.abandoned_checkouts ADD COLUMN IF NOT EXISTS subtotal NUMERIC DEFAULT 0;
+DO $$ BEGIN
+  ALTER TABLE public.abandoned_checkouts ALTER COLUMN customer_name DROP NOT NULL;
+  ALTER TABLE public.abandoned_checkouts ALTER COLUMN email DROP NOT NULL;
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+
+ALTER TABLE public.custom_design_inquiries ADD COLUMN IF NOT EXISTS project_type TEXT;
+ALTER TABLE public.custom_design_inquiries ADD COLUMN IF NOT EXISTS dimension_constraints TEXT;
+ALTER TABLE public.custom_design_inquiries ADD COLUMN IF NOT EXISTS desired_timeline TEXT;
+DO $$ BEGIN
+  ALTER TABLE public.custom_design_inquiries ALTER COLUMN project_name DROP NOT NULL;
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
+
 ALTER TABLE public.notify_list ENABLE ROW LEVEL SECURITY;
 
 -- 1. Allow service_role full control on all tables (used by backend API routes)
@@ -468,7 +493,54 @@ INSERT INTO public.store_settings (id, data, updated_at) VALUES (
   data = EXCLUDED.data,
   updated_at = NOW();
 
--- 3. Clean up template collections & insert official collections
+-- 3. Insert Strava Media Configuration into store_settings
+INSERT INTO public.store_settings (id, data, updated_at) VALUES (
+  'strava_media',
+  '{
+    "heroImage": "/images/strava-keychain/keychain-04.jpg",
+    "variationImages": {
+      "var-57x94": "/images/strava-keychain/keychain-04.jpg",
+      "var-emoney": "/images/strava-keychain/keychain-05.jpg",
+      "var-flazz": "/images/strava-keychain/keychain-06.jpg"
+    },
+    "variationPrices": {
+      "var-57x94": 119000,
+      "var-emoney": 180000,
+      "var-flazz": 220000
+    },
+    "gallery": [
+      {
+        "id": "media-photo-01",
+        "type": "image",
+        "title": "Keychain Custom Strava — Tanpa Kartu (5.7x9.4 cm)",
+        "caption": "Tampak depan rute 3D timbul dengan presisi layer 0.12mm.",
+        "src": "/images/strava-keychain/keychain-04.jpg",
+        "aspectRatio": "1:1"
+      },
+      {
+        "id": "media-photo-02",
+        "type": "image",
+        "title": "Keychain Custom Strava — E-Money Edition",
+        "caption": "Dilengkapi kartu e-money terintegrasi yang aktif dan dapat di-tap di transportasi umum.",
+        "src": "/images/strava-keychain/keychain-05.jpg",
+        "aspectRatio": "1:1"
+      },
+      {
+        "id": "media-photo-03",
+        "type": "image",
+        "title": "Keychain Custom Strava — Flazz Edition",
+        "caption": "Varian Flazz resmi dengan bodi kokoh dan finishing halus.",
+        "src": "/images/strava-keychain/keychain-06.jpg",
+        "aspectRatio": "1:1"
+      }
+    ]
+  }'::jsonb,
+  NOW()
+) ON CONFLICT (id) DO UPDATE SET
+  data = EXCLUDED.data,
+  updated_at = NOW();
+
+-- 4. Clean up template collections & insert official collections
 DELETE FROM public.collections WHERE id NOT IN ('col-strava', 'col-coming-soon');
 
 INSERT INTO public.collections (id, slug, name, description, image, product_count, status) VALUES

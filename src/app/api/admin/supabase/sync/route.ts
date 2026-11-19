@@ -99,9 +99,13 @@ export async function POST() {
           price: Number(o.price),
           subtotal: Number(o.subtotal),
           shipping_fee: Number(o.shippingFee || 0),
+          shipping_region: o.shippingRegion || null,
           total: Number(o.total),
           status: o.status,
           payment_method: o.paymentMethod,
+          payment_verified: Boolean(o.paymentVerified),
+          payment_verified_at: o.paymentVerifiedAt || null,
+          clicky_fee: Number(o.clickyFee || 0),
           payment_details: o.paymentDetails || null,
           strava_data: o.stravaData || null,
           production: o.production || null,
@@ -124,7 +128,16 @@ export async function POST() {
         data: settings,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'id' });
-      report['store_settings'] = { count: 1, error: error?.message };
+
+      // Sync Strava Media config as well
+      const media = await getStravaMediaConfig();
+      await supabase.from('store_settings').upsert({
+        id: 'strava_media',
+        data: media,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' });
+
+      report['store_settings'] = { count: 2, error: error?.message };
     } catch (e: any) {
       report['store_settings'] = { count: 0, error: e.message };
     }
