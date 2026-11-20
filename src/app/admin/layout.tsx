@@ -13,6 +13,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [passcode, setPasscode] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loggingIn, setLoggingIn] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,10 +96,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       ) : (
         <div className="min-h-screen bg-[#F4F5F7] flex text-[#14191F]">
-          <AdminSidebar />
+          <AdminSidebar
+            isOpen={mobileSidebarOpen}
+            onClose={() => setMobileSidebarOpen(false)}
+          />
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <AdminHeader />
-            <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+            <AdminHeader
+              onToggleSidebar={() => setMobileSidebarOpen((prev) => !prev)}
+            />
+            <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8">
               {children}
             </main>
           </div>

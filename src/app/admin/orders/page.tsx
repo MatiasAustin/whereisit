@@ -648,13 +648,6 @@ export default function OrdersPage() {
                 <span>+ Tambah Order Manual</span>
               </button>
 
-              <a
-                href="/admin/content/keychain-media"
-                className="px-4 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-semibold text-[#14191F] hover:bg-[#F2EDE4] transition-colors flex items-center gap-1.5"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-[#5C7489]" />
-                <span>Media &amp; YouTube</span>
-              </a>
               <button
                 onClick={() => setShowSettingsModal(true)}
                 className="px-4 py-2 rounded-xl bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-semibold text-[#14191F] hover:bg-[#F2EDE4] transition-colors flex items-center gap-1.5"

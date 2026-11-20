@@ -5,11 +5,13 @@ import Link from 'next/link';
 import {
   StravaGalleryMediaItem,
   StravaMediaConfig,
+  StravaVariation,
   VideoFormatOption,
   VideoRatioOption,
 } from '@/types';
 import { STRAVA_PRODUCT_CONFIG } from '@/data/stravaKeychainConfig';
 import ImageUploadWithCompress from '@/components/ui/ImageUploadWithCompress';
+import { StravaVariationModal } from '@/components/admin/strava/StravaVariationModal';
 import {
   parseYouTubeUrl,
   resolveEffectiveAspectRatio,
@@ -29,6 +31,9 @@ import {
   RotateCcw,
   PlayCircle,
   ExternalLink,
+  Edit2,
+  Sparkles,
+  Layers,
 } from 'lucide-react';
 
 export default function KeychainMediaAdminPage() {
@@ -37,6 +42,8 @@ export default function KeychainMediaAdminPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [detectingId, setDetectingId] = useState<string | null>(null);
+  const [isVarModalOpen, setIsVarModalOpen] = useState(false);
+  const [editingVar, setEditingVar] = useState<StravaVariation | null>(null);
 
   const loadConfig = async () => {
     // 1. Instant hydration from client storage to prevent image flicker on refresh
@@ -148,6 +155,104 @@ export default function KeychainMediaAdminPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const activeVariations: StravaVariation[] =
+    config?.customVariations && config.customVariations.length > 0
+      ? config.customVariations
+      : STRAVA_PRODUCT_CONFIG.variations;
+
+  const handleOpenAddVariation = () => {
+    setEditingVar(null);
+    setIsVarModalOpen(true);
+  };
+
+  const handleOpenEditVariation = (v: StravaVariation) => {
+    setEditingVar(v);
+    setIsVarModalOpen(true);
+  };
+
+  const autoPersist = async (confToSave: StravaMediaConfig, message: string) => {
+    setSaving(true);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('whereisit_strava_media_override', JSON.stringify(confToSave));
+      }
+      const res = await fetch('/api/strava-media', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(confToSave),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showSuccess(message);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err: any) {
+      showError(err.message || 'Gagal sinkronisasi varian');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveVariationModal = async (savedVar: StravaVariation) => {
+    if (!config) return;
+    const currentList = [...activeVariations];
+    const existingIdx = currentList.findIndex((v) => v.id === savedVar.id);
+
+    if (existingIdx >= 0) {
+      currentList[existingIdx] = savedVar;
+    } else {
+      currentList.push(savedVar);
+    }
+
+    const updatedConfig: StravaMediaConfig = {
+      ...config,
+      customVariations: currentList,
+      variationPrices: {
+        ...(config.variationPrices || {}),
+        [savedVar.id]: savedVar.price,
+      },
+      variationImages: {
+        ...(config.variationImages || {}),
+        [savedVar.id]: savedVar.image || config.variationImages?.[savedVar.id] || '',
+      },
+    };
+
+    setConfig(updatedConfig);
+    await autoPersist(updatedConfig, `Varian "${savedVar.name}" berhasil disimpan ke Supabase & Live Web!`);
+  };
+
+  const handleDeleteVariation = async (varId: string) => {
+    if (!config) return;
+    if (activeVariations.length <= 1) {
+      showError('Minimal harus ada 1 varian produk pre-order aktif');
+      return;
+    }
+    const target = activeVariations.find((v) => v.id === varId);
+    if (!confirm(`Hapus varian "${target?.name || varId}" dari website live & Supabase?`)) return;
+
+    const filtered = activeVariations.filter((v) => v.id !== varId);
+    const updatedConfig: StravaMediaConfig = {
+      ...config,
+      customVariations: filtered,
+    };
+
+    setConfig(updatedConfig);
+    await autoPersist(updatedConfig, 'Varian berhasil dihapus dari Supabase & Live Web');
+  };
+
+  const handleResetVariationsToDefault = async () => {
+    if (!config) return;
+    if (!confirm('Kembalikan daftar varian ke 3 varian standar bawaan studio?')) return;
+
+    const updatedConfig: StravaMediaConfig = {
+      ...config,
+      customVariations: STRAVA_PRODUCT_CONFIG.variations,
+    };
+    setConfig(updatedConfig);
+    await autoPersist(updatedConfig, 'Daftar varian direset ke standar studio');
   };
 
   const updateItem = (id: string, patch: Partial<StravaGalleryMediaItem>) => {
@@ -318,23 +423,54 @@ export default function KeychainMediaAdminPage() {
         </div>
       </div>
 
-      {/* SECTION 1: HERO IMAGE & 3 VARIATION THUMBNAILS (AUTO-COMPRESS) */}
+      {/* SECTION 1: HERO IMAGE & VARIATION CARDS */}
       <div className="bg-white rounded-3xl border border-[#ECE6DC] p-6 sm:p-8 shadow-sm space-y-6">
-        <div className="border-b border-[#F0EBE3] pb-4">
-          <h2 className="text-base font-black text-[#14191F]">
-            1. Foto Utama Hero &amp; 3 Foto Variasi Studio (Auto-Compress WebP)
-          </h2>
-          <p className="text-xs text-[#556473]">
-            Setiap gambar yang diunggah otomatis diperkecil dan dikompres menjadi WebP agar halaman mobile 390px tetap ringan.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F0EBE3] pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-black text-[#14191F]">
+                1. Foto Utama Hero &amp; Varian Produk Pre-Order Strava ({activeVariations.length} Varian)
+              </h2>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Live Supabase Sync</span>
+              </span>
+            </div>
+            <p className="text-xs text-[#556473]">
+              Atur foto hero dan tambahkan atau kelola varian produk pre-order (ukuran, harga, chip e-money, dan fitur). Varian baru langsung aktif di halaman web pembeli (/preorder/keychain-strava).
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleResetVariationsToDefault}
+              className="px-3 py-1.5 rounded-xl border border-[#DDD5C7] text-xs font-semibold text-[#7A8B99] hover:bg-[#FAF8F5] transition-colors"
+              title="Reset ke varian bawaan"
+            >
+              Reset Standar
+            </button>
+
+            <button
+              type="button"
+              onClick={handleOpenAddVariation}
+              className="px-4 py-2 rounded-xl bg-[#14191F] text-white text-xs font-bold hover:bg-[#5C7489] transition-colors flex items-center gap-1.5 shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              <span>+ Tambah Varian Baru</span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Hero Showcase Image */}
-          <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D7] space-y-2">
-            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-[#14191F] text-white">
-              Hero Showcase
-            </span>
+          <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D7] space-y-2 flex flex-col justify-between">
+            <div>
+              <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-[#14191F] text-white mb-2">
+                Hero Showcase
+              </span>
+              <p className="text-[11px] text-[#6C7E8E] mb-2">Foto produk utama di header halaman pre-order</p>
+            </div>
             <ImageUploadWithCompress
               label="Foto Utama Hero"
               value={config.heroImage}
@@ -344,28 +480,63 @@ export default function KeychainMediaAdminPage() {
             />
           </div>
 
-          {/* 3 Variation Thumbnails */}
-          {STRAVA_PRODUCT_CONFIG.variations.map((v) => (
-            <div key={v.id} className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D7] space-y-3">
-              <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-[#EDF3F7] text-[#3E5161]">
-                {v.badge || v.name}
-              </span>
-              <ImageUploadWithCompress
-                label={`Foto Varian: ${v.name}`}
-                value={config.variationImages[v.id] ?? v.image ?? ''}
-                onChange={(url) =>
-                  setConfig({
-                    ...config,
-                    variationImages: { ...config.variationImages, [v.id]: url },
-                  })
-                }
-                aspectRatio="square"
-                compressionOptions={{ maxWidth: 1000, maxHeight: 1000, quality: 0.82, preserveAlpha: false }}
-              />
+          {/* Dynamic Variations List */}
+          {activeVariations.map((v) => (
+            <div key={v.id} className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D7] space-y-3 flex flex-col justify-between group hover:border-[#8BA1B4] transition-all">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-[#EDF3F7] text-[#3E5161]">
+                    {v.badge || 'Varian'}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditVariation(v)}
+                      className="p-1 rounded text-[#7A8B99] hover:text-[#14191F] hover:bg-white transition-colors"
+                      title="Edit Detail Varian"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    {activeVariations.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteVariation(v.id)}
+                        className="p-1 rounded text-[#7A8B99] hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Hapus Varian"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
 
-              <div className="pt-2 border-t border-[#ECE6DC]">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#44505C] mb-1">
-                  Harga Varian (IDR)
+                <ImageUploadWithCompress
+                  label={`Foto Varian: ${v.name}`}
+                  value={config.variationImages?.[v.id] ?? v.image ?? ''}
+                  onChange={(url) => {
+                    const newImages = { ...(config.variationImages || {}), [v.id]: url };
+                    const updatedConf = { ...config, variationImages: newImages };
+                    setConfig(updatedConf);
+                    autoPersist(updatedConf, `Foto varian "${v.name}" diperbarui`);
+                  }}
+                  aspectRatio="square"
+                  compressionOptions={{ maxWidth: 1000, maxHeight: 1000, quality: 0.82, preserveAlpha: false }}
+                />
+
+                <div>
+                  <h4 className="font-extrabold text-xs text-[#14191F] line-clamp-1">{v.name}</h4>
+                  <p className="text-[10px] text-[#7A8B99] font-mono">ID: {v.id}</p>
+                  {v.includesEmoney && (
+                    <span className="inline-block mt-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">
+                      ✓ Chip E-Money
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-[#ECE6DC] space-y-1">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#44505C]">
+                  Harga (IDR)
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#7A8B99]">
@@ -383,7 +554,7 @@ export default function KeychainMediaAdminPage() {
                         },
                       })
                     }
-                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs font-bold text-[#14191F] focus:outline-none focus:border-[#5C7489]"
+                    className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-white border border-[#DDD5C7] text-xs font-bold text-[#14191F] focus:outline-none focus:border-[#5C7489]"
                   />
                 </div>
               </div>
@@ -677,6 +848,13 @@ export default function KeychainMediaAdminPage() {
           })}
         </div>
       </div>
+
+      <StravaVariationModal
+        isOpen={isVarModalOpen}
+        onClose={() => setIsVarModalOpen(false)}
+        variation={editingVar}
+        onSave={handleSaveVariationModal}
+      />
     </div>
   );
 }

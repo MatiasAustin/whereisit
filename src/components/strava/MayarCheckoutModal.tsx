@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { formatRupiah } from '@/lib/utils';
 import { STRAVA_PRODUCT_CONFIG } from '@/data/stravaKeychainConfig';
+import { StravaVariation } from '@/types';
 import {
   getActivePaymentProvider,
   ClickyShippingRegion,
@@ -28,6 +29,7 @@ interface MayarCheckoutModalProps {
   onClose: () => void;
   initialVariationId?: string;
   variationPrices?: Record<string, number>;
+  variations?: StravaVariation[];
 }
 
 export default function MayarCheckoutModal({
@@ -35,11 +37,14 @@ export default function MayarCheckoutModal({
   onClose,
   initialVariationId,
   variationPrices,
+  variations,
 }: MayarCheckoutModalProps) {
   const provider = getActivePaymentProvider();
 
+  const availableVariations = variations && variations.length > 0 ? variations : STRAVA_PRODUCT_CONFIG.variations;
+
   const [selectedVarId, setSelectedVarId] = useState(
-    initialVariationId || 'var-57x94'
+    initialVariationId || availableVariations[0]?.id || 'var-57x94'
   );
   const [shippingRegion, setShippingRegion] = useState<ClickyShippingRegion>('Jabodetabek');
   const [mediaPrices, setMediaPrices] = useState<Record<string, number>>(variationPrices || {});
@@ -108,8 +113,8 @@ export default function MayarCheckoutModal({
   if (!isOpen) return null;
 
   const currentVariation =
-    STRAVA_PRODUCT_CONFIG.variations.find((v) => v.id === selectedVarId) ||
-    STRAVA_PRODUCT_CONFIG.variations[0];
+    availableVariations.find((v) => v.id === selectedVarId) ||
+    availableVariations[0];
   const currentPrice = mediaPrices[currentVariation.id] ?? currentVariation.price;
   const currentShippingFee = CLICKY_SHIPPING_RATES[shippingRegion] || 16000;
   const currentTotal = currentPrice + currentShippingFee;
@@ -380,7 +385,7 @@ export default function MayarCheckoutModal({
                 1. Pilih Variasi Keychain (Batch 2)
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {STRAVA_PRODUCT_CONFIG.variations.map((v) => {
+                {availableVariations.map((v) => {
                   const isSelected = selectedVarId === v.id;
                   return (
                     <button

@@ -165,17 +165,22 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: false, error: 'Status pesanan tidak valid' }, { status: 400 });
     }
 
-    const result = await updateStravaOrderStatus(id, targetStatus, {
-      ...(customer ? { customer } : {}),
-      ...(variationName ? { variationName } : {}),
-      ...(variationId ? { variationId } : {}),
-      ...(price !== undefined ? { price: Number(price) } : {}),
-      ...(subtotal !== undefined ? { subtotal: Number(subtotal) } : {}),
-      ...(shippingFee !== undefined ? { shippingFee: Number(shippingFee) } : {}),
-      ...(total !== undefined ? { total: Number(total) } : {}),
-      ...(stravaData ? { stravaData } : {}),
-      production: productionUpdates,
-    });
+    const result = await updateStravaOrderStatus(
+      id,
+      targetStatus,
+      {
+        ...(customer ? { customer } : {}),
+        ...(variationName ? { variationName } : {}),
+        ...(variationId ? { variationId } : {}),
+        ...(price !== undefined ? { price: Number(price) } : {}),
+        ...(subtotal !== undefined ? { subtotal: Number(subtotal) } : {}),
+        ...(shippingFee !== undefined ? { shippingFee: Number(shippingFee) } : {}),
+        ...(total !== undefined ? { total: Number(total) } : {}),
+        ...(stravaData ? { stravaData } : {}),
+        production: productionUpdates,
+      },
+      body.bypassGuards !== undefined ? Boolean(body.bypassGuards) : true
+    );
 
     if (!result.success) {
       return NextResponse.json({ success: false, error: result.error }, { status: 400 });

@@ -22,12 +22,16 @@ export default function StravaFeaturedBanner() {
       .catch(() => {});
   }, []);
 
-  const dynamicVariations = STRAVA_PRODUCT_CONFIG.variations.map((v) => ({
+  const dynamicVariations = (
+    mediaConfig?.customVariations && mediaConfig.customVariations.length > 0
+      ? mediaConfig.customVariations
+      : STRAVA_PRODUCT_CONFIG.variations
+  ).map((v) => ({
     ...v,
     price: mediaConfig?.variationPrices?.[v.id] ?? v.price,
   }));
-  const minDynamicPrice = Math.min(...dynamicVariations.map((v) => v.price));
-  const maxDynamicPrice = Math.max(...dynamicVariations.map((v) => v.price));
+  const minDynamicPrice = dynamicVariations.length > 0 ? Math.min(...dynamicVariations.map((v) => v.price)) : 119000;
+  const maxDynamicPrice = dynamicVariations.length > 0 ? Math.max(...dynamicVariations.map((v) => v.price)) : 220000;
   const dynamicPriceRange = `${formatRupiah(minDynamicPrice)} – ${formatRupiah(maxDynamicPrice)}`;
   return (
     <section className="py-6 sm:py-8 bg-[#F8F6F1]">
@@ -66,7 +70,7 @@ export default function StravaFeaturedBanner() {
                 </p>
 
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  {STRAVA_PRODUCT_CONFIG.variations.map((v) => (
+                  {dynamicVariations.map((v) => (
                     <span
                       key={v.id}
                       className="px-3 py-1.5 rounded-xl bg-black/30 border border-white/10 text-[11px] font-semibold text-[#D5E1E9]"

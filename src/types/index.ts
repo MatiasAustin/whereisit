@@ -313,6 +313,7 @@ export interface StravaMediaConfig {
   heroImage: string;
   variationImages: Record<string, string>;
   variationPrices?: Record<string, number>;
+  customVariations?: StravaVariation[];
   gallery: StravaGalleryMediaItem[];
   updatedAt: string;
 }
@@ -392,6 +393,13 @@ export interface StravaPreOrder {
     assignedMachine?: string;
     confirmedAt?: string;
     startedAt?: string;
+    batchId?: string;
+    batchName?: string;
+    scheduledDate?: string;
+    targetCompletionDate?: string;
+    stage?: 'QUEUE' | 'SCHEDULED' | 'PRINTING' | 'QC' | 'COMPLETED';
+    priority?: 'NORMAL' | 'HIGH' | 'URGENT';
+    completedAt?: string;
   };
   isExample?: boolean;
   createdAt: string;
@@ -426,4 +434,37 @@ export interface QueueSettings {
   stageLabels?: Record<string, string>;
   updatedAt: string;
 }
+
+// ---------------- PRODUCTION & BATCH TYPES ---------------- //
+
+export interface ProductionBatch {
+  id: string;
+  name: string;
+  scheduledDate?: string;
+  status: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED';
+  notes?: string;
+  totalItems?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ---------------- INSPO TYPES ---------------- //
+
+export type InspoPlatform = 'facebook' | 'threads' | 'instagram' | 'tiktok' | 'youtube' | 'pinterest' | 'twitter' | 'web';
+
+export interface InspoItem {
+  id: string;
+  url: string;
+  notes: string;
+  title?: string;
+  description?: string;
+  imageUrl?: string;
+  platform: InspoPlatform;
+  favicon?: string;
+  siteName?: string;
+  status?: 'IDEA' | 'RESEARCH' | 'PLANNED' | 'ARCHIVED';
+  createdAt: string;
+  updatedAt: string;
+}
+
 

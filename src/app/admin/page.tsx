@@ -152,51 +152,41 @@ export default function AdminOverviewPage() {
       {/* Operational Attention Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         
-        {/* Urgent Inquiries Widget */}
+        {/* Production Queue Widget */}
         <div className="bg-white p-6 rounded-3xl border border-[#ECE6DC] shadow-sm flex flex-col justify-between">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-2xl bg-[#EDF3F7] text-[#5C7489]">
-                <Sparkles className="w-5 h-5" />
+                <Layers className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-base font-bold text-[#14191F]">Bespoke Consultation Requests</h4>
-                <p className="text-xs text-[#6C7E8E]">Client briefs awaiting 3D parametric review & quote</p>
+                <h4 className="text-base font-bold text-[#14191F]">3D Production Board</h4>
+                <p className="text-xs text-[#6C7E8E]">Trello kanban board, batch schedule &amp; order fulfillment</p>
               </div>
             </div>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
-              {data.pendingInquiriesCount} Pending
-            </span>
+            <Link
+              href="/admin/production"
+              className="text-xs font-bold px-3 py-1 rounded-full bg-[#14191F] text-white hover:bg-[#5C7489] transition-colors"
+            >
+              Buka Board
+            </Link>
           </div>
 
-          <div className="mt-4 space-y-2.5">
-            {data.recentDesignInquiries.length === 0 ? (
-              <div className="py-6 px-4 rounded-2xl bg-[#FAF8F5] border border-[#ECE6DC] text-center text-xs text-[#7A8B99]">
-                Tidak ada konsultasi desain pending saat ini.
-              </div>
-            ) : (
-              data.recentDesignInquiries.map((inq: any) => (
-                <div key={inq.id} className="p-3 rounded-2xl bg-[#FAF8F5] border border-[#ECE6DC] flex items-center justify-between text-xs">
-                  <div>
-                    <p className="font-bold text-[#14191F]">{inq.clientName}</p>
-                    <p className="text-[11px] text-[#7A8B99] line-clamp-1">{inq.projectType} • {inq.description}</p>
-                  </div>
-                  <Link
-                    href="/admin/custom/design"
-                    className="px-3 py-1 rounded-full bg-[#5C7489] text-white text-[11px] font-semibold hover:bg-[#4E6377] shrink-0"
-                  >
-                    Review Brief
-                  </Link>
-                </div>
-              ))
-            )}
+          <div className="mt-4 p-4 rounded-2xl bg-[#FAF8F5] border border-[#ECE6DC] space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-[#6C7E8E]">Alur Produksi:</span>
+              <span className="font-semibold text-[#14191F]">Antrian → Batch → Cetak → QC → Selesai</span>
+            </div>
+            <p className="text-[11px] text-[#7A8B99]">
+              Kelola antrian cetak 3D, atur batch jadwal, import sheet, dan update status pesanan secepat mungkin.
+            </p>
           </div>
 
           <Link
-            href="/admin/custom/design"
+            href="/admin/production"
             className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[#5C7489] hover:underline"
           >
-            <span>View All Custom Briefs ({data.recentDesignInquiries.length + data.recentCharacterInquiries.length})</span>
+            <span>Open Production Dashboard</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>

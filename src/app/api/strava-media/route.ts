@@ -53,6 +53,7 @@ export async function PUT(request: Request) {
       heroImage: body.heroImage,
       variationImages: body.variationImages,
       variationPrices: body.variationPrices,
+      customVariations: body.customVariations,
       gallery: body.gallery,
     });
 

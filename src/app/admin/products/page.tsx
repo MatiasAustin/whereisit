@@ -203,7 +203,15 @@ export default function AdminProductsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href="/admin/content/keychain-media"
+            className="px-3.5 py-2 rounded-xl bg-[#EDF3F7] border border-[#D5E1E9] text-xs font-bold text-[#5C7489] hover:bg-[#E2ECF2] transition-colors flex items-center gap-1.5 shadow-xs"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#5C7489]" />
+            <span>Varian Pre-Order Strava</span>
+          </Link>
+
           <Link
             href="/"
             target="_blank"

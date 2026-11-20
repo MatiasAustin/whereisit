@@ -92,12 +92,17 @@ export default function StravaKeychainLandingPage() {
     setOpenFaqIndex(openFaqIndex === index ? null : index);
   };
 
-  const dynamicVariations = STRAVA_PRODUCT_CONFIG.variations.map((v) => ({
+  const dynamicVariations = (
+    mediaConfig?.customVariations && mediaConfig.customVariations.length > 0
+      ? mediaConfig.customVariations
+      : STRAVA_PRODUCT_CONFIG.variations
+  ).map((v) => ({
     ...v,
     price: mediaConfig?.variationPrices?.[v.id] ?? v.price,
+    image: mediaConfig?.variationImages?.[v.id] ?? v.image,
   }));
-  const minDynamicPrice = Math.min(...dynamicVariations.map((v) => v.price));
-  const maxDynamicPrice = Math.max(...dynamicVariations.map((v) => v.price));
+  const minDynamicPrice = dynamicVariations.length > 0 ? Math.min(...dynamicVariations.map((v) => v.price)) : 119000;
+  const maxDynamicPrice = dynamicVariations.length > 0 ? Math.max(...dynamicVariations.map((v) => v.price)) : 220000;
   const dynamicPriceRange = `${formatRupiah(minDynamicPrice)} – ${formatRupiah(maxDynamicPrice)}`;
 
   return (
@@ -400,7 +405,7 @@ export default function StravaKeychainLandingPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch mt-8 max-w-6xl mx-auto">
-                {STRAVA_PRODUCT_CONFIG.variations.map((v) => (
+                {dynamicVariations.map((v) => (
                   <StudioTiltCard key={v.id} className="h-full">
                     <div
                       className={`h-full p-6 sm:p-7 rounded-3xl border flex flex-col justify-between transition-all ${
@@ -736,6 +741,7 @@ export default function StravaKeychainLandingPage() {
         onClose={() => setCheckoutOpen(false)}
         initialVariationId={selectedVariationId}
         variationPrices={mediaConfig?.variationPrices}
+        variations={dynamicVariations}
       />
 
       <Footer />

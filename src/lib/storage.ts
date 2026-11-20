@@ -21,7 +21,9 @@ import {
   QueueSettings,
   NotifyListEntry,
   StravaMediaConfig,
-  StravaVariation
+  StravaVariation,
+  ProductionBatch,
+  InspoItem
 } from '@/types';
 import { STRAVA_PRODUCT_CONFIG } from '@/data/stravaKeychainConfig';
 import { INITIAL_PRODUCTS } from './initialData';
@@ -58,6 +60,8 @@ const QUEUE_SETTINGS_FILE = path.join(DATA_DIR, 'queue-settings.json');
 const NOTIFY_LIST_FILE = path.join(DATA_DIR, 'notify-list.json');
 const STRAVA_MEDIA_FILE = path.join(DATA_DIR, 'strava-media.json');
 const SUPABASE_CONFIG_FILE = path.join(DATA_DIR, 'supabase-config.json');
+const BATCHES_FILE = path.join(DATA_DIR, 'production-batches.json');
+const INSPO_FILE = path.join(DATA_DIR, 'inspo.json');
 
 export interface SupabaseConfigData {
   url: string;
@@ -1651,18 +1655,19 @@ export async function createStravaOrder(order: StravaPreOrder): Promise<StravaPr
 export async function updateStravaOrderStatus(
   id: string,
   status: StravaOrderStatus,
-  updates?: Partial<StravaPreOrder>
+  updates?: Partial<StravaPreOrder>,
+  bypassGuards: boolean = false
 ): Promise<{ success: boolean; error?: string }> {
   const current = await getStravaOrderById(id);
   if (!current) {
     return { success: false, error: 'Pesanan tidak ditemukan' };
   }
 
-  // GUARD: Produksi (status 5) TIDAK BOLEH mulai sampai SEMUA terpenuhi:
+  // GUARD: Produksi (status 5) TIDAK BOLEH mulai sampai SEMUA terpenuhi (kecuali diizinkan admin):
   // 1. Pembayaran terverifikasi (Clicky verified atau Mayar sudah bayar)
   // 2. Form sudah disubmit (stravaData + stravaUrl)
   // 3. Desain dikonfirmasi admin (status 'Desain Dikonfirmasi' atau production.confirmedAt)
-  if (status === 'Produksi') {
+  if (status === 'Produksi' && !bypassGuards) {
     const isPaid = current.paymentVerified || 
       (current.paymentMethod !== 'Clicky' && current.status !== 'Menunggu Pembayaran');
     if (!isPaid) {
@@ -2106,6 +2111,7 @@ export function getDefaultStravaMediaConfig(): StravaMediaConfig {
     heroImage: '/images/strava-keychain/keychain-04.jpg',
     variationImages,
     variationPrices,
+    customVariations: STRAVA_PRODUCT_CONFIG.variations,
     gallery: STRAVA_PRODUCT_CONFIG.gallery.map((g) => ({
       id: g.id,
       type: g.type,
@@ -2137,6 +2143,7 @@ export async function getStravaMediaConfig(): Promise<StravaMediaConfig> {
         return {
           ...fallback,
           ...(data.data as Partial<StravaMediaConfig>),
+          customVariations: (data.data as any)?.customVariations || fallback.customVariations,
           variationPrices: {
             ...fallback.variationPrices,
             ...((data.data as any)?.variationPrices || {}),
@@ -2150,7 +2157,11 @@ export async function getStravaMediaConfig(): Promise<StravaMediaConfig> {
 
 export async function getStravaVariations(): Promise<StravaVariation[]> {
   const config = await getStravaMediaConfig();
-  return STRAVA_PRODUCT_CONFIG.variations.map((v) => ({
+  const baseList = (config.customVariations && config.customVariations.length > 0)
+    ? config.customVariations
+    : STRAVA_PRODUCT_CONFIG.variations;
+
+  return baseList.map((v) => ({
     ...v,
     price:
       config.variationPrices?.[v.id] !== undefined && Number(config.variationPrices[v.id]) > 0
@@ -2167,6 +2178,7 @@ export async function updateStravaMediaConfig(
   const updated: StravaMediaConfig = {
     ...current,
     ...updates,
+    customVariations: updates.customVariations !== undefined ? updates.customVariations : (current.customVariations || STRAVA_PRODUCT_CONFIG.variations),
     variationImages: {
       ...(current.variationImages || {}),
       ...(updates.variationImages || {}),
@@ -2246,6 +2258,237 @@ export function saveStoredSupabaseConfig(config: Partial<SupabaseConfigData>): b
   writeJsonFile(SUPABASE_CONFIG_FILE, updated);
   return true;
 }
+
+// ---------------- PRODUCTION BATCHES & SCHEDULING ---------------- //
+
+export async function getProductionBatches(): Promise<ProductionBatch[]> {
+  const batches = readJsonFile<ProductionBatch[]>(BATCHES_FILE, []);
+  if (!batches || batches.length === 0) {
+    const defaultBatch: ProductionBatch = {
+      id: 'BATCH-DEFAULT-1',
+      name: 'Batch 1 — Reguler',
+      scheduledDate: new Date().toISOString().split('T')[0],
+      status: 'IN_PROGRESS',
+      notes: 'Batch antrian produksi aktif',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    writeJsonFile(BATCHES_FILE, [defaultBatch]);
+    return [defaultBatch];
+  }
+  return batches;
+}
+
+export async function createProductionBatch(data: {
+  name: string;
+  scheduledDate?: string;
+  notes?: string;
+  status?: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED';
+}): Promise<ProductionBatch> {
+  const now = new Date().toISOString();
+  const newBatch: ProductionBatch = {
+    id: `BATCH-${Date.now().toString(36).toUpperCase()}`,
+    name: data.name.trim(),
+    scheduledDate: data.scheduledDate || now.split('T')[0],
+    status: data.status || 'PLANNED',
+    notes: data.notes?.trim() || '',
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const list = readJsonFile<ProductionBatch[]>(BATCHES_FILE, []);
+  list.unshift(newBatch);
+  writeJsonFile(BATCHES_FILE, list);
+  return newBatch;
+}
+
+export async function updateProductionBatch(
+  id: string,
+  updates: Partial<ProductionBatch>
+): Promise<ProductionBatch | null> {
+  const list = readJsonFile<ProductionBatch[]>(BATCHES_FILE, []);
+  const index = list.findIndex((b) => b.id === id);
+  if (index === -1) return null;
+
+  const updated: ProductionBatch = {
+    ...list[index],
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  };
+
+  list[index] = updated;
+  writeJsonFile(BATCHES_FILE, list);
+  return updated;
+}
+
+export async function deleteProductionBatch(id: string): Promise<boolean> {
+  const list = readJsonFile<ProductionBatch[]>(BATCHES_FILE, []);
+  const filtered = list.filter((b) => b.id !== id);
+  if (filtered.length === list.length) return false;
+  writeJsonFile(BATCHES_FILE, filtered);
+  return true;
+}
+
+export async function batchImportStravaOrders(
+  ordersToImport: Array<Partial<StravaPreOrder>>
+): Promise<{ count: number; imported: StravaPreOrder[] }> {
+  const importedList: StravaPreOrder[] = [];
+
+  for (const item of ordersToImport) {
+    const now = new Date().toISOString();
+    const orderId = item.id || item.orderNumber || `WSI-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+    const newOrder: StravaPreOrder = {
+      id: orderId,
+      orderNumber: item.orderNumber || orderId,
+      productType: 'keychain-strava',
+      variationId: item.variationId || 'var-57x94',
+      variationName: item.variationName || '5.7x9.4 cm',
+      customer: {
+        fullName: item.customer?.fullName || 'Customer',
+        phone: item.customer?.phone || '',
+        email: item.customer?.email || `${(item.customer?.phone || 'cust').replace(/\D/g, '')}@sheet.import`,
+        address: item.customer?.address || 'Alamat dari spreadsheet',
+        city: item.customer?.city || 'Indonesia',
+        postalCode: item.customer?.postalCode || '',
+        notes: item.customer?.notes,
+      },
+      price: Number(item.price || 119000),
+      subtotal: Number(item.subtotal || item.price || 119000),
+      shippingFee: Number(item.shippingFee || 0),
+      shippingRegion: item.shippingRegion,
+      total: Number(item.total || item.price || 119000),
+      status: item.status || 'Desain Dikonfirmasi',
+      paymentMethod: item.paymentMethod || 'Sheet Import / Transfer',
+      paymentVerified: item.paymentVerified !== undefined ? item.paymentVerified : true,
+      paymentVerifiedAt: item.paymentVerifiedAt || now,
+      paymentDetails: item.paymentDetails || {
+        channel: 'Sheet Import',
+        invoiceId: item.orderNumber,
+        paidAt: now,
+      },
+      stravaData: item.stravaData ? {
+        stravaUrl: item.stravaData.stravaUrl || '',
+        images: item.stravaData.images || ['/images/strava-keychain/keychain-04.jpg'],
+        eventName: item.stravaData.eventName || 'Custom Route Run',
+        eventDate: item.stravaData.eventDate || now.split('T')[0],
+        distance: item.stravaData.distance || '10.0 km',
+        pace: item.stravaData.pace || 'Pace',
+        duration: item.stravaData.duration || '00:55:00',
+        engravedText: item.stravaData.engravedText || item.customer?.fullName || '',
+        adminNotes: item.stravaData.adminNotes || '',
+        submittedAt: item.stravaData.submittedAt || now,
+      } : {
+        stravaUrl: '',
+        images: ['/images/strava-keychain/keychain-04.jpg'],
+        eventName: 'Custom Route Run',
+        eventDate: now.split('T')[0],
+        distance: '10.0 km',
+        pace: 'Pace',
+        duration: '00:55:00',
+        engravedText: item.customer?.fullName || '',
+        adminNotes: '',
+        submittedAt: now,
+      },
+      production: {
+        batchName: item.production?.batchName || 'Batch 1 — Reguler',
+        batchId: item.production?.batchId,
+        scheduledDate: item.production?.scheduledDate || now.split('T')[0],
+        assignedMachine: item.production?.assignedMachine || 'Bambu Lab X1C',
+        internalAdminNotes: item.production?.internalAdminNotes || 'Diimport dari spreadsheet',
+        confirmedAt: now,
+      },
+      isExample: false,
+      createdAt: item.createdAt || now,
+      updatedAt: now,
+    };
+
+    const saved = await createStravaOrder(newOrder);
+    importedList.push(saved);
+  }
+
+  return { count: importedList.length, imported: importedList };
+}
+
+// ---------------- INSPO ITEMS ---------------- //
+
+export async function getInspoList(): Promise<InspoItem[]> {
+  const items = readJsonFile<InspoItem[]>(INSPO_FILE, []);
+  return items;
+}
+
+export async function createInspoItem(data: {
+  url: string;
+  notes: string;
+  title?: string;
+  description?: string;
+  imageUrl?: string;
+  platform?: InspoItem['platform'];
+  favicon?: string;
+  siteName?: string;
+}): Promise<InspoItem> {
+  const now = new Date().toISOString();
+  const id = `INSPO-${Date.now().toString(36).toUpperCase()}`;
+
+  // Basic platform auto-detection
+  let platform: InspoItem['platform'] = data.platform || 'web';
+  const urlLower = data.url.toLowerCase();
+  if (urlLower.includes('facebook.com') || urlLower.includes('fb.watch')) platform = 'facebook';
+  else if (urlLower.includes('threads.net')) platform = 'threads';
+  else if (urlLower.includes('instagram.com')) platform = 'instagram';
+  else if (urlLower.includes('tiktok.com')) platform = 'tiktok';
+  else if (urlLower.includes('youtube.com') || urlLower.includes('youtu.be')) platform = 'youtube';
+  else if (urlLower.includes('pinterest.com')) platform = 'pinterest';
+  else if (urlLower.includes('twitter.com') || urlLower.includes('x.com')) platform = 'twitter';
+
+  const newItem: InspoItem = {
+    id,
+    url: data.url.trim(),
+    notes: data.notes.trim(),
+    title: data.title?.trim() || `${platform.toUpperCase()} Inspo Idea`,
+    description: data.description?.trim(),
+    imageUrl: data.imageUrl,
+    platform,
+    favicon: data.favicon,
+    siteName: data.siteName,
+    status: 'IDEA',
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const list = readJsonFile<InspoItem[]>(INSPO_FILE, []);
+  list.unshift(newItem);
+  writeJsonFile(INSPO_FILE, list);
+  return newItem;
+}
+
+export async function updateInspoItem(
+  id: string,
+  updates: Partial<InspoItem>
+): Promise<InspoItem | null> {
+  const list = readJsonFile<InspoItem[]>(INSPO_FILE, []);
+  const index = list.findIndex((i) => i.id === id);
+  if (index === -1) return null;
+
+  const updated: InspoItem = {
+    ...list[index],
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  };
+
+  list[index] = updated;
+  writeJsonFile(INSPO_FILE, list);
+  return updated;
+}
+
+export async function deleteInspoItem(id: string): Promise<boolean> {
+  const list = readJsonFile<InspoItem[]>(INSPO_FILE, []);
+  const filtered = list.filter((i) => i.id !== id);
+  if (filtered.length === list.length) return false;
+  writeJsonFile(INSPO_FILE, filtered);
+  return true;
+}
+
 
 
 
