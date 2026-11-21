@@ -143,7 +143,7 @@ export default function StravaKeychainLandingPage() {
                 </div>
 
                 <p className="text-sm sm:text-base text-[#44505C] leading-relaxed max-w-xl">
-                  Gantungan kunci 3D print dari rute Strava kamu sendiri, lengkap dengan peta rute, jarak, pace, dan waktu tempuh. Cocok untuk kenang-kenangan race, PB pertama, atau bukti kamu pernah lari sejauh itu. Tersedia varian yang bisa difungsikan sebagai e-money &amp; Flazz.
+                  Gantungan Kunci Rute Lari Custom 3D Print — Strava x whereisit? Makin Kalcer dengan Keychain Rute Strava favoritmu! gantungan kunci 3d print dari rute strava kamu sendiri — lengkap dengan peta rute, jarak, pace, dan waktu tempuh. cocok buat kenang-kenangan race, pb pertama, atau sekadar bukti kamu pernah lari sejauh itu.
                 </p>
 
                 {/* Price Display */}

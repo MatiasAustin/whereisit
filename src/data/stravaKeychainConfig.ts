@@ -3,7 +3,7 @@ import { StravaVariation } from '@/types';
 export const STRAVA_PRODUCT_CONFIG = {
   name: 'Keychain Custom Data Strava x Where Is It? 3D print Custom',
   shortName: 'Keychain Custom Data Strava x Where Is It? 3D print Custom',
-  hook: 'Rute lari kamu, sekarang bisa dipegang.',
+  hook: 'Makin Kalcer dengan Keychain Rute Strava favoritmu!',
   badge: 'Pre-Order',
   priceRange: 'Rp119.000 – Rp220.000',
   defaultLeadDays: 7, // 5-7 hari kerja sejak desain dikonfirmasi
@@ -12,7 +12,7 @@ export const STRAVA_PRODUCT_CONFIG = {
 
   // Official Studio Description
   descriptionId:
-    'Gantungan Kunci Rute Lari Custom 3D Print — Strava x whereisit? rute lari kamu, sekarang bisa dipegang. gantungan kunci 3d print dari rute strava kamu sendiri — lengkap dengan peta rute, jarak, pace, dan waktu tempuh. cocok buat kenang-kenangan race, pb pertama, atau sekadar bukti kamu pernah lari sejauh itu.',
+    'Gantungan Kunci Rute Lari Custom 3D Print — Strava x whereisit? Makin Kalcer dengan Keychain Rute Strava favoritmu! gantungan kunci 3d print dari rute strava kamu sendiri — lengkap dengan peta rute, jarak, pace, dan waktu tempuh. cocok buat kenang-kenangan race, pb pertama, atau sekadar bukti kamu pernah lari sejauh itu.',
 
   // Key Features from Product Source of Truth
   keyFeatures: [

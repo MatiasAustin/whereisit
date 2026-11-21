@@ -75,6 +75,30 @@ const STATUS_BADGES: Record<StravaOrderStatus, { label: string; bg: string; text
     text: 'text-emerald-900',
     border: 'border-emerald-200',
   },
+  'Baru': {
+    label: 'Pesanan Baru',
+    bg: 'bg-amber-50',
+    text: 'text-amber-800',
+    border: 'border-amber-200',
+  },
+  'Antri Produksi': {
+    label: 'Antri Produksi',
+    bg: 'bg-indigo-50',
+    text: 'text-indigo-800',
+    border: 'border-indigo-200',
+  },
+  'Siap Kirim': {
+    label: 'Siap Kirim',
+    bg: 'bg-emerald-50',
+    text: 'text-emerald-800',
+    border: 'border-emerald-200',
+  },
+  'Batal': {
+    label: 'Dibatalkan',
+    bg: 'bg-red-50',
+    text: 'text-red-800',
+    border: 'border-red-200',
+  },
 };
 
 export default function ProductionQueueWidget({ currentOrderId, showFullList = true }: ProductionQueueWidgetProps) {

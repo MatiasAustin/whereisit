@@ -1553,6 +1553,18 @@ export async function getStravaOrders(): Promise<StravaPreOrder[]> {
             productType: 'keychain-strava',
             variationId: o.variation_id,
             variationName: o.variation_name,
+            qty: Number(o.payment_details?.qty ?? o.production?.qty ?? 1),
+            unitPrice: o.payment_details?.unitPrice !== undefined ? Number(o.payment_details.unitPrice) : Number(o.price),
+            dpPaid: o.payment_details?.dpPaid !== undefined ? Number(o.payment_details.dpPaid) : 0,
+            remainingBalance: o.payment_details?.remainingBalance !== undefined ? Number(o.payment_details.remainingBalance) : 0,
+            paymentStatus: o.payment_details?.paymentStatus || (o.status === 'Menunggu Pembayaran' ? 'Belum Bayar' : 'Lunas'),
+            channel: o.payment_details?.channel || 'Direct TF',
+            shippingCourier: o.production?.courier || o.production?.courierName || '',
+            trackingNumber: o.production?.trackingNumber || o.production?.resiNumber || '',
+            shippedAt: o.production?.shippedAt || o.production?.shippingDate || '',
+            estimatedCompletionDate: o.production?.estimatedCompletionDate || '',
+            invoiceNo: o.payment_details?.invoiceNo || o.payment_details?.invoiceId || '',
+            needsAdminConfirmation: Boolean(o.payment_details?.needsAdminConfirmation || o.variation_id === 'unconfirmed' || String(o.variation_name || '').toLowerCase().includes('belum dikonfirmasi')),
             customer: o.customer,
             price: Number(o.price),
             subtotal: Number(o.subtotal),
@@ -1578,7 +1590,23 @@ export async function getStravaOrders(): Promise<StravaPreOrder[]> {
   }
 
   const localList = readJsonFile<StravaPreOrder[]>(STRAVA_ORDERS_FILE, []);
-  return localList.filter((o) => !o.isExample && !String(o.id).includes('EXAMPLE') && !String(o.orderNumber || '').includes('EXAMPLE'));
+  return localList
+    .filter((o) => !o.isExample && !String(o.id).includes('EXAMPLE') && !String(o.orderNumber || '').includes('EXAMPLE'))
+    .map((o) => ({
+      ...o,
+      qty: Number(o.qty ?? o.paymentDetails?.qty ?? o.production?.qty ?? 1),
+      unitPrice: o.unitPrice !== undefined ? Number(o.unitPrice) : (o.price !== undefined ? Number(o.price) : 0),
+      dpPaid: o.dpPaid !== undefined ? Number(o.dpPaid) : (o.paymentDetails?.dpPaid !== undefined ? Number(o.paymentDetails.dpPaid) : 0),
+      remainingBalance: o.remainingBalance !== undefined ? Number(o.remainingBalance) : (o.paymentDetails?.remainingBalance !== undefined ? Number(o.paymentDetails.remainingBalance) : 0),
+      paymentStatus: o.paymentStatus || o.paymentDetails?.paymentStatus || (o.status === 'Menunggu Pembayaran' ? 'Belum Bayar' : 'Lunas'),
+      channel: o.channel || o.paymentDetails?.channel || 'Direct TF',
+      shippingCourier: o.shippingCourier || o.production?.courier || o.production?.courierName || '',
+      trackingNumber: o.trackingNumber || o.production?.trackingNumber || o.production?.resiNumber || '',
+      shippedAt: o.shippedAt || o.production?.shippedAt || o.production?.shippingDate || '',
+      estimatedCompletionDate: o.estimatedCompletionDate || o.production?.estimatedCompletionDate || '',
+      invoiceNo: o.invoiceNo || o.paymentDetails?.invoiceNo || o.paymentDetails?.invoiceId || '',
+      needsAdminConfirmation: Boolean(o.needsAdminConfirmation || o.paymentDetails?.needsAdminConfirmation || o.variationId === 'unconfirmed' || String(o.variationName || '').toLowerCase().includes('belum dikonfirmasi')),
+    }));
 }
 
 export async function getStravaOrderById(id: string): Promise<StravaPreOrder | undefined> {
@@ -1594,17 +1622,72 @@ export async function getStravaOrderById(id: string): Promise<StravaPreOrder | u
 
 export async function createStravaOrder(order: StravaPreOrder): Promise<StravaPreOrder> {
   const now = new Date().toISOString();
+  const qty = Number(order.qty ?? order.paymentDetails?.qty ?? order.production?.qty ?? 1);
+  const unitPrice = order.unitPrice !== undefined ? Number(order.unitPrice) : (order.price !== undefined ? Number(order.price) : 0);
+  const total = order.total !== undefined ? Number(order.total) : (qty * unitPrice);
+  const dpPaid = order.dpPaid !== undefined ? Number(order.dpPaid) : (order.paymentDetails?.dpPaid !== undefined ? Number(order.paymentDetails.dpPaid) : (order.paymentStatus === 'Lunas' || order.status === 'Selesai' ? total : 0));
+  const remainingBalance = order.remainingBalance !== undefined ? Number(order.remainingBalance) : Math.max(0, total - dpPaid);
+  const paymentStatus = order.paymentStatus || order.paymentDetails?.paymentStatus || (order.status === 'Menunggu Pembayaran' ? 'Belum Bayar' : 'Lunas');
+  const channel = order.channel || order.paymentDetails?.channel || 'Direct TF';
+  const shippingCourier = order.shippingCourier || order.production?.courier || order.production?.courierName || '';
+  const trackingNumber = order.trackingNumber || order.production?.trackingNumber || order.production?.resiNumber || '';
+  const shippedAt = order.shippedAt || order.production?.shippedAt || order.production?.shippingDate || '';
+  const estimatedCompletionDate = order.estimatedCompletionDate || order.production?.estimatedCompletionDate || '';
+  const invoiceNo = order.invoiceNo || order.paymentDetails?.invoiceNo || order.paymentDetails?.invoiceId || '';
+  const needsAdminConfirmation = Boolean(
+    order.needsAdminConfirmation || 
+    order.variationId === 'unconfirmed' || 
+    String(order.variationName || '').toLowerCase().includes('belum dikonfirmasi')
+  );
+
   const enrichedPaymentDetails = {
     ...(order.paymentDetails || {}),
     shippingRegion: order.shippingRegion,
     paymentVerified: order.paymentVerified || false,
     paymentVerifiedAt: order.paymentVerifiedAt || null,
     clickyFee: order.clickyFee || null,
+    paymentStatus,
+    dpPaid,
+    remainingBalance,
+    unitPrice,
+    qty,
+    channel,
+    invoiceId: invoiceNo,
+    invoiceNo,
+    needsAdminConfirmation,
+  };
+
+  const enrichedProduction = {
+    ...(order.production || {}),
+    qty,
+    courier: shippingCourier,
+    courierName: shippingCourier,
+    resiNumber: trackingNumber,
+    trackingNumber,
+    shippingDate: shippedAt,
+    shippedAt,
+    estimatedCompletionDate,
   };
 
   const newOrder: StravaPreOrder = {
     ...order,
+    qty,
+    unitPrice,
+    dpPaid,
+    remainingBalance,
+    paymentStatus,
+    channel,
+    shippingCourier,
+    trackingNumber,
+    shippedAt,
+    estimatedCompletionDate,
+    invoiceNo,
+    needsAdminConfirmation,
+    price: unitPrice,
+    subtotal: total,
+    total,
     paymentDetails: enrichedPaymentDetails,
+    production: enrichedProduction,
     createdAt: order.createdAt || now,
     updatedAt: now,
   };
@@ -1631,7 +1714,7 @@ export async function createStravaOrder(order: StravaPreOrder): Promise<StravaPr
         clicky_fee: newOrder.clickyFee || 0,
         payment_details: enrichedPaymentDetails,
         strava_data: newOrder.stravaData || null,
-        production: newOrder.production || null,
+        production: enrichedProduction,
         is_example: Boolean(newOrder.isExample),
         created_at: newOrder.createdAt,
         updated_at: newOrder.updatedAt,
@@ -1676,7 +1759,7 @@ export async function updateStravaOrderStatus(
         error: 'Tidak dapat memulai produksi: Pembayaran belum diverifikasi admin. Silakan verifikasi pembayaran terlebih dahulu.',
       };
     }
-    if (!current.stravaData || !current.stravaData.stravaUrl || current.status === 'Dibayar — Data Belum Lengkap') {
+    if (!current.stravaData || !current.stravaData.stravaUrl || current.status === 'Dibayar — Data Belum Lengkap' || current.status === 'Baru') {
       return {
         success: false,
         error: 'Tidak dapat memulai produksi: Form data Strava belum disubmit oleh pembeli.',
@@ -1691,10 +1774,66 @@ export async function updateStravaOrderStatus(
   }
 
   const now = new Date().toISOString();
+  const qty = updates?.qty !== undefined ? Number(updates.qty) : (current.qty ?? 1);
+  const unitPrice = updates?.unitPrice !== undefined ? Number(updates.unitPrice) : (updates?.price !== undefined ? Number(updates.price) : current.unitPrice ?? current.price);
+  const total = updates?.total !== undefined ? Number(updates.total) : (qty * unitPrice);
+  const dpPaid = updates?.dpPaid !== undefined ? Number(updates.dpPaid) : (current.dpPaid ?? 0);
+  const remainingBalance = updates?.remainingBalance !== undefined ? Number(updates.remainingBalance) : Math.max(0, total - dpPaid);
+  const paymentStatus = updates?.paymentStatus || current.paymentStatus || 'Belum Bayar';
+  const channel = updates?.channel || current.channel || 'Direct TF';
+  const shippingCourier = updates?.shippingCourier || current.shippingCourier || '';
+  const trackingNumber = updates?.trackingNumber || current.trackingNumber || '';
+  const shippedAt = updates?.shippedAt || current.shippedAt || '';
+  const estimatedCompletionDate = updates?.estimatedCompletionDate || current.estimatedCompletionDate || '';
+  const invoiceNo = updates?.invoiceNo || current.invoiceNo || '';
+  const needsAdminConfirmation = updates?.needsAdminConfirmation !== undefined ? updates.needsAdminConfirmation : current.needsAdminConfirmation;
+
+  const mergedPaymentDetails = {
+    ...(current.paymentDetails || {}),
+    ...(updates?.paymentDetails || {}),
+    paymentStatus,
+    dpPaid,
+    remainingBalance,
+    unitPrice,
+    qty,
+    channel,
+    invoiceId: invoiceNo,
+    invoiceNo,
+    needsAdminConfirmation,
+  };
+
+  const mergedProduction = {
+    ...(current.production || {}),
+    ...(updates?.production || {}),
+    qty,
+    courier: shippingCourier,
+    courierName: shippingCourier,
+    resiNumber: trackingNumber,
+    trackingNumber,
+    shippingDate: shippedAt,
+    shippedAt,
+    estimatedCompletionDate,
+  };
+
   const updated: StravaPreOrder = {
     ...current,
     ...updates,
     status,
+    qty,
+    unitPrice,
+    price: unitPrice,
+    subtotal: total,
+    total,
+    dpPaid,
+    remainingBalance,
+    paymentStatus,
+    channel,
+    shippingCourier,
+    trackingNumber,
+    shippedAt,
+    estimatedCompletionDate,
+    invoiceNo,
+    needsAdminConfirmation,
     customer: {
       ...current.customer,
       ...(updates?.customer || {}),
@@ -1705,10 +1844,8 @@ export async function updateStravaOrderStatus(
           ...updates.stravaData,
         }
       : current.stravaData,
-    production: {
-      ...current.production,
-      ...(updates?.production || {}),
-    },
+    production: mergedProduction,
+    paymentDetails: mergedPaymentDetails,
     updatedAt: now,
   };
 
@@ -1998,12 +2135,16 @@ export async function getPublicProductionQueue(): Promise<{
     'Produksi': 1,
     'QC / Finishing': 2,
     'Packing': 3,
-    'Desain Dikonfirmasi': 4,
-    'Data Diterima — Menunggu Konfirmasi Desain': 5,
-    'Dibayar — Data Belum Lengkap': 6,
-    'Menunggu Pembayaran': 7,
-    'Dikirim': 8,
-    'Selesai': 9,
+    'Antri Produksi': 4,
+    'Desain Dikonfirmasi': 5,
+    'Data Diterima — Menunggu Konfirmasi Desain': 6,
+    'Dibayar — Data Belum Lengkap': 7,
+    'Menunggu Pembayaran': 8,
+    'Baru': 9,
+    'Siap Kirim': 10,
+    'Dikirim': 11,
+    'Selesai': 12,
+    'Batal': 13,
   };
 
   const sortedActive = [...activeOrders].sort(
@@ -2331,12 +2472,77 @@ export async function deleteProductionBatch(id: string): Promise<boolean> {
 
 export async function batchImportStravaOrders(
   ordersToImport: Array<Partial<StravaPreOrder>>
-): Promise<{ count: number; imported: StravaPreOrder[] }> {
+): Promise<{ count: number; skippedCount: number; imported: StravaPreOrder[] }> {
+  const existingOrders = await getStravaOrders();
   const importedList: StravaPreOrder[] = [];
+  let skippedCount = 0;
 
   for (const item of ordersToImport) {
+    // Deduplication check
+    const isDup = existingOrders.some((exist) => {
+      // 1. Check Invoice / Clicky ID
+      const candInvoice = (item.invoiceNo || item.paymentDetails?.invoiceId || item.paymentDetails?.invoiceNo || '').trim();
+      const candNotes = (item.customer?.notes || item.stravaData?.adminNotes || item.production?.internalAdminNotes || '').toLowerCase();
+      const existInvoice = (exist.invoiceNo || exist.paymentDetails?.invoiceId || exist.paymentDetails?.invoiceNo || '').trim();
+      const existNotes = (exist.customer?.notes || exist.stravaData?.adminNotes || exist.production?.internalAdminNotes || '').toLowerCase();
+
+      if (candInvoice && existInvoice && candInvoice.toLowerCase() === existInvoice.toLowerCase()) {
+        return true;
+      }
+
+      // Check clicky regex in notes/invoice
+      const clickyRegex = /[a-f0-9]{24}/i;
+      const candClicky = (candInvoice + ' ' + candNotes).match(clickyRegex);
+      const existClicky = (existInvoice + ' ' + existNotes).match(clickyRegex);
+      if (candClicky && existClicky && candClicky[0].toLowerCase() === existClicky[0].toLowerCase()) {
+        return true;
+      }
+
+      // 2. No. WA + Tanggal Order + Nama Pemesan
+      const cleanPhone = (p?: string) => (p || '').replace(/\D/g, '').replace(/^0/, '62');
+      const candPhone = cleanPhone(item.customer?.phone);
+      const existPhone = cleanPhone(exist.customer?.phone);
+
+      const cleanName = (n?: string) => (n || '').trim().toLowerCase();
+      const candName = cleanName(item.customer?.fullName);
+      const existName = cleanName(exist.customer?.fullName);
+
+      const candDate = item.createdAt ? new Date(item.createdAt).toISOString().split('T')[0] : '';
+      const existDate = exist.createdAt ? new Date(exist.createdAt).toISOString().split('T')[0] : '';
+
+      if (candName && existName && candName === existName && candDate === existDate) {
+        if (!candPhone || !existPhone || candPhone.includes('shopee') || existPhone.includes('shopee') || candPhone === existPhone) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+
+    if (isDup) {
+      skippedCount++;
+      continue;
+    }
+
     const now = new Date().toISOString();
     const orderId = item.id || item.orderNumber || `WSI-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const qty = Number(item.qty ?? item.paymentDetails?.qty ?? item.production?.qty ?? 1);
+    const unitPrice = item.unitPrice !== undefined ? Number(item.unitPrice) : (item.price !== undefined ? Number(item.price) : 0);
+    const total = item.total !== undefined ? Number(item.total) : (qty * unitPrice);
+    const dpPaid = item.dpPaid !== undefined ? Number(item.dpPaid) : (item.paymentDetails?.dpPaid !== undefined ? Number(item.paymentDetails.dpPaid) : 0);
+    const remainingBalance = item.remainingBalance !== undefined ? Number(item.remainingBalance) : Math.max(0, total - dpPaid);
+    const paymentStatus = item.paymentStatus || item.paymentDetails?.paymentStatus || (item.status === 'Menunggu Pembayaran' ? 'Belum Bayar' : 'Lunas');
+    const channel = item.channel || item.paymentDetails?.channel || 'Direct TF';
+    const shippingCourier = item.shippingCourier || item.production?.courier || item.production?.courierName || '';
+    const trackingNumber = item.trackingNumber || item.production?.trackingNumber || item.production?.resiNumber || '';
+    const shippedAt = item.shippedAt || item.production?.shippedAt || item.production?.shippingDate || '';
+    const estimatedCompletionDate = item.estimatedCompletionDate || item.production?.estimatedCompletionDate || '';
+    const invoiceNo = item.invoiceNo || item.paymentDetails?.invoiceNo || item.paymentDetails?.invoiceId || '';
+    const needsAdminConfirmation = Boolean(
+      item.needsAdminConfirmation || 
+      item.variationId === 'unconfirmed' || 
+      String(item.variationName || '').toLowerCase().includes('belum dikonfirmasi')
+    );
 
     const newOrder: StravaPreOrder = {
       id: orderId,
@@ -2344,6 +2550,27 @@ export async function batchImportStravaOrders(
       productType: 'keychain-strava',
       variationId: item.variationId || 'var-57x94',
       variationName: item.variationName || '5.7x9.4 cm',
+      qty,
+      unitPrice,
+      price: unitPrice,
+      subtotal: total,
+      shippingFee: Number(item.shippingFee || 0),
+      shippingRegion: item.shippingRegion,
+      total,
+      dpPaid,
+      remainingBalance,
+      paymentStatus,
+      channel,
+      shippingCourier,
+      trackingNumber,
+      shippedAt,
+      estimatedCompletionDate,
+      invoiceNo,
+      needsAdminConfirmation,
+      status: item.status || 'Desain Dikonfirmasi',
+      paymentMethod: item.paymentMethod || 'Sheet Import / Transfer',
+      paymentVerified: item.paymentVerified !== undefined ? item.paymentVerified : (paymentStatus === 'Lunas'),
+      paymentVerifiedAt: item.paymentVerifiedAt || (paymentStatus === 'Lunas' ? now : null),
       customer: {
         fullName: item.customer?.fullName || 'Customer',
         phone: item.customer?.phone || '',
@@ -2352,20 +2579,20 @@ export async function batchImportStravaOrders(
         city: item.customer?.city || 'Indonesia',
         postalCode: item.customer?.postalCode || '',
         notes: item.customer?.notes,
+        shippingAddress: item.customer?.address,
       },
-      price: Number(item.price || 119000),
-      subtotal: Number(item.subtotal || item.price || 119000),
-      shippingFee: Number(item.shippingFee || 0),
-      shippingRegion: item.shippingRegion,
-      total: Number(item.total || item.price || 119000),
-      status: item.status || 'Desain Dikonfirmasi',
-      paymentMethod: item.paymentMethod || 'Sheet Import / Transfer',
-      paymentVerified: item.paymentVerified !== undefined ? item.paymentVerified : true,
-      paymentVerifiedAt: item.paymentVerifiedAt || now,
-      paymentDetails: item.paymentDetails || {
-        channel: 'Sheet Import',
-        invoiceId: item.orderNumber,
-        paidAt: now,
+      paymentDetails: {
+        channel,
+        invoiceId: invoiceNo,
+        invoiceNo,
+        paidAt: paymentStatus === 'Lunas' ? (item.paymentDetails?.paidAt || now) : undefined,
+        paymentStatus,
+        unitPrice,
+        qty,
+        dpPaid,
+        remainingBalance,
+        needsAdminConfirmation,
+        ...(item.paymentDetails || {}),
       },
       stravaData: item.stravaData ? {
         stravaUrl: item.stravaData.stravaUrl || '',
@@ -2376,27 +2603,27 @@ export async function batchImportStravaOrders(
         pace: item.stravaData.pace || 'Pace',
         duration: item.stravaData.duration || '00:55:00',
         engravedText: item.stravaData.engravedText || item.customer?.fullName || '',
+        keychainName: item.stravaData.keychainName,
+        routeColor: item.stravaData.routeColor,
         adminNotes: item.stravaData.adminNotes || '',
         submittedAt: item.stravaData.submittedAt || now,
-      } : {
-        stravaUrl: '',
-        images: ['/images/strava-keychain/keychain-04.jpg'],
-        eventName: 'Custom Route Run',
-        eventDate: now.split('T')[0],
-        distance: '10.0 km',
-        pace: 'Pace',
-        duration: '00:55:00',
-        engravedText: item.customer?.fullName || '',
-        adminNotes: '',
-        submittedAt: now,
-      },
+      } : undefined,
       production: {
         batchName: item.production?.batchName || 'Batch 1 — Reguler',
         batchId: item.production?.batchId,
         scheduledDate: item.production?.scheduledDate || now.split('T')[0],
         assignedMachine: item.production?.assignedMachine || 'Bambu Lab X1C',
-        internalAdminNotes: item.production?.internalAdminNotes || 'Diimport dari spreadsheet',
+        internalAdminNotes: item.production?.internalAdminNotes || `Diimport dari spreadsheet. Invoice: ${invoiceNo || '-'}`,
         confirmedAt: now,
+        qty,
+        courier: shippingCourier,
+        courierName: shippingCourier,
+        resiNumber: trackingNumber,
+        trackingNumber,
+        shippingDate: shippedAt,
+        shippedAt,
+        estimatedCompletionDate,
+        ...(item.production || {}),
       },
       isExample: false,
       createdAt: item.createdAt || now,
@@ -2404,10 +2631,11 @@ export async function batchImportStravaOrders(
     };
 
     const saved = await createStravaOrder(newOrder);
+    existingOrders.push(saved);
     importedList.push(saved);
   }
 
-  return { count: importedList.length, imported: importedList };
+  return { count: importedList.length, skippedCount, imported: importedList };
 }
 
 // ---------------- INSPO ITEMS ---------------- //

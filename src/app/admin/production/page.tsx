@@ -278,7 +278,7 @@ export default function ProductionPage() {
             3D Production Board
           </h1>
           <p className="text-xs text-[#6C7E8E] mt-0.5">
-            Atur antrian cetak 3D Keychain Strava, atur batch &amp; jadwal produksi, serta update status pesanan.
+            Atur antrian cetak 3D Keychain Strava, atur batch & jadwal produksi, serta update status pesanan.
           </p>
         </div>
 
@@ -289,7 +289,7 @@ export default function ProductionPage() {
             className="px-3.5 py-2 rounded-xl bg-white border border-[#DDD5C7] text-xs font-semibold text-[#14191F] hover:bg-[#FAF8F5] transition-colors shadow-xs flex items-center gap-1.5"
           >
             <Calendar className="w-3.5 h-3.5 text-[#5C7489]" />
-            <span>Atur Batch &amp; Jadwal</span>
+            <span>Atur Batch & Jadwal</span>
           </button>
 
           <button

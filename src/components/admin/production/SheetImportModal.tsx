@@ -1,8 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, FileSpreadsheet, Check, AlertCircle, Upload, ArrowRight, Sparkles } from 'lucide-react';
-import { ProductionBatch, StravaPreOrder } from '@/types';
+import { X, FileSpreadsheet, Check, AlertCircle, Upload, Info, AlertTriangle } from 'lucide-react';
+import { ProductionBatch, StravaPreOrder, StravaOrderStatus } from '@/types';
+import { 
+  parseExcelOrCsvFile, 
+  parseDelimitedText, 
+  parsePreorderSheetGrid,
+  ParsedPreorderRow,
+  formatRupiah
+} from '@/lib/preorderSheetParser';
 
 interface SheetImportModalProps {
   isOpen: boolean;
@@ -11,7 +18,7 @@ interface SheetImportModalProps {
   onImportSuccess: () => void;
 }
 
-interface ParsedRow {
+interface ParsedPostPaymentRow {
   name: string;
   stravaLink: string;
   paceEg: string;
@@ -39,120 +46,182 @@ export function SheetImportModal({
     new Date().toISOString().split('T')[0]
   );
   const [initialStatus, setInitialStatus] = useState<string>('Desain Dikonfirmasi');
-  const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
   const [importing, setImporting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  
+  // Format detection
+  const [detectedFormat, setDetectedFormat] = useState<'PREORDER_21' | 'POST_PAYMENT_10' | 'UNKNOWN'>('UNKNOWN');
+  const [postPaymentRows, setPostPaymentRows] = useState<ParsedPostPaymentRow[]>([]);
+  const [preorderRows, setPreorderRows] = useState<ParsedPreorderRow[]>([]);
+  const [skippedNonProductionCount, setSkippedNonProductionCount] = useState(0);
 
   if (!isOpen) return null;
+
+  const processGridData = (grid: string[][]) => {
+    if (!grid || grid.length === 0) {
+      setPostPaymentRows([]);
+      setPreorderRows([]);
+      setDetectedFormat('UNKNOWN');
+      setSkippedNonProductionCount(0);
+      return;
+    }
+
+    const firstRow = grid[0] || [];
+    const headerStr = firstRow.join(' ').toLowerCase();
+
+    // Check if 21-column Preorder Sheet format
+    const isPreorder21 = 
+      headerStr.includes('tanggal order') || 
+      headerStr.includes('dp dibayar') || 
+      headerStr.includes('sisa bayar') ||
+      headerStr.includes('varian / detail custom') ||
+      firstRow.length >= 15;
+
+    if (isPreorder21) {
+      setDetectedFormat('PREORDER_21');
+      const parsed = parsePreorderSheetGrid(grid);
+      
+      // CRITICAL PRODUCTION GUARD:
+      // Orders on the Production page must enter production ONLY if their Status Order / Produksi 
+      // is one of the production stages: Antri Produksi, Produksi, QC / Finishing, Siap Kirim, Dikirim, Selesai.
+      // Orders with status 'Dibayar — Data Belum Lengkap' or 'Baru' must NEVER enter production!
+      const PRODUCTION_ELIGIBLE_STATUSES = [
+        'antri produksi',
+        'produksi',
+        'qc / finishing',
+        'qc',
+        'finishing',
+        'siap kirim',
+        'dikirim',
+        'selesai'
+      ];
+
+      const eligible: ParsedPreorderRow[] = [];
+      let skippedCount = 0;
+
+      for (const row of parsed.rows) {
+        const orderStatusLower = (row.statusOrderSheet || '').toLowerCase();
+        const stageMappedLower = (row.adminStageMapped || '').toLowerCase();
+
+        const isEligible = 
+          PRODUCTION_ELIGIBLE_STATUSES.some((s) => orderStatusLower.includes(s)) &&
+          stageMappedLower !== 'baru' &&
+          stageMappedLower !== 'dibayar — data belum lengkap' &&
+          stageMappedLower !== 'menunggu pembayaran';
+
+        if (isEligible) {
+          eligible.push(row);
+        } else {
+          skippedCount++;
+        }
+      }
+
+      setPreorderRows(eligible);
+      setSkippedNonProductionCount(skippedCount);
+      setPostPaymentRows([]);
+    } else {
+      // 10-column Post-Payment form
+      setDetectedFormat('POST_PAYMENT_10');
+      setSkippedNonProductionCount(0);
+      setPreorderRows([]);
+
+      // Process post-payment rows
+      let colMap: Record<string, number> = {};
+      const hasHeader = firstRow.some(
+        (c) =>
+          c.toLowerCase().includes('name') ||
+          c.toLowerCase().includes('alias') ||
+          c.toLowerCase().includes('strava') ||
+          c.toLowerCase().includes('pace') ||
+          c.toLowerCase().includes('address') ||
+          c.toLowerCase().includes('invoice') ||
+          c.toLowerCase().includes('whatsapp')
+      );
+
+      let startIndex = 0;
+      if (hasHeader) {
+        startIndex = 1;
+        firstRow.forEach((col, idx) => {
+          const c = col.toLowerCase();
+          if (c.includes('name') || c.includes('alias') || c.includes('pemesan')) colMap['name'] = idx;
+          else if (c.includes('strava') || c.includes('link')) colMap['stravaLink'] = idx;
+          else if (c.includes('pace') || c.includes('eg') || c.includes('race')) colMap['paceEg'] = idx;
+          else if (c.includes('address') || c.includes('alamat')) colMap['address'] = idx;
+          else if (c.includes('email')) colMap['email'] = idx;
+          else if (c.includes('whatsapp') || c.includes('no hp') || c.includes('phone') || c.includes('wa')) colMap['whatsapp'] = idx;
+          else if (c.includes('form') || c.includes('submit')) colMap['formSubmittedAt'] = idx;
+          else if (c.includes('invoice') || c.includes('inv')) colMap['invoiceNo'] = idx;
+          else if (c.includes('payment') || c.includes('bayar') || c.includes('status')) colMap['paymentStatus'] = idx;
+          else if (c.includes('paid')) colMap['paidAt'] = idx;
+        });
+      }
+
+      const rows: ParsedPostPaymentRow[] = [];
+      for (let i = startIndex; i < grid.length; i++) {
+        const parts = grid[i];
+        if (!parts || parts.length === 0 || !parts.some((p) => p.trim())) continue;
+
+        const name = colMap['name'] !== undefined ? parts[colMap['name']] : parts[0];
+        const stravaLink = colMap['stravaLink'] !== undefined ? parts[colMap['stravaLink']] : parts[1];
+        const paceEg = colMap['paceEg'] !== undefined ? parts[colMap['paceEg']] : parts[2];
+        const address = colMap['address'] !== undefined ? parts[colMap['address']] : parts[3];
+        const email = colMap['email'] !== undefined ? parts[colMap['email']] : parts[4];
+        const whatsapp = colMap['whatsapp'] !== undefined ? parts[colMap['whatsapp']] : parts[5];
+        const formSubmittedAt = colMap['formSubmittedAt'] !== undefined ? parts[colMap['formSubmittedAt']] : parts[6];
+        const invoiceNo = colMap['invoiceNo'] !== undefined ? parts[colMap['invoiceNo']] : parts[7];
+        const paymentStatus = colMap['paymentStatus'] !== undefined ? parts[colMap['paymentStatus']] : parts[8];
+        const paidAt = colMap['paidAt'] !== undefined ? parts[colMap['paidAt']] : parts[9];
+
+        if (name || whatsapp || stravaLink) {
+          rows.push({
+            name: name || 'Pelanggan Sheet',
+            stravaLink: stravaLink || '',
+            paceEg: paceEg || 'Pace',
+            address: address || '',
+            email: email || '',
+            whatsapp: whatsapp || '',
+            formSubmittedAt: formSubmittedAt || new Date().toISOString(),
+            invoiceNo: invoiceNo || '',
+            paymentStatus: paymentStatus || 'paid',
+            paidAt: paidAt || new Date().toISOString(),
+          });
+        }
+      }
+      setPostPaymentRows(rows);
+    }
+  };
 
   const parsePastedData = (text: string) => {
     setRawText(text);
     setErrorMsg('');
     if (!text.trim()) {
-      setParsedRows([]);
+      setPostPaymentRows([]);
+      setPreorderRows([]);
+      setDetectedFormat('UNKNOWN');
+      setSkippedNonProductionCount(0);
       return;
     }
-
-    const lines = text.trim().split(/\r?\n/).filter((l) => l.trim().length > 0);
-    if (lines.length === 0) {
-      setParsedRows([]);
-      return;
-    }
-
-    // Determine delimiter: tab vs comma vs semicolon
-    const firstLine = lines[0];
-    const isTab = firstLine.includes('\t');
-    const delimiter = isTab ? '\t' : firstLine.includes(';') ? ';' : ',';
-
-    let startIndex = 0;
-    const headerCols = firstLine.split(delimiter).map((c) => c.trim().toLowerCase());
-    
-    // Check if first line is header
-    const hasHeader = headerCols.some(
-      (c) =>
-        c.includes('name') ||
-        c.includes('alias') ||
-        c.includes('strava') ||
-        c.includes('pace') ||
-        c.includes('address') ||
-        c.includes('invoice') ||
-        c.includes('whatsapp')
-    );
-
-    let colMap: Record<string, number> = {};
-
-    if (hasHeader) {
-      startIndex = 1;
-      headerCols.forEach((col, idx) => {
-        if (col.includes('name') || col.includes('alias') || col.includes('pemesan')) colMap['name'] = idx;
-        else if (col.includes('strava') || col.includes('link')) colMap['stravaLink'] = idx;
-        else if (col.includes('pace') || col.includes('eg') || col.includes('race')) colMap['paceEg'] = idx;
-        else if (col.includes('address') || col.includes('alamat')) colMap['address'] = idx;
-        else if (col.includes('email')) colMap['email'] = idx;
-        else if (col.includes('whatsapp') || col.includes('no hp') || col.includes('phone') || col.includes('wa')) colMap['whatsapp'] = idx;
-        else if (col.includes('form') || col.includes('submit')) colMap['formSubmittedAt'] = idx;
-        else if (col.includes('invoice') || col.includes('inv')) colMap['invoiceNo'] = idx;
-        else if (col.includes('payment') || col.includes('bayar') || col.includes('status')) colMap['paymentStatus'] = idx;
-        else if (col.includes('paid')) colMap['paidAt'] = idx;
-      });
-    }
-
-    const rows: ParsedRow[] = [];
-
-    for (let i = startIndex; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-      const parts = line.split(delimiter).map((p) => p.trim());
-
-      // If mapped by header, use map; otherwise fallback to default sheet column positions
-      // 0: Name/Alias, 1: Strava Link, 2: Pace/EG, 3: Address, 4: Email, 5: Whatsapp, 6: Form submitted at, 7: Invoice no, 8: Payment status, 9: Paid at
-      const name = colMap['name'] !== undefined ? parts[colMap['name']] : parts[0];
-      const stravaLink = colMap['stravaLink'] !== undefined ? parts[colMap['stravaLink']] : parts[1];
-      const paceEg = colMap['paceEg'] !== undefined ? parts[colMap['paceEg']] : parts[2];
-      const address = colMap['address'] !== undefined ? parts[colMap['address']] : parts[3];
-      const email = colMap['email'] !== undefined ? parts[colMap['email']] : parts[4];
-      const whatsapp = colMap['whatsapp'] !== undefined ? parts[colMap['whatsapp']] : parts[5];
-      const formSubmittedAt = colMap['formSubmittedAt'] !== undefined ? parts[colMap['formSubmittedAt']] : parts[6];
-      const invoiceNo = colMap['invoiceNo'] !== undefined ? parts[colMap['invoiceNo']] : parts[7];
-      const paymentStatus = colMap['paymentStatus'] !== undefined ? parts[colMap['paymentStatus']] : parts[8];
-      const paidAt = colMap['paidAt'] !== undefined ? parts[colMap['paidAt']] : parts[9];
-
-      if (name || whatsapp || stravaLink) {
-        rows.push({
-          name: name || 'Pelanggan Sheet',
-          stravaLink: stravaLink || '',
-          paceEg: paceEg || 'Pace',
-          address: address || '',
-          email: email || '',
-          whatsapp: whatsapp || '',
-          formSubmittedAt: formSubmittedAt || new Date().toISOString(),
-          invoiceNo: invoiceNo || '',
-          paymentStatus: paymentStatus || 'paid',
-          paidAt: paidAt || new Date().toISOString(),
-        });
-      }
-    }
-
-    setParsedRows(rows);
+    const grid = parseDelimitedText(text);
+    processGridData(grid);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      if (text) {
-        parsePastedData(text);
-      }
-    };
-    reader.readAsText(file);
+    setErrorMsg('');
+    try {
+      const grid = await parseExcelOrCsvFile(file);
+      processGridData(grid);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Gagal membaca file spreadsheet.');
+    }
   };
 
+  const totalReadyCount = detectedFormat === 'PREORDER_21' ? preorderRows.length : postPaymentRows.length;
+
   const handleExecuteImport = async () => {
-    if (parsedRows.length === 0) {
-      setErrorMsg('Tidak ada baris yang valid untuk diimport.');
+    if (totalReadyCount === 0) {
+      setErrorMsg('Tidak ada baris yang valid untuk masuk produksi.');
       return;
     }
 
@@ -162,49 +231,105 @@ export function SheetImportModal({
     const finalBatchName = (newBatchName.trim() || selectedBatch).trim();
 
     try {
-      const ordersPayload = parsedRows.map((row) => {
-        const isPaid = (row.paymentStatus || '').toLowerCase().includes('paid');
-        return {
+      let ordersPayload: any[] = [];
+
+      if (detectedFormat === 'PREORDER_21') {
+        ordersPayload = preorderRows.map((row) => ({
           customer: {
-            fullName: row.name,
-            phone: row.whatsapp,
-            email: row.email || `${row.whatsapp.replace(/\D/g, '')}@sheet.order`,
-            address: row.address || 'Alamat dari spreadsheet',
+            fullName: row.namaPemesan,
+            phone: row.noWa,
+            email: row.noWa ? `${row.noWa.replace(/\D/g, '')}@sheet.order` : 'order@whereisitofc.store',
+            address: row.alamatPengiriman || 'Alamat dari spreadsheet',
             city: 'Indonesia',
           },
-          stravaData: {
-            stravaUrl: row.stravaLink,
-            images: ['/images/strava-keychain/keychain-04.jpg'],
-            eventName: 'Strava Keychain Run',
-            eventDate: new Date().toISOString().split('T')[0],
-            distance: '10.0 km',
-            pace: row.paceEg || 'Pace',
-            duration: '00:50:00',
-            engravedText: row.name,
-            adminNotes: `Sheet Import | Form: ${row.formSubmittedAt || '-'}`,
-            submittedAt: row.formSubmittedAt || new Date().toISOString(),
-          },
-          price: 119000,
-          subtotal: 119000,
+          variationId: row.variationId || 'var-57x94',
+          variationName: row.variationName || row.varianRaw,
+          qty: row.qty,
+          unitPrice: row.hargaSatuan ?? 0,
+          dpPaid: row.dpDibayar ?? 0,
+          remainingBalance: row.sisaBayar ?? 0,
+          price: row.hargaSatuan ?? 0,
+          subtotal: row.totalHarga ?? 0,
           shippingFee: 0,
-          total: 119000,
-          status: initialStatus,
-          paymentMethod: 'Sheet Import',
-          paymentVerified: isPaid,
+          total: row.totalHarga ?? 0,
+          status: row.adminStageMapped as StravaOrderStatus,
+          paymentMethod: row.channel || 'Spreadsheet Preorder',
+          paymentVerified: row.statusPembayaran === 'Lunas',
           paymentDetails: {
-            channel: 'Google Sheet / Excel',
+            channel: row.channel,
             invoiceId: row.invoiceNo || undefined,
-            paidAt: row.paidAt || undefined,
+            paymentStatus: row.statusPembayaran,
+            paidAt: row.statusPembayaran === 'Lunas' ? (row.tanggalOrderIso || new Date().toISOString()) : undefined,
+          },
+          stravaData: {
+            stravaUrl: row.stravaUrl || '',
+            images: ['/images/strava-keychain/keychain-04.jpg'],
+            eventName: row.eventName || 'Strava Keychain Run',
+            eventDate: row.tanggalOrderIso ? row.tanggalOrderIso.split('T')[0] : new Date().toISOString().split('T')[0],
+            distance: row.distance || '10.0 km',
+            pace: row.pace || 'Pace',
+            duration: row.duration || '00:50:00',
+            engravedText: row.keychainName || row.namaPemesan || '',
+            adminNotes: row.catatan ? `Preorder Sheet: ${row.catatan}` : '',
+            submittedAt: row.tanggalOrderIso || new Date().toISOString(),
           },
           production: {
             batchName: finalBatchName,
             scheduledDate,
             assignedMachine: 'Bambu Lab X1C',
-            internalAdminNotes: `Imported from sheet. Invoice: ${row.invoiceNo || '-'}`,
+            courier: row.metodePengiriman || 'JNE',
+            trackingNumber: row.noResi || '',
+            estimatedCompletionDate: row.estimasiSelesai || '',
+            shippedAt: row.tanggalKirim || '',
+            internalAdminNotes: `Imported to production from sheet. ${row.catatan || ''}`,
             confirmedAt: new Date().toISOString(),
           },
-        };
-      });
+        }));
+      } else {
+        ordersPayload = postPaymentRows.map((row) => {
+          const isPaid = (row.paymentStatus || '').toLowerCase().includes('paid');
+          return {
+            customer: {
+              fullName: row.name,
+              phone: row.whatsapp,
+              email: row.email || `${row.whatsapp.replace(/\D/g, '')}@sheet.order`,
+              address: row.address || 'Alamat dari spreadsheet',
+              city: 'Indonesia',
+            },
+            stravaData: {
+              stravaUrl: row.stravaLink,
+              images: ['/images/strava-keychain/keychain-04.jpg'],
+              eventName: 'Strava Keychain Run',
+              eventDate: new Date().toISOString().split('T')[0],
+              distance: '10.0 km',
+              pace: row.paceEg || 'Pace',
+              duration: '00:50:00',
+              engravedText: row.name,
+              adminNotes: `Sheet Import | Form: ${row.formSubmittedAt || '-'}`,
+              submittedAt: row.formSubmittedAt || new Date().toISOString(),
+            },
+            price: 119000,
+            subtotal: 119000,
+            shippingFee: 0,
+            total: 119000,
+            status: initialStatus,
+            paymentMethod: 'Sheet Import',
+            paymentVerified: isPaid,
+            paymentDetails: {
+              channel: 'Google Sheet / Excel',
+              invoiceId: row.invoiceNo || undefined,
+              paidAt: row.paidAt || undefined,
+            },
+            production: {
+              batchName: finalBatchName,
+              scheduledDate,
+              assignedMachine: 'Bambu Lab X1C',
+              internalAdminNotes: `Imported from sheet. Invoice: ${row.invoiceNo || '-'}`,
+              confirmedAt: new Date().toISOString(),
+            },
+          };
+        });
+      }
 
       const res = await fetch('/api/production', {
         method: 'POST',
@@ -217,14 +342,14 @@ export function SheetImportModal({
 
       const json = await res.json();
       if (!json.success) {
-        throw new Error(json.error || 'Gagal mengimport pesanan');
+        throw new Error(json.error || 'Gagal mengimport pesanan ke antrian produksi');
       }
 
       onImportSuccess();
       onClose();
     } catch (err: any) {
       console.error(err);
-      setErrorMsg(err.message || 'Terjadi kesalahan saat import data');
+      setErrorMsg(err.message || 'Terjadi kesalahan saat import data produksi.');
     } finally {
       setImporting(false);
     }
@@ -240,10 +365,22 @@ export function SheetImportModal({
               <FileSpreadsheet className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-[#14191F]">Import Orderan dari Spreadsheet</h2>
-              <p className="text-xs text-[#6C7E8E]">
-                Copy-paste dari Google Sheets / Excel atau upload file CSV/TSV
-              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#5C7489]">
+                  Workshop Fulfillment
+                </span>
+                {detectedFormat === 'PREORDER_21' && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    Format Preorder Sheet (21 Kolom)
+                  </span>
+                )}
+                {detectedFormat === 'POST_PAYMENT_10' && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                    Format Post-Payment Form (10 Kolom)
+                  </span>
+                )}
+              </div>
+              <h2 className="text-lg font-black text-[#14191F]">Import Orderan ke Jadwal Produksi</h2>
             </div>
           </div>
           <button
@@ -255,7 +392,7 @@ export function SheetImportModal({
         </div>
 
         {/* Content Body */}
-        <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+        <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1 text-xs">
           {errorMsg && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-2xl flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -325,15 +462,15 @@ export function SheetImportModal({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-[#14191F]">
-                Paste Baris Google Sheets / Excel di sini:
+                Paste Baris Google Sheets / Excel atau Upload File:
               </label>
               <div className="flex items-center gap-2">
                 <label className="cursor-pointer text-[11px] font-semibold text-[#5C7489] hover:underline flex items-center gap-1">
                   <Upload className="w-3.5 h-3.5" />
-                  <span>Upload .CSV</span>
+                  <span>Upload .xlsx / .csv</span>
                   <input
                     type="file"
-                    accept=".csv,.tsv,.txt"
+                    accept=".xlsx,.xls,.csv,.tsv"
                     className="hidden"
                     onChange={handleFileUpload}
                   />
@@ -343,22 +480,88 @@ export function SheetImportModal({
 
             <textarea
               rows={5}
-              placeholder={`Contoh copy-paste dari Google Sheets:\nName/Alias\tStrava Link\tPace/EG\tAddress\tEmail\tWhatsapp\tForm submitted at\tInvoice no\tPayment status\tPaid at\nEndy Hardjono\thttps://strava.app.link/Vr8bBtLteeb\tPace\tPOLRESTA SIDOARJO\tendy@gmail.com\t085706494674\t26-11-18 15:37:29\t6afd6ee059e032\tpaid\t26-11-18 16:07:44`}
+              placeholder={`Contoh copy-paste dari Google Sheets:\nBisa format 21 kolom "Daftar Preorder" atau format 10 kolom post-payment:\nName/Alias\tStrava Link\tPace/EG\tAddress\tEmail\tWhatsapp\tForm submitted at\tInvoice no\tPayment status\tPaid at`}
               value={rawText}
               onChange={(e) => parsePastedData(e.target.value)}
               className="w-full p-3 rounded-2xl bg-[#FAF8F5] border border-[#DDD5C7] font-mono text-[11px] focus:outline-none focus:border-[#5C7489] resize-y"
             />
             <p className="text-[10px] text-[#7A8B99]">
-              Format otomatis mendeteksi kolom: Name/Alias, Strava Link, Pace/EG, Address, Email, Whatsapp, Form Submitted, Invoice No, Payment Status, Paid At.
+              Mendukung format 21-kolom Daftar Preorder Keychain dan format 10-kolom post-payment form.
             </p>
           </div>
 
-          {/* Preview Table */}
-          {parsedRows.length > 0 && (
+          {/* Production Guard Notice when non-production rows were skipped */}
+          {skippedNonProductionCount > 0 && (
+            <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+              <div className="text-[11px] text-amber-900">
+                <p className="font-bold">
+                  {skippedNonProductionCount} Pesanan Status Baru / Data Belum Lengkap Dilewati
+                </p>
+                <p className="mt-0.5">
+                  Sesuai aturan operasional studio, pesanan dengan status <em>Baru</em> atau <em>Dibayar — Data Belum Lengkap</em> belum boleh masuk jadwal mesin produksi. Hanya pesanan dengan status Antri Produksi, Produksi, QC, Siap Kirim, atau Selesai yang dimasukkan ke batch.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Preview: Preorder 21 Format */}
+          {detectedFormat === 'PREORDER_21' && preorderRows.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-xs text-[#14191F]">
-                  Pratinjau Data ({parsedRows.length} pesanan terdeteksi):
+                  Pratinjau Pesanan Pre-Order ({preorderRows.length} pesanan siap masuk produksi):
+                </span>
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">
+                  Siap dijadwalkan
+                </span>
+              </div>
+
+              <div className="border border-[#ECE6DC] rounded-2xl overflow-hidden max-h-56 overflow-y-auto">
+                <table className="w-full text-left text-[11px]">
+                  <thead className="bg-[#FAF8F5] text-[#7A8B99] font-bold uppercase tracking-wider text-[10px] sticky top-0 border-b border-[#ECE6DC]">
+                    <tr>
+                      <th className="px-3 py-2">No</th>
+                      <th className="px-3 py-2">Pemesan</th>
+                      <th className="px-3 py-2">WhatsApp</th>
+                      <th className="px-3 py-2">Varian</th>
+                      <th className="px-3 py-2">Tahap Produksi</th>
+                      <th className="px-3 py-2">Total Harga</th>
+                      <th className="px-3 py-2">Status Bayar</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#F0EBE3]">
+                    {preorderRows.map((r, idx) => (
+                      <tr key={idx} className="hover:bg-[#FAF8F5]">
+                        <td className="px-3 py-2 font-mono font-bold text-[#14191F]">{r.no}</td>
+                        <td className="px-3 py-2 font-bold text-[#14191F]">{r.namaPemesan}</td>
+                        <td className="px-3 py-2 font-mono text-[#5C7489]">{r.noWa || '-'}</td>
+                        <td className="px-3 py-2 font-semibold text-[#14191F]">{r.variationName || r.varianRaw}</td>
+                        <td className="px-3 py-2">
+                          <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            {r.statusOrderSheet}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 font-mono">{r.totalHarga ? formatRupiah(r.totalHarga) : '-'}</td>
+                        <td className="px-3 py-2">
+                          <span className="px-2 py-0.5 rounded font-bold text-[10px] bg-emerald-100 text-emerald-800">
+                            {r.statusPembayaran}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Preview: Post-Payment 10 Format */}
+          {detectedFormat === 'POST_PAYMENT_10' && postPaymentRows.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs text-[#14191F]">
+                  Pratinjau Data Post-Payment ({postPaymentRows.length} pesanan terdeteksi):
                 </span>
                 <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">
                   Siap diimport
@@ -379,7 +582,7 @@ export function SheetImportModal({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#F0EBE3]">
-                    {parsedRows.map((row, idx) => (
+                    {postPaymentRows.map((row, idx) => (
                       <tr key={idx} className="hover:bg-[#FAF8F5]">
                         <td className="px-3 py-2 text-[#7A8B99] font-mono">{idx + 1}</td>
                         <td className="px-3 py-2 font-bold text-[#14191F] max-w-[120px] truncate">
@@ -436,7 +639,7 @@ export function SheetImportModal({
 
           <button
             type="button"
-            disabled={importing || parsedRows.length === 0}
+            disabled={importing || totalReadyCount === 0}
             onClick={handleExecuteImport}
             className="px-6 py-2.5 rounded-xl bg-[#14191F] text-white text-xs font-bold hover:bg-[#5C7489] transition-colors flex items-center gap-2 shadow-md disabled:opacity-50"
           >
@@ -448,7 +651,7 @@ export function SheetImportModal({
             ) : (
               <>
                 <Check className="w-4 h-4" />
-                <span>Import {parsedRows.length} Pesanan ke Produksi</span>
+                <span>Import {totalReadyCount} Pesanan ke Produksi</span>
               </>
             )}
           </button>

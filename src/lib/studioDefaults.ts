@@ -99,15 +99,19 @@ export const INITIAL_SETTINGS: StoreSettings = {
 export const INITIAL_JOURNAL: JournalArticle[] = [];
 
 export const DEFAULT_STAGE_LABELS: Record<StravaOrderStatus, string> = {
+  'Baru': 'Pesanan Baru',
   'Menunggu Pembayaran': 'Menunggu Pembayaran',
   'Dibayar — Data Belum Lengkap': 'Data Belum Lengkap',
   'Data Diterima — Menunggu Konfirmasi Desain': 'Review Desain 3D',
   'Desain Dikonfirmasi': 'Siap Cetak',
+  'Antri Produksi': 'Antri Cetak',
   'Produksi': 'Sedang Dicetak',
   'QC / Finishing': 'QC & Finishing',
   'Packing': 'Packing',
+  'Siap Kirim': 'Siap Dikirim',
   'Dikirim': 'Dalam Pengiriman',
   'Selesai': 'Selesai',
+  'Batal': 'Dibatalkan',
 };
 
 export const DEFAULT_QUEUE_SETTINGS: QueueSettings = {

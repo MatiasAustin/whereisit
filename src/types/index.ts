@@ -266,15 +266,21 @@ export interface JournalArticle {
 // ---------------- STRAVA PRE-ORDER TYPES ---------------- //
 
 export type StravaOrderStatus =
+  | 'Baru'
   | 'Menunggu Pembayaran'
   | 'Dibayar — Data Belum Lengkap'
   | 'Data Diterima — Menunggu Konfirmasi Desain'
   | 'Desain Dikonfirmasi'
+  | 'Antri Produksi'
   | 'Produksi'
   | 'QC / Finishing'
   | 'Packing'
+  | 'Siap Kirim'
   | 'Dikirim'
-  | 'Selesai';
+  | 'Selesai'
+  | 'Batal';
+
+export type PaymentStatusType = 'Belum Bayar' | 'DP' | 'Lunas' | 'Batal';
 
 export interface StravaVariation {
   id: string;
@@ -338,6 +344,8 @@ export interface StravaCustomData {
   engravedText?: string;
   adminNotes?: string;
   submittedAt?: string;
+  keychainName?: string;
+  routeColor?: string;
 }
 
 export type PaymentProvider = 'clicky' | 'mayar';
@@ -348,6 +356,18 @@ export interface StravaPreOrder {
   productType: 'keychain-strava';
   variationId: string;
   variationName: string;
+  qty?: number;
+  unitPrice?: number;
+  dpPaid?: number;
+  remainingBalance?: number;
+  paymentStatus?: PaymentStatusType | string;
+  channel?: string;
+  shippingCourier?: string;
+  trackingNumber?: string;
+  shippedAt?: string;
+  estimatedCompletionDate?: string;
+  invoiceNo?: string;
+  needsAdminConfirmation?: boolean;
   customer: {
     fullName: string;
     email: string;
@@ -356,6 +376,7 @@ export interface StravaPreOrder {
     city: string;
     postalCode?: string;
     notes?: string;
+    shippingAddress?: string;
   };
   price: number;
   subtotal: number;
@@ -369,6 +390,7 @@ export interface StravaPreOrder {
   clickyFee?: number | null;
   paymentDetails?: {
     invoiceId?: string;
+    invoiceNo?: string;
     paymentUrl?: string;
     paidAt?: string;
     mayarTransactionId?: string;
@@ -378,6 +400,12 @@ export interface StravaPreOrder {
     paymentVerified?: boolean;
     paymentVerifiedAt?: string | null;
     clickyFee?: number | null;
+    paymentStatus?: PaymentStatusType | string;
+    unitPrice?: number;
+    qty?: number;
+    dpPaid?: number;
+    remainingBalance?: number;
+    needsAdminConfirmation?: boolean;
   };
   stravaData?: StravaCustomData;
   production?: {
@@ -397,9 +425,12 @@ export interface StravaPreOrder {
     batchName?: string;
     scheduledDate?: string;
     targetCompletionDate?: string;
-    stage?: 'QUEUE' | 'SCHEDULED' | 'PRINTING' | 'QC' | 'COMPLETED';
+    stage?: string;
     priority?: 'NORMAL' | 'HIGH' | 'URGENT';
     completedAt?: string;
+    qty?: number;
+    shippingDate?: string;
+    shippedAt?: string;
   };
   isExample?: boolean;
   createdAt: string;

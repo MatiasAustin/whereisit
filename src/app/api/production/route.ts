@@ -67,8 +67,9 @@ export async function POST(request: Request) {
       const importResult = await batchImportStravaOrders(orders);
       return NextResponse.json({
         success: true,
-        message: `Berhasil mengimport ${importResult.count} pesanan ke produksi dan antrian!`,
+        message: `${importResult.count} baru, ${importResult.skippedCount} duplikat dilewati`,
         count: importResult.count,
+        skippedCount: importResult.skippedCount,
         data: importResult.imported,
       });
     }

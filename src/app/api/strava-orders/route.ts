@@ -7,6 +7,7 @@ import {
   getQueueSettings,
   computeEstimatedCompletion,
   createStravaOrder,
+  batchImportStravaOrders,
   deleteStravaOrder,
   clearExampleStravaOrders,
 } from '@/lib/storage';
@@ -150,15 +151,19 @@ export async function PATCH(request: Request) {
     const targetStatus = (status || existingOrder.status) as StravaOrderStatus;
 
     const validStatuses: StravaOrderStatus[] = [
+      'Baru',
       'Menunggu Pembayaran',
       'Dibayar — Data Belum Lengkap',
       'Data Diterima — Menunggu Konfirmasi Desain',
       'Desain Dikonfirmasi',
+      'Antri Produksi',
       'Produksi',
       'QC / Finishing',
       'Packing',
+      'Siap Kirim',
       'Dikirim',
       'Selesai',
+      'Batal',
     ];
 
     if (!validStatuses.includes(targetStatus)) {
@@ -176,6 +181,18 @@ export async function PATCH(request: Request) {
         ...(subtotal !== undefined ? { subtotal: Number(subtotal) } : {}),
         ...(shippingFee !== undefined ? { shippingFee: Number(shippingFee) } : {}),
         ...(total !== undefined ? { total: Number(total) } : {}),
+        ...(body.qty !== undefined ? { qty: Number(body.qty) } : {}),
+        ...(body.unitPrice !== undefined ? { unitPrice: Number(body.unitPrice) } : {}),
+        ...(body.dpPaid !== undefined ? { dpPaid: Number(body.dpPaid) } : {}),
+        ...(body.remainingBalance !== undefined ? { remainingBalance: Number(body.remainingBalance) } : {}),
+        ...(body.paymentStatus ? { paymentStatus: body.paymentStatus } : {}),
+        ...(body.channel ? { channel: body.channel } : {}),
+        ...(body.shippingCourier ? { shippingCourier: body.shippingCourier } : {}),
+        ...(body.trackingNumber !== undefined ? { trackingNumber: body.trackingNumber } : {}),
+        ...(body.shippedAt !== undefined ? { shippedAt: body.shippedAt } : {}),
+        ...(body.estimatedCompletionDate !== undefined ? { estimatedCompletionDate: body.estimatedCompletionDate } : {}),
+        ...(body.invoiceNo !== undefined ? { invoiceNo: body.invoiceNo } : {}),
+        ...(body.needsAdminConfirmation !== undefined ? { needsAdminConfirmation: Boolean(body.needsAdminConfirmation) } : {}),
         ...(stravaData ? { stravaData } : {}),
         production: productionUpdates,
       },
@@ -204,22 +221,54 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const {
+      action,
+      orders,
       customer,
       variationId = 'var-57x94',
       variationName = '5.7x9.4 cm',
+      qty = 1,
+      unitPrice,
       price = 119000,
-      subtotal = 119000,
+      subtotal,
       shippingFee = 0,
-      total = 119000,
+      total,
+      dpPaid = 0,
+      remainingBalance,
+      paymentStatus = 'Belum Bayar',
       status = 'Data Diterima — Menunggu Konfirmasi Desain',
       paymentMethod = 'WhatsApp Manual Order',
+      channel = 'WhatsApp',
+      shippingCourier = 'JNE',
+      trackingNumber = '',
+      shippedAt,
+      estimatedCompletionDate,
+      invoiceNo = '',
       stravaData,
       internalAdminNotes,
     } = body;
 
+    if (action === 'import_sheet') {
+      if (!Array.isArray(orders) || orders.length === 0) {
+        return NextResponse.json({ success: false, error: 'Daftar pesanan untuk diimport kosong' }, { status: 400 });
+      }
+      const result = await batchImportStravaOrders(orders);
+      return NextResponse.json({
+        success: true,
+        count: result.count,
+        skippedCount: result.skippedCount,
+        message: `${result.count} baru, ${result.skippedCount} duplikat dilewati`,
+      });
+    }
+
     if (!customer?.fullName || !customer?.phone) {
       return NextResponse.json({ success: false, error: 'Nama dan nomor WhatsApp pelanggan wajib diisi' }, { status: 400 });
     }
+
+    const calculatedQty = Math.max(1, Number(qty) || 1);
+    const calculatedUnitPrice = unitPrice !== undefined ? Number(unitPrice) : Number(price || 119000);
+    const calculatedTotal = total !== undefined ? Number(total) : (calculatedQty * calculatedUnitPrice);
+    const calculatedDp = dpPaid !== undefined ? Number(dpPaid) : 0;
+    const calculatedRemaining = remainingBalance !== undefined ? Number(remainingBalance) : Math.max(0, calculatedTotal - calculatedDp);
 
     const orderId = generateOrderId();
     const newOrder: StravaPreOrder = {
@@ -228,6 +277,17 @@ export async function POST(request: Request) {
       productType: 'keychain-strava',
       variationId,
       variationName,
+      qty: calculatedQty,
+      unitPrice: calculatedUnitPrice,
+      dpPaid: calculatedDp,
+      remainingBalance: calculatedRemaining,
+      paymentStatus,
+      channel,
+      shippingCourier,
+      trackingNumber,
+      shippedAt,
+      estimatedCompletionDate,
+      invoiceNo,
       customer: {
         fullName: customer.fullName.trim(),
         phone: customer.phone.trim(),
@@ -236,15 +296,24 @@ export async function POST(request: Request) {
         city: customer.city?.trim() || 'Indonesia',
         postalCode: customer.postalCode?.trim() || '',
       },
-      price: Number(price),
-      subtotal: Number(subtotal),
+      price: calculatedUnitPrice,
+      subtotal: calculatedTotal,
       shippingFee: Number(shippingFee),
-      total: Number(total),
+      total: calculatedTotal,
       status: status as StravaOrderStatus,
       paymentMethod,
+      paymentVerified: paymentStatus === 'Lunas',
+      paymentVerifiedAt: paymentStatus === 'Lunas' ? new Date().toISOString() : null,
       paymentDetails: {
-        channel: 'Manual Admin',
-        paidAt: new Date().toISOString(),
+        channel,
+        invoiceId: invoiceNo,
+        invoiceNo,
+        paymentStatus,
+        unitPrice: calculatedUnitPrice,
+        qty: calculatedQty,
+        dpPaid: calculatedDp,
+        remainingBalance: calculatedRemaining,
+        paidAt: paymentStatus === 'Lunas' ? new Date().toISOString() : undefined,
       },
       stravaData: stravaData ? {
         stravaUrl: stravaData.stravaUrl || '',
@@ -255,10 +324,20 @@ export async function POST(request: Request) {
         pace: stravaData.pace || '05:30 /km',
         duration: stravaData.duration || '00:55:00',
         engravedText: stravaData.engravedText || '',
+        keychainName: stravaData.keychainName,
+        routeColor: stravaData.routeColor,
         adminNotes: stravaData.adminNotes || '',
         submittedAt: new Date().toISOString(),
       } : undefined,
       production: {
+        qty: calculatedQty,
+        courier: shippingCourier,
+        courierName: shippingCourier,
+        resiNumber: trackingNumber,
+        trackingNumber,
+        shippingDate: shippedAt,
+        shippedAt,
+        estimatedCompletionDate,
         internalAdminNotes: internalAdminNotes || 'Pesanan manual diinput dari Admin Dashboard',
       },
       isExample: false,
